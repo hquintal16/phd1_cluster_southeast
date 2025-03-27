@@ -1,5 +1,5 @@
 #Setup----
-#Updated February 2025
+#Updated March 2025
 #Linked to GitHub
 #Author: Hunter Quintal
 #purpose: rasterize NOAA Events Database by county for validation of clustered events
@@ -9,13 +9,13 @@
 # https://www.ncdc.noaa.gov/stormevents/listevents.jsp?eventType=%28Z%29+Excessive+Heat&eventType=%28C%29+Flash+Flood&eventType=%28Z%29+Heat&eventType=%28C%29+Heavy+Rain&beginDate_mm=01&beginDate_dd=01&beginDate_yyyy=2023&endDate_mm=01&endDate_dd=01&endDate_yyyy=2024&county=ALL&hailfilter=0.00&tornfilter=0&windfilter=000&sort=DT&submitbutton=Search&statefips=37%2CNORTH+CAROLINA
 
 # Load Libraries & Functions ----
-source("V:/users/hquintal/phd2_southeast/scripts/01_library.R")
+source("V:/users/hquintal/phd1_cluster_southeast/scripts/01_library.R")
 
 # Download bulk files manually ----
 # https://www.ncei.noaa.gov/pub/data/swdi/stormevents/csvfiles/
 
 ## Read in koppen-geiger geotiffs ----
-directory <- "V:/users/hquintal/phd2_southeast/data/input/regional_aggregation/koppen_geiger/1991_2020/koppen_geiger_0p1.tif"
+directory <- "V:/users/hquintal/phd1_cluster_southeast/data/input/regional_aggregation/koppen_geiger/1991_2020/koppen_geiger_0p1.tif"
 resolution <- terra::rast(directory)
 resolution <- resolution/resolution
 
@@ -33,7 +33,7 @@ us.states.rast <- terra::crop(us.states.rast,terra::ext(-130,-65,24,50))
 
 # Load NOAA events csv ----
 # CONUS 1950-2023
-files <- list.files(path = 'V:/users/hquintal/phd2_southeast/data/input/noaa_events/',full.names = T)
+files <- list.files(path = 'V:/users/hquintal/phd1_cluster_southeast/data/input/noaa_events/',full.names = T)
 
 # 2025-02-28 Repeat for 2009 and 2015, somehow I missed these years
 # files <- files[c(60,66)]
@@ -219,7 +219,7 @@ tz_combine <- data.table(tz = unique(events$CZ_TIMEZONE),
 #                          region = c("America/Chicago","America/New_York",
 #                                     "America/Los_Angeles","America/Adak",
 #                                     "America/Denver","America/Anchorage"))
-table(events$STATE)
+# table(events$STATE)
 # Add time-zones back in 
 time.zone.list <- list()
 
@@ -308,10 +308,10 @@ events <- events %>%
 #   select(-c(BEGIN_DATE_TIME_UTC))
 
 # Save result
-write.csv(events,'V:/users/hquintal/phd2_southeast/data/output/09_validation/NOAA_events_2009_2015.csv')
+write.csv(events,'V:/users/hquintal/phd1_cluster_southeast/data/output/04_noaa/NOAA_events.csv')
 
 # Read result
-events <- as.data.table(read.csv('V:/users/hquintal/phd2_southeast/data/output/09_validation/NOAA_events_2009_2015.csv'))
+events <- as.data.table(read.csv('V:/users/hquintal/phd1_cluster_southeast/data/output/04_noaa/NOAA_events.csv'))
 
 # Give 0 dollars to "" or "NA" entries
 events$DAMAGE_PROPERTY[nchar(events$DAMAGE_PROPERTY) < 2] <- '0.00K'
@@ -331,10 +331,10 @@ events <- events %>%
   mutate(DAMAGE_CROPS_CHAR = gsub("[^a-zA-Z]", "", DAMAGE_CROPS))
 
 # Save result
-write.csv(events,'V:/users/hquintal/phd2_southeast/data/output/09_validation/NOAA_events_2009_2015.csv')
+write.csv(events,'V:/users/hquintal/phd1_cluster_southeast/data/output/04_noaa/NOAA_events.csv')
 
 # Read result
-events <- as.data.table(read.csv('V:/users/hquintal/phd2_southeast/data/output/09_validation/NOAA_events_2009_2015.csv'))
+events <- as.data.table(read.csv('V:/users/hquintal/phd1_cluster_southeast/data/output/04_noaa/NOAA_events.csv'))
 
 # Convert damages into dollars
 events$DAMAGE_PROPERTY_CHAR <- as.numeric(gsub('K',1000,
@@ -397,10 +397,10 @@ events <- events %>%
   select(-c(column_label,STATE,STATE_FIPS,CZ_NAME))
 
 # Save result
-write.csv(events,'V:/users/hquintal/phd2_southeast/data/output/09_validation/NOAA_events_2009_2015.csv')
+write.csv(events,'V:/users/hquintal/phd1_cluster_southeast/data/output/04_noaa/NOAA_events.csv')
 
 # Read result
-events <- as.data.table(read.csv('V:/users/hquintal/phd2_southeast/data/output/09_validation/NOAA_events_2009_2015.csv'))
+events <- as.data.table(read.csv('V:/users/hquintal/phd1_cluster_southeast/data/output/04_noaa/NOAA_events.csv'))
 
 # order by start date time
 events <- events[order(rank(EPISODE_ID))]
@@ -428,36 +428,36 @@ noaa.heat <- rbind(excess.heat,heat)
 noaa.precipitation <- rbind(flash.flood,flood,heavy.rain,hurricane,typhoon,tropical.storm,tropical.depression)
 
 # Save result
-write.csv(excess.heat,'V:/users/hquintal/phd2_southeast/data/output/09_validation/NOAA_events_excess_heat_2009_2015.csv')
-write.csv(flash.flood,'V:/users/hquintal/phd2_southeast/data/output/09_validation/NOAA_events_flash_flood_2009_2015.csv')
-write.csv(flood,'V:/users/hquintal/phd2_southeast/data/output/09_validation/NOAA_events_flood_2009_2015.csv')
-write.csv(heat,'V:/users/hquintal/phd2_southeast/data/output/09_validation/NOAA_events_heat_2009_2015.csv')
-write.csv(heavy.rain,'V:/users/hquintal/phd2_southeast/data/output/09_validation/NOAA_events_heavy_rain_2009_2015.csv')
-write.csv(hurricane,'V:/users/hquintal/phd2_southeast/data/output/09_validation/NOAA_events_hurricane_2009_2015.csv')
-write.csv(typhoon,'V:/users/hquintal/phd2_southeast/data/output/09_validation/NOAA_events_typhoon_2009_2015.csv')
-write.csv(tropical.storm,'V:/users/hquintal/phd2_southeast/data/output/09_validation/NOAA_events_tropical_storm_2009_2015.csv')
-write.csv(tropical.depression,'V:/users/hquintal/phd2_southeast/data/output/09_validation/NOAA_events_tropical_depression_2009_2015.csv')
+write.csv(excess.heat,'V:/users/hquintal/phd1_cluster_southeast/data/output/04_noaa/NOAA_events_excess_heat.csv')
+write.csv(flash.flood,'V:/users/hquintal/phd1_cluster_southeast/data/output/04_noaa/NOAA_events_flash_flood.csv')
+write.csv(flood,'V:/users/hquintal/phd1_cluster_southeast/data/output/04_noaa/NOAA_events_flood.csv')
+write.csv(heat,'V:/users/hquintal/phd1_cluster_southeast/data/output/04_noaa/NOAA_events_heat.csv')
+write.csv(heavy.rain,'V:/users/hquintal/phd1_cluster_southeast/data/output/04_noaa/NOAA_events_heavy_rain.csv')
+write.csv(hurricane,'V:/users/hquintal/phd1_cluster_southeast/data/output/04_noaa/NOAA_events_hurricane.csv')
+write.csv(typhoon,'V:/users/hquintal/phd1_cluster_southeast/data/output/04_noaa/NOAA_events_typhoon.csv')
+write.csv(tropical.storm,'V:/users/hquintal/phd1_cluster_southeast/data/output/04_noaa/NOAA_events_tropical_storm.csv')
+write.csv(tropical.depression,'V:/users/hquintal/phd1_cluster_southeast/data/output/04_noaa/NOAA_events_tropical_depression.csv')
 
-write.csv(noaa.heat,'V:/users/hquintal/phd2_southeast/data/output/09_validation/NOAA_events_all_heat_2009_2015.csv')
-write.csv(noaa.precipitation,'V:/users/hquintal/phd2_southeast/data/output/09_validation/NOAA_events_all_precipitation_2009_2015.csv')
+write.csv(noaa.heat,'V:/users/hquintal/phd1_cluster_southeast/data/output/04_noaa/NOAA_events_all_heat.csv')
+write.csv(noaa.precipitation,'V:/users/hquintal/phd1_cluster_southeast/data/output/04_noaa/NOAA_events_all_precipitation.csv')
 
-write.csv(events,'V:/users/hquintal/phd2_southeast/data/output/09_validation/NOAA_events_2009_2015.csv')
+write.csv(events,'V:/users/hquintal/phd1_cluster_southeast/data/output/04_noaa/NOAA_events.csv')
 
 # Read result
-excess.heat <- as.data.table(read.csv('V:/users/hquintal/phd2_southeast/data/output/09_validation/NOAA_events_excess_heat_2009_2015.csv'))
-flash.flood <- as.data.table(read.csv('V:/users/hquintal/phd2_southeast/data/output/09_validation/NOAA_events_flash_flood_2009_2015.csv'))
-flood <- as.data.table(read.csv('V:/users/hquintal/phd2_southeast/data/output/09_validation/NOAA_events_flood_2009_2015.csv'))
-heat <- as.data.table(read.csv('V:/users/hquintal/phd2_southeast/data/output/09_validation/NOAA_events_heat_2009_2015.csv'))
-heavy.rain <- as.data.table(read.csv('V:/users/hquintal/phd2_southeast/data/output/09_validation/NOAA_events_heavy_rain_2009_2015.csv'))
-hurricane <- as.data.table(read.csv('V:/users/hquintal/phd2_southeast/data/output/09_validation/NOAA_events_hurricane_2009_2015.csv'))
-typhoon <- as.data.table(read.csv('V:/users/hquintal/phd2_southeast/data/output/09_validation/NOAA_events_typhoon_2009_2015.csv'))
-tropical.storm <- as.data.table(read.csv('V:/users/hquintal/phd2_southeast/data/output/09_validation/NOAA_events_tropical_storm_2009_2015.csv'))
-tropical.depression <- as.data.table(read.csv('V:/users/hquintal/phd2_southeast/data/output/09_validation/NOAA_events_tropical_depression_2009_2015.csv'))
+excess.heat <- as.data.table(read.csv('V:/users/hquintal/phd1_cluster_southeast/data/output/04_noaa/NOAA_events_excess_heat.csv'))
+flash.flood <- as.data.table(read.csv('V:/users/hquintal/phd1_cluster_southeast/data/output/04_noaa/NOAA_events_flash_flood.csv'))
+flood <- as.data.table(read.csv('V:/users/hquintal/phd1_cluster_southeast/data/output/04_noaa/NOAA_events_flood.csv'))
+heat <- as.data.table(read.csv('V:/users/hquintal/phd1_cluster_southeast/data/output/04_noaa/NOAA_events_heat.csv'))
+heavy.rain <- as.data.table(read.csv('V:/users/hquintal/phd1_cluster_southeast/data/output/04_noaa/NOAA_events_heavy_rain.csv'))
+hurricane <- as.data.table(read.csv('V:/users/hquintal/phd1_cluster_southeast/data/output/04_noaa/NOAA_events_hurricane.csv'))
+typhoon <- as.data.table(read.csv('V:/users/hquintal/phd1_cluster_southeast/data/output/04_noaa/NOAA_events_typhoon.csv'))
+tropical.storm <- as.data.table(read.csv('V:/users/hquintal/phd1_cluster_southeast/data/output/04_noaa/NOAA_events_tropical_storm.csv'))
+tropical.depression <- as.data.table(read.csv('V:/users/hquintal/phd1_cluster_southeast/data/output/04_noaa/NOAA_events_tropical_depression.csv'))
 
-noaa.heat <- as.data.table(read.csv('V:/users/hquintal/phd2_southeast/data/output/09_validation/NOAA_events_all_heat_2009_2015.csv'))
-noaa.precipitation <- as.data.table(read.csv('V:/users/hquintal/phd2_southeast/data/output/09_validation/NOAA_events_all_precipitation_2009_2015.csv'))
+noaa.heat <- as.data.table(read.csv('V:/users/hquintal/phd1_cluster_southeast/data/output/04_noaa/NOAA_events_all_heat.csv'))
+noaa.precipitation <- as.data.table(read.csv('V:/users/hquintal/phd1_cluster_southeast/data/output/04_noaa/NOAA_events_all_precipitation.csv'))
 
-events <- as.data.table(read.csv('V:/users/hquintal/phd2_southeast/data/output/09_validation/NOAA_events_2009_2015.csv'))
+events <- as.data.table(read.csv('V:/users/hquintal/phd1_cluster_southeast/data/output/04_noaa/NOAA_events.csv'))
 
 events$START.TIMESTAMP.UTC <- as.Date(events$START.TIMESTAMP.UTC)
 events$END.TIMESTAMP.UTC <- as.Date(events$END.TIMESTAMP.UTC)
@@ -521,7 +521,7 @@ for (i in 1:length(excess.heat.episode)){
   
   # save result
   save.cdf(raster = temp,
-           folder.path = 'V:/users/hquintal/phd2_southeast/data/output/08_noaa_event/NOAA/excess_heat/',
+           folder.path = 'V:/users/hquintal/phd1_cluster_southeast/data/output/04_noaa/conus/excess_heat/',
            file.name = paste0(min(terra::time(temp)),'_NOAA_excess_heat_',
                               excess.heat.episode[[i]]),
            var.name = 'Episode ID',
@@ -591,7 +591,7 @@ for (i in 1:length(flash.flood.episode)){
   
   # save result
   save.cdf(raster = temp,
-           folder.path = 'V:/users/hquintal/phd2_southeast/data/output/08_noaa_event/NOAA/flash_flood/',
+           folder.path = 'V:/users/hquintal/phd1_cluster_southeast/data/output/04_noaa/conus/flash_flood/',
            file.name = paste0(min(terra::time(temp)),'_NOAA_flash_flood_',
                               flash.flood.episode[[i]]),
            var.name = 'Episode ID',
@@ -661,7 +661,7 @@ for (i in 1:length(flood.episode)){
   
   # save result
   save.cdf(raster = temp,
-           folder.path = 'V:/users/hquintal/phd2_southeast/data/output/08_noaa_event/NOAA/flood/',
+           folder.path = 'V:/users/hquintal/phd1_cluster_southeast/data/output/04_noaa/conus/flood/',
            file.name = paste0(min(terra::time(temp)),'_NOAA_flood_',
                               flood.episode[[i]]),
            var.name = 'Episode ID',
@@ -731,7 +731,7 @@ for (i in 1:length(heat.episode)){
   
   # save result
   save.cdf(raster = temp,
-           folder.path = 'V:/users/hquintal/phd2_southeast/data/output/08_noaa_event/NOAA/heat/',
+           folder.path = 'V:/users/hquintal/phd1_cluster_southeast/data/output/04_noaa/conus/heat/',
            file.name = paste0(min(terra::time(temp)),'_NOAA_heat_',
                               heat.episode[[i]]),
            var.name = 'Episode ID',
@@ -801,7 +801,7 @@ for (i in 1:length(heavy.rain.episode)){
   
   # save result
   save.cdf(raster = temp,
-           folder.path = 'V:/users/hquintal/phd2_southeast/data/output/08_noaa_event/NOAA/heavy_rain/',
+           folder.path = 'V:/users/hquintal/phd1_cluster_southeast/data/output/04_noaa/conus/heavy_rain/',
            file.name = paste0(min(terra::time(temp)),'_NOAA_heavy_rain_',
                               heavy.rain.episode[[i]]),
            var.name = 'Episode ID',
@@ -871,7 +871,7 @@ for (i in 1:length(hurricane.episode)){
   
   # save result
   save.cdf(raster = temp,
-           folder.path = 'V:/users/hquintal/phd2_southeast/data/output/08_noaa_event/NOAA/hurricane/',
+           folder.path = 'V:/users/hquintal/phd1_cluster_southeast/data/output/04_noaa/conus/hurricane/',
            file.name = paste0(min(terra::time(temp)),'_NOAA_hurricane_',
                               hurricane.episode[[i]]),
            var.name = 'Episode ID',
@@ -941,7 +941,7 @@ for (i in 1:length(typhoon.episode)){
   
   # save result
   save.cdf(raster = temp,
-           folder.path = 'V:/users/hquintal/phd2_southeast/data/output/08_noaa_event/NOAA/typhoon/',
+           folder.path = 'V:/users/hquintal/phd1_cluster_southeast/data/output/04_noaa/conus/typhoon/',
            file.name = paste0(min(terra::time(temp)),'_NOAA_typhoon_',
                               typhoon.episode[[i]]),
            var.name = 'Episode ID',
@@ -1011,7 +1011,7 @@ for (i in 1:length(tropical.storm.episode)){
   
   # save result
   save.cdf(raster = temp,
-           folder.path = 'V:/users/hquintal/phd2_southeast/data/output/08_noaa_event/NOAA/tropical_storm/',
+           folder.path = 'V:/users/hquintal/phd1_cluster_southeast/data/output/04_noaa/conus/tropical_storm/',
            file.name = paste0(min(terra::time(temp)),'_NOAA_tropical_storm_',
                               tropical.storm.episode[[i]]),
            var.name = 'Episode ID',
@@ -1081,7 +1081,7 @@ for (i in 1:length(tropical.depression.episode)){
   
   # save result
   save.cdf(raster = temp,
-           folder.path = 'V:/users/hquintal/phd2_southeast/data/output/08_noaa_event/NOAA/tropical_depression/',
+           folder.path = 'V:/users/hquintal/phd1_cluster_southeast/data/output/04_noaa/conus/tropical_depression/',
            file.name = paste0(min(terra::time(temp)),'_NOAA_tropical_depression_',
                               tropical.depression.episode[[i]]),
            var.name = 'Episode ID',

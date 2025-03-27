@@ -1,8 +1,8 @@
 #Setup----
-#Updated September 2024
+#Updated March 2025
 #Linked to GitHub
 #Author: Hunter Quintal
-#purpose: all libraries and functions required for PhD 2 analysis
+#purpose: all libraries and functions required for PhD 21analysis
 
 # Download older R versions at: https://cran.r-project.org/bin/windows/base/old/
 # Download older Rtools packages at: https://cran.r-project.org/bin/windows/Rtools/history.html

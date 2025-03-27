@@ -1,9 +1,8 @@
 #Setup----
-#Updated January 2025
+#Updated March 2025
 #Linked to GitHub
 #Hunter Quintal
 #purpose: Ordinary Least Squares Exponential Regression to calculate Space Time Separable Covariance Model
-#outputs saved in folder: V:\users\hquintal\phd2_southeast\data\output\02_geoeas\space_time_metric\heat_index\
 #study area: Southeast
 
 # objective function using a series of equations recursively by alpha to calculate
@@ -12,7 +11,7 @@
 # per month using a plausible range of variables as ar = c(0.1,100) and at = c(0.1,1000)
 
 # Load Libraries & Functions ----
-source("V:/users/hquintal/phd2_southeast/scripts/01_library.R")
+source("V:/users/hquintal/phd1_cluster_southeast/scripts/01_library.R")
 
 ## Monthly ----
 year_month <- yearmo(start.year = 1940,end.year = 2023)
@@ -71,8 +70,8 @@ for (year in year_month){
   print(year)
   
   # Read in experimental covariance
-  space <- read.csv(paste0('V:/users/hquintal/phd2_southeast/data/output/02_geoeas/02_experimental_covariance/precipitation/month/precipitation_experimental_covariance_space_',year,'.txt'))
-  time <- read.csv(paste0('V:/users/hquintal/phd2_southeast/data/output/02_geoeas/02_experimental_covariance/precipitation/month/precipitation_experimental_covariance_time_',year,'.txt'))
+  space <- read.csv(paste0('V:/users/hquintal/phd1_cluster_southeast/data/output/02_covariance/02_experimental_covariance/precipitation/month/precipitation_experimental_covariance_space_',year,'.txt'))
+  time <- read.csv(paste0('V:/users/hquintal/phd1_cluster_southeast/data/output/02_covariance/02_experimental_covariance/precipitation/month/precipitation_experimental_covariance_time_',year,'.txt'))
   
   # Convert into df
   colnames(space) <- NULL
@@ -569,11 +568,11 @@ stm.gau.exp <- stm.gau.exp[complete.cases(stm.gau.exp),]
 # plot(stm.gau.exp$year_mo,stm.gau.exp$stm2,type='l')
 
 # save STM
-write.csv(stm,'V:/users/hquintal/phd2_southeast/data/output/02_geoeas/03_space_time_metric/precipitation/month/precipitation_space_time_metric_optimal.txt')
-write.csv(stm.exp,'V:/users/hquintal/phd2_southeast/data/output/02_geoeas/03_space_time_metric/precipitation/month/precipitation_space_time_metric_single_exponential.txt')
-write.csv(stm.gau,'V:/users/hquintal/phd2_southeast/data/output/02_geoeas/03_space_time_metric/precipitation/month/precipitation_space_time_metric_single_gaussian.txt')
-write.csv(stm.exp.exp,'V:/users/hquintal/phd2_southeast/data/output/02_geoeas/03_space_time_metric/precipitation/month/precipitation_space_time_metric_nested_exponential.txt')
-write.csv(stm.gau.exp,'V:/users/hquintal/phd2_southeast/data/output/02_geoeas/03_space_time_metric/precipitation/month/precipitation_space_time_metric_nested_gaussian_exponential.txt')
+write.csv(stm,'V:/users/hquintal/phd1_cluster_southeast/data/output/02_covariance/03_space_time_metric/precipitation/month/precipitation_space_time_metric_optimal.txt')
+write.csv(stm.exp,'V:/users/hquintal/phd1_cluster_southeast/data/output/02_covariance/03_space_time_metric/precipitation/month/precipitation_space_time_metric_single_exponential.txt')
+write.csv(stm.gau,'V:/users/hquintal/phd1_cluster_southeast/data/output/02_covariance/03_space_time_metric/precipitation/month/precipitation_space_time_metric_single_gaussian.txt')
+write.csv(stm.exp.exp,'V:/users/hquintal/phd1_cluster_southeast/data/output/02_covariance/03_space_time_metric/precipitation/month/precipitation_space_time_metric_nested_exponential.txt')
+write.csv(stm.gau.exp,'V:/users/hquintal/phd1_cluster_southeast/data/output/02_covariance/03_space_time_metric/precipitation/month/precipitation_space_time_metric_nested_gaussian_exponential.txt')
 
 # save figures
 for (fig in 1:length(fitted.cov.plots)){
