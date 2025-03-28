@@ -5,11 +5,12 @@
 #purpose: Convert gridded time series into space time cube points using 
 # space time metric (record median), then compare against thresholds to get 
 # extreme points
-#outputs saved in folder: V:\users\hquintal\phd2_southeast\data\output\z_01_extreme_obs
 #study area: Southeast
 
-# Load Libraries & Functions ----
-source("V:/users/hquintal/phd2_southeast/scripts/01_library.R")
+# Load Libraries & Set Project Root ----
+library(here)
+here::i_am("scripts/10_cluster_points.R")
+source(here::here("scripts", "01_library.R"))
 
 # Heat Index ----
 process_heat_index_files <- function(input_dir, 
@@ -42,7 +43,6 @@ process_heat_index_files <- function(input_dir,
     
     # Set up parallel processing
     plan(multisession, workers = num_cores)  # Use one less than available cores
-    # plan(multisession, workers = 19)  # Use one less than available cores
     
     results <- future_lapply(seq_along(nc_files), function(i) {
       
@@ -95,12 +95,12 @@ process_heat_index_files <- function(input_dir,
         mutate(observation = heat_index) %>%
         select(lat, long, date, observation, threshold, extreme)
       
-      # Subset to only rows where value == 1
+      # Subset to only rows where extreme == 1
       cube_sf_filtered <- cube_sf %>% filter(extreme == 1)
       
       # Only save if values exist
       if (nrow(cube_sf_filtered) > 0) {
-        output_file <- file.path(output_dir, paste0("extreme_", substr(basename(nc_file),1,nchar(basename(nc_file))-3), ".csv"))
+        output_file <- file.path(output_dir, paste0("extreme_", substr(basename(nc_file), 1, nchar(basename(nc_file)) - 3), ".csv"))
         write.csv(cube_sf_filtered, output_file, row.names = FALSE)
       }
       
@@ -120,10 +120,10 @@ process_heat_index_files <- function(input_dir,
 
 
 ## Covariance ----
-stm <- read.csv('V:/users/hquintal/phd2_southeast/data/output/02_geoeas/03_space_time_metric/heat_index/month/heat_index_space_time_metric_optimal.txt')
+stm <- read.csv(here::here("data", "output", "02_covariance", "03_space_time_metric", "heat_index", "month", "heat_index_space_time_metric_optimal.txt"))
 
 # add year, season, decade, date
-stm$date <- as.Date(paste0(as.character(stm$year_mo), '01'), format='%Y%m%d')
+stm$date <- as.Date(paste0(as.character(stm$year_mo), '01'), format = '%Y%m%d')
 stm$year <- lubridate::year(stm$date)
 stm$decade <- floor_decade(stm$year)
 stm$month <- lubridate::month(stm$date)
@@ -140,7 +140,7 @@ stm$month <- ifelse(stm$month %in% 12, "Dec",
                                                               ifelse(stm$month %in% 7, "Jul",
                                                                      ifelse(stm$month %in% 8, "Aug",
                                                                             ifelse(stm$month %in% 9, "Sep",
-                                                                                   ifelse(stm$month %in% 10, "Oct","Nov")))))))))))
+                                                                                   ifelse(stm$month %in% 10, "Oct", "Nov")))))))))))
 
 # Summarize the data
 decade.heat <- stm %>%
@@ -178,110 +178,111 @@ month.heat <- stm %>%
 record.heat <- median(stm$stm2)
 
 ### 0.25 deg / day ----
-process_heat_index_files(input_dir = "V:/users/hquintal/phd2_southeast/data/output/01_variables/daily/heat_index", 
-                         output_dir = "V:/users/hquintal/phd2_southeast/data/output/z_01_extreme_obs/stm1/heat_index", 
-                         threshold_shapefile = "V:/users/hquintal/phd2_southeast/data/input/threshold/wfo_usa.shp", 
-                         space_time_metric = 1)
+process_heat_index_files(
+  input_dir = here::here("data", "output", "01_era5", "daily", "heat_index"), 
+  output_dir = here::here("data", "output", "03_cluster", "stm1", "heat_index"), 
+  threshold_shapefile = here::here("data", "input", "threshold", "wfo_usa.shp"), 
+  space_time_metric = 1
+)
 
 ### 0.39 deg / day ----
-process_heat_index_files(input_dir = "V:/users/hquintal/phd2_southeast/data/output/01_variables/daily/heat_index", 
-                         output_dir = "V:/users/hquintal/phd2_southeast/data/output/z_01_extreme_obs/record/heat_index", 
-                         threshold_shapefile = "V:/users/hquintal/phd2_southeast/data/input/threshold/wfo_usa.shp", 
-                         space_time_metric = 'record')
+process_heat_index_files(
+  input_dir = here::here("data", "output", "01_era5", "daily", "heat_index"), 
+  output_dir = here::here("data", "output", "03_cluster", "record", "heat_index"), 
+  threshold_shapefile = here::here("data", "input", "threshold", "wfo_usa.shp"), 
+  space_time_metric = 'record'
+)
 
 ### 1.00 deg / day ----
-process_heat_index_files(input_dir = "V:/users/hquintal/phd2_southeast/data/output/01_variables/daily/heat_index", 
-                         output_dir = "V:/users/hquintal/phd2_southeast/data/output/z_01_extreme_obs/stm4/heat_index", 
-                         threshold_shapefile = "V:/users/hquintal/phd2_southeast/data/input/threshold/wfo_usa.shp", 
-                         space_time_metric = 4)
+process_heat_index_files(
+  input_dir = here::here("data", "output", "01_era5", "daily", "heat_index"), 
+  output_dir = here::here("data", "output", "03_cluster", "stm4", "heat_index"), 
+  threshold_shapefile = here::here("data", "input", "threshold", "wfo_usa.shp"), 
+  space_time_metric = 4
+)
 
 # Precipitation ----
 process_precipitation_files <- function(input_dir, output_dir, space_time_metric, atlas_sf) {
-
+  
   # Start time
   start_time <- Sys.time()
-
+  
   # List all NetCDF files
   nc_files <- list.files(input_dir, pattern = "\\.nc$", full.names = TRUE)
-
+  
   # Subset if necessary
   nc_files <- nc_files[c(492:length(nc_files))]
-
+  
   # Progress bar setup
   handlers(global = TRUE)
   p <- progressor(along = nc_files)
-
+  
   # Use parallel processing
   plan(multicore, workers = parallel::detectCores() - 1)  # Use one less than max cores
-
+  
   future_lapply(seq_along(nc_files), function(i) {
-
+    
     nc_file <- nc_files[[i]]
     p(sprintf("Processing %d/%d: %s", i, length(nc_files), basename(nc_file)))
-
+    
     # Read NetCDF file as raster
     var <- terra::rast(nc_file)
-
+    
     # Create space-time cube for hourly data
     cube <- create.st.cube(target.raster = var, space.time.metric = space_time_metric)
-
+    
     # Convert to data frame
     cube.df <- as.data.frame(cube, xy = TRUE)
-
+    
     # Convert to long format
     cube_long <- cube.df %>%
       pivot_longer(-c(x, y), names_to = "datetime", values_to = "precipitation") %>%
       mutate(datetime = ifelse(nchar(datetime) == 10, paste0(datetime, " 00:00:00"), datetime)) %>%  # Ensure midnight timestamps have time component
-      mutate(datetime = as.POSIXct(datetime, format="%Y-%m-%d %H:%M:%S", tz="UTC"))  # Convert to POSIXct
-
+      mutate(datetime = as.POSIXct(datetime, format = "%Y-%m-%d %H:%M:%S", tz = "UTC"))  # Convert to POSIXct
+    
     # Convert to sf object
     cube_sf <- st_as_sf(cube_long, coords = c("x", "y"), crs = 4269)  # NAD83 CRS
-
+    
     # Perform spatial join with atlas_sf
     cube_sf <- st_join(cube_sf, atlas_sf, left = TRUE) %>%
       mutate(ne1yr24ha = ifelse(is.na(ne1yr24ha), min(atlas_sf$ne1yr24ha, na.rm = TRUE), ne1yr24ha))
-
-    # Compare values with threshold and create boolean column
-    # cube_sf <- cube_sf %>%
-    #   mutate(value = ifelse(precipitation >= ne1yr24ha, 1, 0)) %>%
-    #   mutate(lat = st_coordinates(.)[, 2], long = st_coordinates(.)[, 1]) %>%
-    #   select(lat, long, datetime, value)
+    
     cube_sf <- cube_sf %>%
       mutate(extreme = ifelse(precipitation >= ne1yr24ha, 1, 0)) %>%
       mutate(lat = st_coordinates(.)[, 2], long = st_coordinates(.)[, 1]) %>%
       mutate(threshold = ne1yr24ha) %>%
       mutate(observation = precipitation) %>%
       select(lat, long, datetime, observation, threshold, extreme)
-
-    # Subset to only rows where value == 1
-    cube_sf_filtered <- cube_sf %>% filter(extreme == 1) #%>% select(lat, long, datetime)
-
+    
+    # Subset to only rows where extreme == 1
+    cube_sf_filtered <- cube_sf %>% filter(extreme == 1)
+    
     # Save processed file if it contains values
     if (nrow(cube_sf_filtered) > 0) {
       output_file <- file.path(output_dir, paste0("extreme_", substr(basename(nc_file), 1, nchar(basename(nc_file)) - 3), ".csv"))
       write.csv(cube_sf_filtered, output_file, row.names = FALSE)
     }
-
+    
     gc()
   })
-
+  
   # Stop time and elapsed time
   stop_time <- Sys.time()
   elapsed_time <- stop_time - start_time
-
+  
   print(paste("Processing started at:", start_time))
   print(paste("Processing completed at:", stop_time))
   print(paste("Total elapsed time:", elapsed_time))
 }
 
 ## Threshold ----
-atlas_sf <- st_read("V:/users/hquintal/phd2_southeast/data/input/threshold/atlas14_shapefile.shp")
+atlas_sf <- st_read(here::here("data", "input", "threshold", "atlas14_shapefile.shp"))
 
 ## Covariance ----
-stm <- read.csv('V:/users/hquintal/phd2_southeast/data/output/02_geoeas/03_space_time_metric/precipitation/month/precipitation_space_time_metric_optimal.txt')
+stm <- read.csv(here::here("data", "output", "02_covariance", "03_space_time_metric", "precipitation", "month", "precipitation_space_time_metric_optimal.txt"))
 
 # add year, season, decade, date
-stm$date <- as.Date(paste0(as.character(stm$year_mo), '01'), format='%Y%m%d')
+stm$date <- as.Date(paste0(as.character(stm$year_mo), '01'), format = '%Y%m%d')
 stm$year <- lubridate::year(stm$date)
 stm$decade <- floor_decade(stm$year)
 stm$month <- lubridate::month(stm$date)
@@ -298,7 +299,7 @@ stm$month <- ifelse(stm$month %in% 12, "Dec",
                                                               ifelse(stm$month %in% 7, "Jul",
                                                                      ifelse(stm$month %in% 8, "Aug",
                                                                             ifelse(stm$month %in% 9, "Sep",
-                                                                                   ifelse(stm$month %in% 10, "Oct","Nov")))))))))))
+                                                                                   ifelse(stm$month %in% 10, "Oct", "Nov")))))))))))
 
 # Summarize the data
 decade.precipitation <- stm %>%
@@ -337,16 +338,16 @@ record.precipitation <- median(stm$stm2)
 
 ## 0.25 deg / hour ----
 process_precipitation_files(
-  input_dir = "V:/users/hquintal/phd2_southeast/data/output/01_variables/hourly/precipitation",
-  output_dir = "V:/users/hquintal/phd2_southeast/data/output/z_01_extreme_obs/stm1/precipitation",
+  input_dir = here::here("data", "output", "01_era5", "hourly", "precipitation"),
+  output_dir = here::here("data", "output", "03_cluster", "stm1", "precipitation"),
   space_time_metric = 1,
   atlas_sf = atlas_sf
 )
 
 ## 1.00 deg / hour ----
 process_precipitation_files(
-  input_dir = "V:/users/hquintal/phd2_southeast/data/output/01_variables/hourly/precipitation", 
-  output_dir = "V:/users/hquintal/phd2_southeast/data/output/z_01_extreme_obs/stm4/precipitation", 
+  input_dir = here::here("data", "output", "01_era5", "hourly", "precipitation"),
+  output_dir = here::here("data", "output", "03_cluster", "stm4", "precipitation"),
   space_time_metric = 4,
   atlas_sf = atlas_sf
 )

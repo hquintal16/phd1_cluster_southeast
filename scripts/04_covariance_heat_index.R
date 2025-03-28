@@ -1,5 +1,5 @@
 #Setup----
-#Updated January 2025
+#Updated March 2025
 #Linked to GitHub
 #Hunter Quintal
 #purpose: Ordinary Least Squares Exponential Regression to calculate Space Time Separable Covariance Model
@@ -10,8 +10,11 @@
 # averages the alpha1, alpha2, ar1, ar2, at1, at2 by month to get a stable model 
 # per month using a plausible range of variables as ar = c(0.1,100) and at = c(0.1,1000)
 
+library(here)
+here::i_am("scripts/04_covariance_heat_index.R")
+
 # Load Libraries & Functions ----
-source("V:/users/hquintal/phd1_cluster_southeast/scripts/01_library.R")
+source(here("scripts", "01_library.R"))
 
 ## Monthly ----
 year_month <- yearmo(start.year = 1940,end.year = 2023)
@@ -70,8 +73,10 @@ for (year in year_month){
   print(year)
   
   # Read in experimental covariance
-  space <- read.csv(paste0('V:/users/hquintal/phd1_cluster_southeast/data/output/02_covariance/02_experimental_covariance/heat_index/month/heat_index_experimental_covariance_space_',year,'.txt'))
-  time <- read.csv(paste0('V:/users/hquintal/phd1_cluster_southeast/data/output/02_covariance/02_experimental_covariance/heat_index/month/heat_index_experimental_covariance_time_',year,'.txt'))
+  space <- read.csv(here::here("data", "output", "02_covariance", "02_experimental_covariance", "heat_index", "month",
+                               paste0("heat_index_experimental_covariance_space_", year, ".txt")))
+  time <- read.csv(here::here("data", "output", "02_covariance", "02_experimental_covariance", "heat_index", "month",
+                              paste0("heat_index_experimental_covariance_time_", year, ".txt"))) 
   
   # Convert into df
   colnames(space) <- NULL
@@ -404,7 +409,7 @@ for (year in year_month){
     theme_bw()
   
   gau.exp.plot <- ggpubr::ggarrange(gau.exp.plot.space,gau.exp.plot.time,nrow=1,ncol=2)
-  gau.exp.plot <- ggpubr::annotate_figure(gau.exp.plot,                                                                  top = text_grob(substitute(
+  gau.exp.plot <- ggpubr::annotate_figure(gau.exp.plot,top = text_grob(substitute(
     C[x] * (r~","~τ) == cov.sill %*% (alpha1 %*% 
                                         exp(frac(-3 * r^2,ar1)) %*% 
                                         exp(frac(-3 * τ^2,at1)) + 
@@ -555,44 +560,31 @@ for (year in year_month){
 
 # subset to complete cases
 stm <- stm[complete.cases(stm),]
-# plot(stm$year_mo,stm$stm2,type='l')
-# mean(stm$stm2)
-# median(stm$stm2)
 stm.exp <- stm.exp[complete.cases(stm.exp),]
-# plot(stm.exp$year_mo,stm.exp$stm,type='l')
-# mean(stm.exp$stm)
-# median(stm.exp$stm)
 stm.gau <- stm.gau[complete.cases(stm.gau),]
-# plot(stm.gau$year_mo,stm.gau$stm,type='l')
-# mean(stm.gau$stm)
-# median(stm.gau$stm)
 stm.exp.exp <- stm.exp.exp[complete.cases(stm.exp.exp),]
-# mean(stm.exp.exp$stm2)
-# median(stm.exp.exp$stm2)
-# plot(stm.exp.exp$year_mo,stm.exp.exp$stm2,type='l')
 stm.gau.exp <- stm.gau.exp[complete.cases(stm.gau.exp),]
-# plot(stm.gau.exp$year_mo,stm.gau.exp$stm2,type='l')
 
 # save STM
-write.csv(stm,'V:/users/hquintal/phd1_cluster_southeast/data/output/02_covariance/03_space_time_metric/heat_index/month/heat_index_space_time_metric_optimal.txt')
-write.csv(stm.exp,'V:/users/hquintal/phd1_cluster_southeast/data/output/02_covariance/03_space_time_metric/heat_index/month/heat_index_space_time_metric_single_exponential.txt')
-write.csv(stm.gau,'V:/users/hquintal/phd1_cluster_southeast/data/output/02_covariance/03_space_time_metric/heat_index/month/heat_index_space_time_metric_single_gaussian.txt')
-write.csv(stm.exp.exp,'V:/users/hquintal/phd1_cluster_southeast/data/output/02_covariance/03_space_time_metric/heat_index/month/heat_index_space_time_metric_nested_exponential.txt')
-write.csv(stm.gau.exp,'V:/users/hquintal/phd1_cluster_southeast/data/output/02_covariance/03_space_time_metric/heat_index/month/heat_index_space_time_metric_nested_gaussian_exponential.txt')
+write.csv(stm, here("data", "output", "02_covariance", "03_space_time_metric", "heat_index", "month", "heat_index_space_time_metric_optimal.txt"))
+write.csv(stm.exp,here("data", "output", "02_covariance", "03_space_time_metric", "heat_index", "month", "heat_index_space_time_metric_single_exponential.txt"))
+write.csv(stm.gau,here("data", "output", "02_covariance", "03_space_time_metric", "heat_index", "month", "heat_index_space_time_metric_single_gaussian.txt"))
+write.csv(stm.exp.exp,here("data", "output", "02_covariance", "03_space_time_metric", "heat_index", "month", "heat_index_space_time_metric_nested_exponential.txt"))
+write.csv(stm.gau.exp,here("data", "output", "02_covariance", "03_space_time_metric", "heat_index", "month", "heat_index_space_time_metric_nested_gaussian_exponential.txt"))
 
-# save figures
-for (fig in 1:length(fitted.cov.plots)){
-  
-  print(fig)
-  
-  save.figure.png(figure = fitted.cov.plots[[fig]],
-                  figure.number = '3',
-                  figure.name = paste0('Heat_Index_Covariance_Model_',seq(1940,2023,1)[fig]),
-                  pixels.x = 6000,pixels.y = 3000,resolution = 600)
-  
-  save.figure.svg(figure = fitted.cov.plots[[fig]],
-                  figure.number = '3',
-                  figure.name = paste0('Heat_Index_Covariance_Model_',seq(1940,2023,1)[fig]),
-                  pixels.x = 6,pixels.y = 3)
-  
-}
+# # save figures
+# for (fig in 1:length(fitted.cov.plots)){
+#   
+#   print(fig)
+#   
+#   save.figure.png(figure = fitted.cov.plots[[fig]],
+#                   figure.number = '3',
+#                   figure.name = paste0('Heat_Index_Covariance_Model_',seq(1940,2023,1)[fig]),
+#                   pixels.x = 6000,pixels.y = 3000,resolution = 600)
+#   
+#   save.figure.svg(figure = fitted.cov.plots[[fig]],
+#                   figure.number = '3',
+#                   figure.name = paste0('Heat_Index_Covariance_Model_',seq(1940,2023,1)[fig]),
+#                   pixels.x = 6,pixels.y = 3)
+#   
+# }

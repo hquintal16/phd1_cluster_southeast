@@ -2,26 +2,24 @@
 #Updated March 2025
 #Linked to GitHub
 #Hunter Quintal
-#purpose: cluster extreme points
+#purpose: compile all extreme points, conduct kNN analysis to calculate epsilon, cluster extreme points
 #outputs saved in folder: V:\users\hquintal\phd2_southeast\data\output\z_02_cluster
 #study area: Southeast
 
-# HCQ : MAKE SURE TO INCLUDE OBSERVATIONS, THRESHOLDS
-
-# Load Libraries & Functions ----
-source("V:/users/hquintal/phd2_southeast/scripts/01_library.R")
+# Load Libraries & Set Project Root ----
+library(here)
+here::i_am("scripts/11_cluster_dbscan.R")  # Adjust this path as needed
+source(here::here("scripts", "01_library.R"))
 
 process_extremes_data <- function(input_dir, output_dir) {
-
-  # input_dir <- "V:/users/hquintal/phd2_southeast/data/output/z_01_extreme_obs/stm4/precipitation"
   
   # Define subfolder names for output file naming
   subfolder_name <- basename(input_dir)
   subsubfolder_name <- basename(dirname(input_dir))
   
   # Load region raster (with its CRS)
-  region.crs <- terra::rast('V:/users/hquintal/phd2_southeast/data/output/07_event_final/stm1/heat_index/1940-07-21_event_0001.nc')
-
+  region.crs <- terra::rast(here::here("data", "output", "01_era5", "daily", "heat_index", "heat_index_daily_maximum_194001.nc"))
+  
   # Create US land mask from states
   us.states <- st_as_sf(maps::map("state", plot = FALSE, fill = TRUE))
   us.states.rast <- st_rasterize(us.states %>% dplyr::select(1, geom))
@@ -30,7 +28,7 @@ process_extremes_data <- function(input_dir, output_dir) {
   terra::crs(us.states.rast) <- terra::crs(region.crs)
   us.states.rast <- terra::crop(us.states.rast, region.crs)
   us.states.rast <- terra::extend(us.states.rast, region.crs)
-
+  
   # Convert the raster mask to a polygon and buffer it
   us_states_poly <- terra::as.polygons(us.states.rast, dissolve = TRUE)
   us_states_sf <- st_as_sf(us_states_poly)
@@ -62,11 +60,10 @@ process_extremes_data <- function(input_dir, output_dir) {
     bind_rows(data_list)
   })
   
-  # if else statement for PRECIPITATION data 
+  # If precipitation data, use datetime; otherwise use date (for Heat Index)
   if (grepl("precipitation", subfolder_name, ignore.case = TRUE)) {
     
     # Convert compiled_data to an sf object without altering original lat/long
-    # Remove any existing non-valid geometry columns
     compiled_data_clean <- compiled_data %>% dplyr::select(lat, long, datetime, observation, threshold)
     points_sf <- st_as_sf(compiled_data_clean, coords = c("long", "lat"), crs = 4326)
     
@@ -101,9 +98,7 @@ process_extremes_data <- function(input_dir, output_dir) {
     
     # Normalize the date variable (convert to numeric)
     extremes.normalized$date.norm <- as.numeric(extremes.normalized$date)
-    if (grepl("precipitation", subfolder_name, ignore.case = TRUE)) {
-      extremes.normalized$date.norm <- extremes.normalized$date.norm / 3600
-    }
+    extremes.normalized$date.norm <- extremes.normalized$date.norm / 3600
     extremes.normalized$lat.norm <- as.numeric(extremes.normalized$lat.norm)
     extremes.normalized$long.norm <- as.numeric(extremes.normalized$long.norm)
     
@@ -136,7 +131,6 @@ process_extremes_data <- function(input_dir, output_dir) {
   } else { # HEAT INDEX
     
     # Convert compiled_data to an sf object without altering original lat/long
-    # Remove any existing non-valid geometry columns
     compiled_data_clean <- compiled_data %>% dplyr::select(lat, long, date, observation, threshold)
     points_sf <- st_as_sf(compiled_data_clean, coords = c("long", "lat"), crs = 4326)
     
@@ -207,15 +201,15 @@ process_extremes_data <- function(input_dir, output_dir) {
 # Calc Clusters ----
 # Define input directories (with descriptive names as comments)
 input_dirs <- c(
-  # "V:/users/hquintal/phd2_southeast/data/output/z_01_extreme_obs/stm1/heat_index",    # 0.25 deg / day
-  "V:/users/hquintal/phd2_southeast/data/output/z_01_extreme_obs/record/heat_index",    # 0.39 deg / day
-  "V:/users/hquintal/phd2_southeast/data/output/z_01_extreme_obs/stm4/heat_index",      # 1.00 deg / day
-  # "V:/users/hquintal/phd2_southeast/data/output/z_01_extreme_obs/stm1/precipitation",   # 0.25 deg / hour
-  "V:/users/hquintal/phd2_southeast/data/output/z_01_extreme_obs/stm4/precipitation"    # 1.00 deg / hour
+  here::here("data", "output", "03_cluster", "01_extreme_points", "stm1", "heat_index"),    # 0.25 deg / day
+  here::here("data", "output", "03_cluster", "01_extreme_points", "record", "heat_index"),    # 0.39 deg / day
+  here::here("data", "output", "03_cluster", "01_extreme_points", "stm4", "heat_index"),      # 1.00 deg / day
+  here::here("data", "output", "03_cluster", "01_extreme_points", "stm1", "precipitation"),   # 0.25 deg / hour
+  here::here("data", "output", "03_cluster", "01_extreme_points", "stm4", "precipitation")    # 1.00 deg / hour
 )
 
 # Define the common output directory
-output_dir <- "V:/users/hquintal/phd2_southeast/data/output/z_02_cluster"
+output_dir <- here::here("data", "output", "03_cluster", "02_cluster")
 
 # Loop over each input directory and process the extremes data.
 for (in_dir in input_dirs) {
@@ -224,38 +218,40 @@ for (in_dir in input_dirs) {
 }
 
 # Summary Info ----
-heat_index_0.25_deg_day <- read.csv('V:/users/hquintal/phd2_southeast/data/output/z_02_cluster/heat_index_stm1_clustered_extremes.csv')
-heat_index_0.39_deg_day <- read.csv('V:/users/hquintal/phd2_southeast/data/output/z_02_cluster/heat_index_record_clustered_extremes.csv')
-heat_index_1.00_deg_day <- read.csv('V:/users/hquintal/phd2_southeast/data/output/z_02_cluster/heat_index_stm4_clustered_extremes.csv')
-# precipitation_0.25_deg_hour <- read.csv('V:/users/hquintal/phd2_southeast/data/output/z_02_cluster/precipitation_stm1_clustered_extremes.csv')
-precipitation_1.00_deg_hour <- read.csv('V:/users/hquintal/phd2_southeast/data/output/z_02_cluster/precipitation_stm4_clustered_extremes.csv')
+heat_index_0.25_deg_day <- read.csv(here::here("data", "output", "03_cluster", "02_cluster", "heat_index_stm1_clustered_extremes.csv"))
+heat_index_0.39_deg_day <- read.csv(here::here("data", "output", "03_cluster", "02_cluster", "heat_index_record_clustered_extremes.csv"))
+heat_index_1.00_deg_day <- read.csv(here::here("data", "output", "03_cluster", "02_cluster", "heat_index_stm4_clustered_extremes.csv"))
+precipitation_0.25_deg_hour <- read.csv(here::here("data", "output", "03_cluster", "02_cluster", "precipitation_stm1_clustered_extremes.csv"))
+precipitation_1.00_deg_hour <- read.csv(here::here("data", "output", "03_cluster", "02_cluster", "precipitation_stm4_clustered_extremes.csv"))
 
-cluster_results <- data.frame(hazard = c('Heat','Heat','Heat','Precipitation'),
-                              resolution = c(0.25,0.39,1.00,1.00),
-                              mu = c(heat_index_0.25_deg_day$mu[1],
-                                     heat_index_0.39_deg_day$mu[1],
-                                     heat_index_1.00_deg_day$mu[1],
-                                     # precipitation_0.25_deg_hour$mu[1],
-                                     precipitation_1.00_deg_hour$mu[1]),
-                              eps = c(heat_index_0.25_deg_day$eps[1],
-                                      heat_index_0.39_deg_day$eps[1],
-                                      heat_index_1.00_deg_day$eps[1],
-                                      # precipitation_0.25_deg_hour$eps[1],
-                                      precipitation_1.00_deg_hour$eps[1]),
-                              points = c(nrow(heat_index_0.25_deg_day),
-                                         nrow(heat_index_0.39_deg_day),
-                                         nrow(heat_index_1.00_deg_day),
-                                         # nrow(precipitation_0.25_deg_hour),
-                                         nrow(precipitation_1.00_deg_hour)),
-                              noise = c(sum(heat_index_0.25_deg_day$cluster == 0),
-                                        sum(heat_index_0.39_deg_day$cluster == 0),
-                                        sum(heat_index_1.00_deg_day$cluster == 0),
-                                        # sum(precipitation_0.25_deg_hour$cluster == 0),
-                                        sum(precipitation_1.00_deg_hour$cluster == 0)),
-                              clusters = c(max(unique(heat_index_0.25_deg_day$cluster)),
-                                           max(unique(heat_index_0.39_deg_day$cluster)),
-                                           max(unique(heat_index_1.00_deg_day$cluster)),
-                                           # max(unique(precipitation_0.25_deg_hour$cluster)),
-                                           max(unique(precipitation_1.00_deg_hour$cluster))))
+cluster_results <- data.frame(
+  hazard = c('Heat','Heat','Heat','Precipitation','Precipitation'),
+  resolution = c(0.25, 0.39, 1.00, 0.25, 1.00),
+  mu = c(heat_index_0.25_deg_day$mu[1],
+         heat_index_0.39_deg_day$mu[1],
+         heat_index_1.00_deg_day$mu[1],
+         precipitation_0.25_deg_hour$mu[1],
+         precipitation_1.00_deg_hour$mu[1]),
+  eps = c(heat_index_0.25_deg_day$eps[1],
+          heat_index_0.39_deg_day$eps[1],
+          heat_index_1.00_deg_day$eps[1],
+          precipitation_0.25_deg_hour$eps[1],
+          precipitation_1.00_deg_hour$eps[1]),
+  points = c(nrow(heat_index_0.25_deg_day),
+             nrow(heat_index_0.39_deg_day),
+             nrow(heat_index_1.00_deg_day),
+             nrow(precipitation_0.25_deg_hour),
+             nrow(precipitation_1.00_deg_hour)),
+  noise = c(sum(heat_index_0.25_deg_day$cluster == 0),
+            sum(heat_index_0.39_deg_day$cluster == 0),
+            sum(heat_index_1.00_deg_day$cluster == 0),
+            sum(precipitation_0.25_deg_hour$cluster == 0),
+            sum(precipitation_1.00_deg_hour$cluster == 0)),
+  clusters = c(max(unique(heat_index_0.25_deg_day$cluster)),
+               max(unique(heat_index_0.39_deg_day$cluster)),
+               max(unique(heat_index_1.00_deg_day$cluster)),
+               max(unique(precipitation_0.25_deg_hour$cluster)),
+               max(unique(precipitation_1.00_deg_hour$cluster)))
+)
 
-write.csv(cluster_results,'V:/users/hquintal/phd2_southeast/data/output/z_02_cluster/summary.csv')
+write.csv(cluster_results, here::here("data", "output", "03_cluster", "02_cluster", "summary.csv"))

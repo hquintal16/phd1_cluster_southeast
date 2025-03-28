@@ -6,14 +6,15 @@
 # 1. daily extent of all events
 # 2. spatial extent and frequency of all events
 # 3. temporal duration of all events
-#outputs saved in folder: V:/users/hquintal/phd2_southeast/data/output/08_noaa_event/NOAA_southeast
 #study area: Southeast
 
-# Load Libraries & Functions ----
-source("V:/users/hquintal/phd2_southeast/scripts/01_library.R")
+# Load Libraries & Set Project Root ----
+library(here)
+here::i_am("scripts/08_noaa_summary.R")  # Adjust this file path if necessary
+source(here::here("scripts", "01_library.R"))
 
 # Load spatraster with correct crs 
-region.crs <- terra::rast('V:/users/hquintal/phd2_southeast/data/output/07_event_final/stm1/heat_index/1940-07-21_event_0001.nc')
+region.crs <- terra::rast(here::here("data", "output", "01_era5", "daily", "heat_index", "heat_index_daily_maximum_194001.nc"))
 
 # Create US land mask
 us.states <- st_as_sf(maps::map("county", plot = FALSE, fill = TRUE))
@@ -23,9 +24,7 @@ us.states.rast <- us.states.rast / us.states.rast
 terra::crs(us.states.rast) <- terra::crs(region.crs)
 us.states.rast <- terra::crop(us.states.rast, region.crs)
 us.states.rast <- terra::extend(us.states.rast, region.crs)
-plot(us.states.rast)
 
-# UPDATED 2025-03-14 ----
 process_noaa_events <- function(noaa_dirs, output_path, hazard_name) {
   total_start_time <- Sys.time()
   
@@ -129,56 +128,60 @@ process_noaa_events <- function(noaa_dirs, output_path, hazard_name) {
   cat("\n✅ [All Steps Completed] Total Processing Time:", difftime(total_end_time, total_start_time, units = "mins"), "minutes\n")
 }
 
+# Now, run the process_noaa_events() function for each hazard type.
+# The input and output directories below are built using here::here()
+# with the updated file root "phd1_cluster_southeast".
+
 # Heat ----
-output_path <- "V:/users/hquintal/phd2_southeast/data/output/08_noaa_event/NOAA_southeast/summary/heat/"
-noaa_dirs <- "V:/users/hquintal/phd2_southeast/data/output/08_noaa_event/NOAA_southeast/heat/"
+output_path <- here::here("data", "output", "04_noaa", "southeast", "summary", "heat")
+noaa_dirs <- here::here("data", "output", "04_noaa", "southeast", "heat")
 process_noaa_events(noaa_dirs, output_path, hazard_name = 'Heat')
 gc()
 
 # Excess Heat ----
-output_path <- "V:/users/hquintal/phd2_southeast/data/output/08_noaa_event/NOAA_southeast/summary/excess_heat/"
-noaa_dirs <- "V:/users/hquintal/phd2_southeast/data/output/08_noaa_event/NOAA_southeast/excess_heat/"
+output_path <- here::here("data", "output", "04_noaa", "southeast", "summary", "excess_heat")
+noaa_dirs <- here::here("data", "output", "04_noaa", "southeast", "excess_heat")
 process_noaa_events(noaa_dirs, output_path, hazard_name = 'Excess_Heat')
 gc()
 
 # Flood ----
-output_path <- "V:/users/hquintal/phd2_southeast/data/output/08_noaa_event/NOAA_southeast/summary/flood/"
-noaa_dirs <- "V:/users/hquintal/phd2_southeast/data/output/08_noaa_event/NOAA_southeast/flood/"
+output_path <- here::here("data", "output", "04_noaa", "southeast", "summary", "flood")
+noaa_dirs <- here::here("data", "output", "04_noaa", "southeast", "flood")
 process_noaa_events(noaa_dirs, output_path, hazard_name = 'Flood')
 gc()
 
 # Flash Flood ----
-output_path <- "V:/users/hquintal/phd2_southeast/data/output/08_noaa_event/NOAA_southeast/summary/flash_flood/"
-noaa_dirs <- "V:/users/hquintal/phd2_southeast/data/output/08_noaa_event/NOAA_southeast/flash_flood/"
+output_path <- here::here("data", "output", "04_noaa", "southeast", "summary", "flash_flood")
+noaa_dirs <- here::here("data", "output", "04_noaa", "southeast", "flash_flood")
 process_noaa_events(noaa_dirs, output_path, hazard_name = 'Flash_Flood')
 gc()
 
 # Heavy Rain ----
-output_path <- "V:/users/hquintal/phd2_southeast/data/output/08_noaa_event/NOAA_southeast/summary/heavy_rain/"
-noaa_dirs <- "V:/users/hquintal/phd2_southeast/data/output/08_noaa_event/NOAA_southeast/heavy_rain/"
+output_path <- here::here("data", "output", "04_noaa", "southeast", "summary", "heavy_rain")
+noaa_dirs <- here::here("data", "output", "04_noaa", "southeast", "heavy_rain")
 process_noaa_events(noaa_dirs, output_path, hazard_name = 'Heavy_Rain')
 gc()
 
 # Hurricane ----
-output_path <- "V:/users/hquintal/phd2_southeast/data/output/08_noaa_event/NOAA_southeast/summary/hurricane/"
-noaa_dirs <- "V:/users/hquintal/phd2_southeast/data/output/08_noaa_event/NOAA_southeast/hurricane/"
+output_path <- here::here("data", "output", "04_noaa", "southeast", "summary", "hurricane")
+noaa_dirs <- here::here("data", "output", "04_noaa", "southeast", "hurricane")
 process_noaa_events(noaa_dirs, output_path, hazard_name = 'Hurricane')
 gc()
 
 # Tropical Depression ----
-output_path <- "V:/users/hquintal/phd2_southeast/data/output/08_noaa_event/NOAA_southeast/summary/tropical_depression/"
-noaa_dirs <- "V:/users/hquintal/phd2_southeast/data/output/08_noaa_event/NOAA_southeast/tropical_depression/"
+output_path <- here::here("data", "output", "04_noaa", "southeast", "summary", "tropical_depression")
+noaa_dirs <- here::here("data", "output", "04_noaa", "southeast", "tropical_depression")
 process_noaa_events(noaa_dirs, output_path, hazard_name = 'Tropical_Depression')
 gc()
 
 # Tropical Storm ----
-output_path <- "V:/users/hquintal/phd2_southeast/data/output/08_noaa_event/NOAA_southeast/summary/tropical_storm/"
-noaa_dirs <- "V:/users/hquintal/phd2_southeast/data/output/08_noaa_event/NOAA_southeast/tropical_storm/"
+output_path <- here::here("data", "output", "04_noaa", "southeast", "summary", "tropical_storm")
+noaa_dirs <- here::here("data", "output", "04_noaa", "southeast", "tropical_storm")
 process_noaa_events(noaa_dirs, output_path, hazard_name = 'Tropical_Storm')
 gc()
 
 # Typhoon ----
-output_path <- "V:/users/hquintal/phd2_southeast/data/output/08_noaa_event/NOAA_southeast/summary/typhoon/"
-noaa_dirs <- "V:/users/hquintal/phd2_southeast/data/output/08_noaa_event/NOAA_southeast/typhoon/"
+output_path <- here::here("data", "output", "04_noaa", "southeast", "summary", "typhoon")
+noaa_dirs <- here::here("data", "output", "04_noaa", "southeast", "typhoon")
 process_noaa_events(noaa_dirs, output_path, hazard_name = 'Typhoon')
 gc()
