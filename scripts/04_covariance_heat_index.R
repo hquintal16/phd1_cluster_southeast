@@ -147,16 +147,12 @@ for (year in year_month){
   
   # Update original df's with modeled values
   exp.exp.model.time <- data.frame(lag = seq(min(time$lag),max(time$lag),0.1))
-  exp.exp.model.time$covariance <- sill * (optimal.exp.exp.alpha1 * exp((-3 * (exp.exp.model.time$lag)^2) /
-                                                                          (3 * (optimal.exp.exp.params[1])^2)) +
-                                             optimal.exp.exp.alpha2 * exp((-3 * exp.exp.model.time$lag) /
-                                                                            optimal.exp.exp.params[3]))
+  exp.exp.model.time$covariance <- sill * (optimal.exp.exp.alpha1 * exp((-3 * (exp.exp.model.time$lag)^2) / (3 * (optimal.exp.exp.params[1])^2)) +
+                                             optimal.exp.exp.alpha2 * exp((-3 * exp.exp.model.time$lag) / optimal.exp.exp.params[3]))
   
   exp.exp.model.space <- data.frame(lag = seq(min(space$lag),max(space$lag),0.1))
-  exp.exp.model.space$covariance <- sill * (optimal.exp.exp.alpha1 * exp((-3 * (exp.exp.model.space$lag)^2) /
-                                                                           (3 * (optimal.exp.exp.params[2])^2)) +
-                                              optimal.exp.exp.alpha2 * exp((-3 * exp.exp.model.space$lag) /
-                                                                             optimal.exp.exp.params[4]))
+  exp.exp.model.space$covariance <- sill * (optimal.exp.exp.alpha1 * exp((-3 * (exp.exp.model.space$lag)^2) / (3 * (optimal.exp.exp.params[2])^2)) +
+                                              optimal.exp.exp.alpha2 * exp((-3 * exp.exp.model.space$lag) / optimal.exp.exp.params[4]))
   
   # plot
   exp.exp.plot.time <- ggplot() +
@@ -372,16 +368,12 @@ for (year in year_month){
   
   # Update original df's with modeled values
   gau.exp.model.time <- data.frame(lag = seq(min(time$lag),max(time$lag),0.1))
-  gau.exp.model.time$covariance <- sill * (optimal.gau.exp.alpha1 * exp((-3 * (gau.exp.model.time$lag)^2) /
-                                                                          (3 * (optimal.gau.exp.params[1])^2)) +
-                                             optimal.gau.exp.alpha2 * exp((-3 * gau.exp.model.time$lag) /
-                                                                            optimal.gau.exp.params[3]))
+  gau.exp.model.time$covariance <- sill * (optimal.gau.exp.alpha1 * exp((-3 * (gau.exp.model.time$lag)^2) / (3 * (optimal.gau.exp.params[1])^2)) +
+                                             optimal.gau.exp.alpha2 * exp((-3 * gau.exp.model.time$lag) / optimal.gau.exp.params[3]))
   
   gau.exp.model.space <- data.frame(lag = seq(min(space$lag),max(space$lag),0.1))
-  gau.exp.model.space$covariance <- sill * (optimal.gau.exp.alpha1 * exp((-3 * (gau.exp.model.space$lag)^2) /
-                                                                           (3 * (optimal.gau.exp.params[2])^2)) +
-                                              optimal.gau.exp.alpha2 * exp((-3 * gau.exp.model.space$lag) /
-                                                                             optimal.gau.exp.params[4]))
+  gau.exp.model.space$covariance <- sill * (optimal.gau.exp.alpha1 * exp((-3 * (gau.exp.model.space$lag)^2) / (3 * (optimal.gau.exp.params[2])^2)) +
+                                              optimal.gau.exp.alpha2 * exp((-3 * gau.exp.model.space$lag) / optimal.gau.exp.params[4]))
   
   
   # plot

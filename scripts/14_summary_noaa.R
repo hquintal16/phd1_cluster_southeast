@@ -6,7 +6,9 @@
 #study area: Southeast
 
 # Load Libraries & Functions ----
-source("V:/users/hquintal/phd2_southeast/scripts/01_library.R")
+library(here)
+here::i_am("scripts/14_summary_noaa.R")  # Adjust the file path as needed
+source(here::here("scripts", "01_library.R"))
 
 # Heat Index ----
 
@@ -55,26 +57,21 @@ process_noaa_hazard_heat_parallel <- function(hazard_folder, era5_folder, noaa_i
     duration_days <- as.numeric(difftime(end_time_event, start_time_event, units = "days")) + 1
     
     # --- Exposed Area Calculation ---
-    # Sum all layers of the NOAA raster and create a binary mask for nonzero cells.
     noaa_sum <- terra::app(noaa_rast, fun = sum, na.rm = TRUE)
     event_mask_binary <- noaa_sum != 0
     res_vals <- terra::res(noaa_rast)
     if(terra::is.lonlat(noaa_rast)) {
-      # Approximate conversion for geographic CRS: 1° ~ 111.32 km
       cell_area <- (111.32 * res_vals[1]) * (111.32 * res_vals[2])
     } else {
-      # Projected CRS (assumed in meters): convert m² to km².
       cell_area <- (res_vals[1] * res_vals[2]) / 1e6
     }
     exposed_area <- sum(terra::values(event_mask_binary), na.rm = TRUE) * cell_area
     
     # --- ERA5 Statistics (Heat) ---
-    # ERA5 files for heat hazards are assumed to be named "heat_index_daily_maximum_yyyymm.nc"
     era5_values <- c()
-    # Use year-month format "yyyymm" (e.g. "194001")
     yearmonths <- unique(format(times, "%Y%m"))
     for(ym in yearmonths) {
-      era5_file <- file.path(era5_folder, paste0("heat_index_daily_maximum_", ym, ".nc"))
+      era5_file <- here::here(era5_folder, paste0("heat_index_daily_maximum_", ym, ".nc"))
       if(!file.exists(era5_file)){
         message("ERA5 file not found for yearmonth: ", ym)
         next
@@ -84,19 +81,14 @@ process_noaa_hazard_heat_parallel <- function(hazard_folder, era5_folder, noaa_i
         message("Error reading ERA5 file: ", era5_file)
         next
       }
-      # Resample ERA5 to match NOAA grid using nearest neighbor interpolation.
       noaa_ref <- noaa_rast[[1]]
       era5_rast_resampled <- terra::resample(era5_rast, noaa_ref, method = "near")
-      
-      # Subset ERA5 layers to the NOAA event time range.
       era5_times <- terra::time(era5_rast_resampled)
       if(!is.null(era5_times)){
         idx <- which(era5_times >= start_time_event & era5_times <= end_time_event)
         if(length(idx) == 0) next
         era5_rast_resampled <- era5_rast_resampled[[idx]]
       }
-      
-      # *** Instead of summing layers, extract values from each ERA5 layer where NOAA event is present.
       for(layer in 1:terra::nlyr(era5_rast_resampled)) {
         era5_layer <- era5_rast_resampled[[layer]]
         era5_masked <- terra::mask(era5_layer, event_mask_binary, maskvalue = FALSE)
@@ -113,8 +105,8 @@ process_noaa_hazard_heat_parallel <- function(hazard_folder, era5_folder, noaa_i
     }
     
     # --- NOAA Impacts ---
-    impacts_csv1 <- file.path(noaa_impacts_folder, paste0("NOAA_events_", hazard_name, ".csv"))
-    impacts_csv2 <- file.path(noaa_impacts_folder, paste0("NOAA_events_", hazard_name, "_2009_2015.csv"))
+    impacts_csv1 <- file.path(here::here(noaa_impacts_folder), paste0("NOAA_events_", hazard_name, ".csv"))
+    impacts_csv2 <- file.path(here::here(noaa_impacts_folder), paste0("NOAA_events_", hazard_name, "_2009_2015.csv"))
     impacts_data <- data.frame()
     if(file.exists(impacts_csv1)){
       impacts_data <- read.csv(impacts_csv1, stringsAsFactors = FALSE)
@@ -137,7 +129,6 @@ process_noaa_hazard_heat_parallel <- function(hazard_folder, era5_folder, noaa_i
       NA
     }
     
-    # --- Assemble one row of results ---
     res_row <- data.frame(
       episode_id = episode_id,
       hazard = hazard_name,
@@ -145,7 +136,7 @@ process_noaa_hazard_heat_parallel <- function(hazard_folder, era5_folder, noaa_i
       end_time = end_time_event,
       duration = duration_days,
       exposed_counties = exposed_counties,
-      exposed_area = exposed_area,  # in km²
+      exposed_area = exposed_area,
       era5_mean = era5_mean,
       era5_median = era5_median,
       era5_max = era5_max,
@@ -176,15 +167,14 @@ process_noaa_hazard_heat_parallel <- function(hazard_folder, era5_folder, noaa_i
 
 ## Implementation ----
 
-# Define heat hazard folders
+# Define heat hazard folders (update file root to "phd1_cluster_southeast")
 heat_hazard_folders <- c(
-  "V:/users/hquintal/phd2_southeast/data/output/08_noaa_event/NOAA_southeast/excess_heat",
-  "V:/users/hquintal/phd2_southeast/data/output/08_noaa_event/NOAA_southeast/heat"
+  here::here("data", "output", "04_noaa", "southeast", "excess_heat"),
+  here::here("data", "output", "04_noaa", "southeast", "heat")
 )
 
-# Define ERA5 folder for daily heat index (for heat hazards)
-era5_folder_heat <- "V:/users/hquintal/phd2_southeast/data/output/01_variables/daily/heat_index"
-noaa_impacts_folder <- "V:/users/hquintal/phd2_southeast/data/output/08_noaa_event"
+era5_folder_heat <- here::here("data", "output", "01_era5", "daily", "heat_index")
+noaa_impacts_folder <- here::here("data", "output", "05_validation", "summary")
 
 all_heat_results <- list()
 for (h_folder in heat_hazard_folders) {
@@ -204,21 +194,20 @@ for (h_folder in heat_hazard_folders) {
 }
 names(all_heat_results) <- sapply(heat_hazard_folders, basename)
 combined_heat_results <- do.call(rbind, all_heat_results)
-combined_csv <- "V:/users/hquintal/phd2_southeast/data/output/08_noaa_event/NOAA_southeast_heat_combined_summary.csv"
+combined_csv <- here::here("data", "output", "05_validation", "summary", "southeast_heat_combined_summary.csv")
 write.csv(combined_heat_results, combined_csv, row.names = FALSE)
 message("Combined heat summary saved to: ", combined_csv)
 
 # Precipitation ----
+
 process_noaa_hazard_precip_folder <- function(hazard_folder, era5_folder, noaa_impacts_folder) {
   message(sprintf("Processing folder: %s", hazard_folder))
   
-  # List all NOAA .nc files in the folder
   nc_files <- list.files(hazard_folder, pattern = "\\.nc$", full.names = TRUE)
   if(length(nc_files) == 0){
     stop("No .nc files found in ", hazard_folder)
   }
   
-  # Initialize results data frame (exposed_area will be in km²)
   results <- data.frame(
     episode_id = character(),
     hazard = character(),
@@ -239,7 +228,6 @@ process_noaa_hazard_precip_folder <- function(hazard_folder, era5_folder, noaa_i
     stringsAsFactors = FALSE
   )
   
-  # Process each NOAA file sequentially
   for(nc_file in nc_files) {
     message(sprintf("Processing file: %s", basename(nc_file)))
     
@@ -249,7 +237,6 @@ process_noaa_hazard_precip_folder <- function(hazard_folder, era5_folder, noaa_i
       next
     }
     
-    # Updated regex to allow optional underscore before .nc
     file_base <- basename(nc_file)
     m <- regexec("^(\\d{4}-\\d{2}-\\d{2})_NOAA_(.+?)_([0-9]+)_?\\.nc$", file_base)
     parts <- regmatches(file_base, m)
@@ -261,7 +248,6 @@ process_noaa_hazard_precip_folder <- function(hazard_folder, era5_folder, noaa_i
     hazard_name <- parts[[1]][3]
     episode_id <- parts[[1]][4]
     
-    # Get NOAA event times; if missing, use first_day_str
     times <- terra::time(noaa_rast)
     if(is.null(times) || length(times) == 0){
       times <- as.POSIXct(first_day_str, tz = "UTC")
@@ -270,27 +256,20 @@ process_noaa_hazard_precip_folder <- function(hazard_folder, era5_folder, noaa_i
     end_time_event <- max(times, na.rm = TRUE)
     duration_days <- as.numeric(difftime(end_time_event, start_time_event, units = "days")) + 1
     
-    # --- Exposed Area Calculation ---
-    # Sum all layers of the NOAA raster and create a binary mask (nonzero cells)
     noaa_sum <- terra::app(noaa_rast, fun = sum, na.rm = TRUE)
     event_mask_binary <- noaa_sum != 0
     res_vals <- terra::res(noaa_rast)
     if(terra::is.lonlat(noaa_rast)) {
-      # Approximate conversion: 1° ~ 111.32 km
       cell_area <- (111.32 * res_vals[1]) * (111.32 * res_vals[2])
     } else {
       cell_area <- (res_vals[1] * res_vals[2]) / 1e6
     }
     exposed_area <- sum(terra::values(event_mask_binary), na.rm = TRUE) * cell_area
     
-    # --- ERA5 Statistics (Precipitation) ---
-    # ERA5 files are assumed to be named "yyyy_mm_era5_precip_tot_conus.nc"
-    # We want to accumulate precipitation over the entire NOAA event period.
     accumulated_era5 <- NULL
-    # Format NOAA times to "yyyy_mm"
     yearmonths <- unique(format(times, "%Y_%m"))
     for(ym in yearmonths) {
-      era5_file <- file.path(era5_folder, paste0(ym, "_era5_precip_tot_conus.nc"))
+      era5_file <- here::here(era5_folder, paste0(ym, "_era5_precip_tot_conus.nc"))
       if(!file.exists(era5_file)){
         message("ERA5 file not found for yearmonth: ", ym)
         next
@@ -300,22 +279,15 @@ process_noaa_hazard_precip_folder <- function(hazard_folder, era5_folder, noaa_i
         message("Error reading ERA5 file: ", era5_file)
         next
       }
-      # Resample ERA5 raster to match NOAA grid using nearest neighbor
       noaa_ref <- noaa_rast[[1]]
       era5_rast_resampled <- terra::resample(era5_rast, noaa_ref, method = "near")
-      
-      # ERA5 files have date-time layers; subset to NOAA event time range
       era5_times <- terra::time(era5_rast_resampled)
       if(!is.null(era5_times)) {
         idx <- which(era5_times >= start_time_event & era5_times <= end_time_event)
         if(length(idx) == 0) next
         era5_rast_resampled <- era5_rast_resampled[[idx]]
       }
-      
-      # Sum all hourly ERA5 layers for this month to get a single accumulated layer for that month
       monthly_sum <- terra::app(era5_rast_resampled, fun = sum, na.rm = TRUE)
-      
-      # Accumulate across months
       if(is.null(accumulated_era5)) {
         accumulated_era5 <- monthly_sum
       } else {
@@ -326,7 +298,6 @@ process_noaa_hazard_precip_folder <- function(hazard_folder, era5_folder, noaa_i
     if(is.null(accumulated_era5)) {
       era5_mean <- era5_median <- era5_max <- NA
     } else {
-      # Apply the NOAA event mask to the accumulated ERA5 layer
       era5_masked <- terra::mask(accumulated_era5, event_mask_binary, maskvalue = FALSE)
       vals <- terra::values(era5_masked, mat = FALSE)
       if(length(vals[!is.na(vals)]) > 0) {
@@ -338,9 +309,8 @@ process_noaa_hazard_precip_folder <- function(hazard_folder, era5_folder, noaa_i
       }
     }
     
-    # --- NOAA Impacts ---
-    impacts_csv1 <- file.path(noaa_impacts_folder, paste0("NOAA_events_", hazard_name, ".csv"))
-    impacts_csv2 <- file.path(noaa_impacts_folder, paste0("NOAA_events_", hazard_name, "_2009_2015.csv"))
+    impacts_csv1 <- file.path(here::here(noaa_impacts_folder), paste0("NOAA_events_", hazard_name, ".csv"))
+    impacts_csv2 <- file.path(here::here(noaa_impacts_folder), paste0("NOAA_events_", hazard_name, "_2009_2015.csv"))
     impacts_data <- data.frame()
     if(file.exists(impacts_csv1)){
       impacts_data <- read.csv(impacts_csv1, stringsAsFactors = FALSE)
@@ -370,7 +340,7 @@ process_noaa_hazard_precip_folder <- function(hazard_folder, era5_folder, noaa_i
       end_time = end_time_event,
       duration = duration_days,
       exposed_counties = exposed_counties,
-      exposed_area = exposed_area,  # in km²
+      exposed_area = exposed_area,
       era5_mean = era5_mean,
       era5_median = era5_median,
       era5_max = era5_max,
@@ -391,32 +361,25 @@ process_noaa_hazard_precip_folder <- function(hazard_folder, era5_folder, noaa_i
 
 ## Implementation ----
 
-# Define your vector of hazard folder paths
 precip_hazard_folders <- c(
-  "V:/users/hquintal/phd2_southeast/data/output/08_noaa_event/NOAA_southeast/flash_flood",
-  "V:/users/hquintal/phd2_southeast/data/output/08_noaa_event/NOAA_southeast/flood",
-  "V:/users/hquintal/phd2_southeast/data/output/08_noaa_event/NOAA_southeast/heavy_rain",
-  "V:/users/hquintal/phd2_southeast/data/output/08_noaa_event/NOAA_southeast/hurricane",
-  "V:/users/hquintal/phd2_southeast/data/output/08_noaa_event/NOAA_southeast/tropical_depression",
-  "V:/users/hquintal/phd2_southeast/data/output/08_noaa_event/NOAA_southeast/tropical_storm",
-  "V:/users/hquintal/phd2_southeast/data/output/08_noaa_event/NOAA_southeast/typhoon"
+  here::here("data", "output", "04_noaa", "southeast", "flash_flood"),
+  here::here("data", "output", "04_noaa", "southeast", "flood"),
+  here::here("data", "output", "04_noaa", "southeast", "heavy_rain"),
+  here::here("data", "output", "04_noaa", "southeast", "hurricane"),
+  here::here("data", "output", "04_noaa", "southeast", "tropical_depression"),
+  here::here("data", "output", "04_noaa", "southeast", "tropical_storm"),
+  here::here("data", "output", "04_noaa", "southeast", "typhoon")
 )
 
-# Compute the number of .nc files in each folder:
 folder_sizes <- sapply(precip_hazard_folders, function(folder) {
   length(list.files(folder, pattern = "\\.nc$", full.names = TRUE))
 })
-
-# Sort the folders by size (largest first)
 sorted_folders <- precip_hazard_folders[order(folder_sizes, decreasing = TRUE)]
-
-# start with smallest folder for debugging
 precip_hazard_folders <- rev(sorted_folders)
 
-era5_folder_precip <- "V:/users/hquintal/phd2_southeast/data/input/precipitation"
-noaa_impacts_folder <- "V:/users/hquintal/phd2_southeast/data/output/08_noaa_event"
+era5_folder_heat <- here::here("data", "output", "01_era5", "hourly", "precipitation")
+noaa_impacts_folder <- here::here("data", "output", "05_validation", "summary")
 
-# Process each hazard folder in parallel using future_lapply
 all_precip_results <- future_lapply(precip_hazard_folders, function(h_folder) {
   hazard_name <- basename(h_folder)
   message("Processing hazard folder: ", hazard_name)
@@ -427,7 +390,6 @@ all_precip_results <- future_lapply(precip_hazard_folders, function(h_folder) {
     noaa_impacts_folder = noaa_impacts_folder
   )
   
-  # Write individual CSV for this folder.
   output_csv <- file.path(h_folder, paste0("NOAA_", hazard_name, "_summary.csv"))
   write.csv(res, output_csv, row.names = FALSE)
   message("Saved CSV for: ", hazard_name)
@@ -436,7 +398,7 @@ all_precip_results <- future_lapply(precip_hazard_folders, function(h_folder) {
 })
 names(all_precip_results) <- sapply(precip_hazard_folders, basename)
 combined_precip_results <- do.call(rbind, all_precip_results)
-combined_csv <- "V:/users/hquintal/phd2_southeast/data/output/08_noaa_event/NOAA_southeast_precip_combined_summary.csv"
+combined_csv <- here::here("data", "output", "05_validation", "summary", "southeast_precip_combined_summary.csv")
 write.csv(combined_precip_results, combined_csv, row.names = FALSE)
 message("Combined precipitation summary saved to: ", combined_csv)
 
