@@ -31,7 +31,8 @@ libs <- c('SpecsVerification','terra','ggplot2','stringr','tigris','sf','raster'
           'biscale','sf','classInt','reshape2','eulerr','gsubfn','digest',
           'gganimate','transformr','magick','gifski','pbapply','purrr','parallel',
           'future.apply','progress','gridExtra','ggpattern','readr','ISOweek',
-          'progressr','furrr','future','callr','ggnewscale','doSNOW','foreach')
+          'progressr','furrr','future','callr','ggnewscale','doSNOW','foreach',
+          'patchwork')
 
 # sapply(libs,install.packages,character.only=T)
 sapply(libs, require, character.only = T)

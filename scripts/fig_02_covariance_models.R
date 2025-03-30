@@ -2,56 +2,66 @@
 #Updated March 2025
 #Linked to GitHub
 #Author: Hunter Quintal
-#purpose: Produce study area figure with red box within conus extent
+#purpose: Produce four panel figure of monthly covariance models
 
 # Load Libraries & Set Project Root ----
 library(here)
 here::i_am("scripts/fig_02_covariance_models.R")  # Adjust this file path as needed
 source(here::here("scripts", "01_library.R"))
 
-# Load required packages
-library(here)      # For file paths
-library(dplyr)     # For data manipulation
-library(tidyr)     # For data reshaping
-library(ggplot2)   # For plotting
-library(readr)     # For reading CSV files
+# --- File reading & data processing (assumed already done) ---
 
-# # Define file paths using the here package
-heat_file <- here("data","output","02_covariance","03_space_time_metric","heat_index","month","heat_index_space_time_metric_optimal.csv")
-# precip_file <- here("data","output","02_covariance","03_space_time_metric","precipitation","month","precipitation_space_time_metric_optimal.csv")
-# a <- read.csv('V:/users/hquintal/phd1_cluster_southeast/data/output/02_covariance/03_space_time_metric/precipitation/month/precipitation_space_time_metric_optimal.csv')
-# a <- read.csv('V:/users/hquintal/phd1_cluster_southeast/data/output/02_covariance/03_space_time_metric/heat_index/month/heat_index_space_time_metric_optimal.csv')
-# a <- read.csv('V:/users/hquintal/phd1_cluster_southeast/data/output/02_covariance/03_space_time_metric/precipitation/month/precipitation_space_time_metric_nested_exponential.csv')
+# Define directories for heat index and precipitation
+heat_dir <- here("data", "output", "02_covariance", "03_space_time_metric", "heat_index", "month")
+precip_dir <- here("data", "output", "02_covariance", "03_space_time_metric", "precipitation", "month")
 
-# Read the CSV files and add a "type" column for identification
-heat_data <- read_csv(heat_file) %>% mutate(type = "heat_index")
-precip_data <- read_csv(precip_file) %>% mutate(type = "precipitation")
+# List all files in the directories that contain "optimal" in their names
+heat_files <- list.files(heat_dir, pattern = "optimal", full.names = TRUE)
+precip_files <- list.files(precip_dir, pattern = "optimal", full.names = TRUE)
+
+# Read the files and add a "type" column for identification
+heat_data <- read_csv(heat_files) %>% mutate(type = "heat_index")
+precip_data <- read_csv(precip_files) %>% mutate(type = "precipitation")
 
 # Combine the two datasets
 data_all <- bind_rows(heat_data, precip_data)
 
-# Define a function to compute the space and time curves
+# --- Compute curves ---
+# Update the x sequence to start at 0
 compute_curves <- function(sill, alpha1, alpha2, ar1, ar2, at1, at2, model) {
-  x <- 1:100
-  if(model == "Nested Gaussian Exponential") {
-    # Simplify (-3 * (x^2))/(3 * (ar1)^2) to -(x^2)/(ar1^2)
-    space <- sill * (alpha1 * exp(-3 (x^2) / (3*ar1^2)) + alpha2 * exp(-3 * x / ar2))
-    time  <- sill * (alpha1 * exp(-3 (x^2) / (3*at1^2)) + alpha2 * exp(-3 * x / at2))
-  } else if(model == "Nested Exponential") {
-    space <- sill * (alpha1 * exp((-3 * x) / (ar1)) + alpha2 * exp(x / ar2))
-    time  <- sill * (alpha1 * exp((-3 * x) / (at1)) + alpha2 * exp(x / at2))
-  } else {
-    # For any other model type, return NA vectors
-    space <- rep(NA, length(x))
-    time  <- rep(NA, length(x))
-  }
+  # Create a sequence from 0 to 15 in increments of 0.1
+  x <- seq(0, 10, 0.1)
+  
+  # At x = 0, exp(- (0^2)/(ar^2)) = 1 so value = sill*(alpha1+alpha2)
+  space <- sill * (alpha1 * exp( -(x^2)/(ar1^2) ) + alpha2 * exp(-3 * x / ar2))
+  time  <- sill * (alpha1 * exp( -(x^2)/(at1^2) ) + alpha2 * exp(-3 * x / at2))
+
   return(list(x = x, space = space, time = time))
 }
+
+# Original, if I hadn't accidentally given nested exp-exp the same equation as gau-exp
+# compute_curves <- function(sill, alpha1, alpha2, ar1, ar2, at1, at2, model) {
+#   # Create a sequence from 0 to 15 in increments of 0.1
+#   x <- seq(0, 10, 0.1)
+#   
+#   if(model == "Nested Gaussian Exponential") {
+#     # At x = 0, exp(- (0^2)/(ar^2)) = 1 so value = sill*(alpha1+alpha2)
+#     space <- sill * (alpha1 * exp( -(x^2)/(ar1^2) ) + alpha2 * exp(-3 * x / ar2))
+#     time  <- sill * (alpha1 * exp( -(x^2)/(at1^2) ) + alpha2 * exp(-3 * x / at2))
+#   } else if(model == "Nested Exponential") {
+#     space <- sill * (alpha1 * exp((-3 * x) / ar1) + alpha2 * exp(x / ar2))
+#     time  <- sill * (alpha1 * exp((-3 * x) / at1) + alpha2 * exp(x / at2))
+#   } else {
+#     space <- rep(NA, length(x))
+#     time  <- rep(NA, length(x))
+#   }
+#   return(list(x = x, space = space, time = time))
+# }
 
 # Add a unique identifier for each row
 data_all <- data_all %>% mutate(id = row_number())
 
-# Compute curves for each row using the compute_curves function
+# Compute curves for each row
 data_curves <- data_all %>%
   rowwise() %>%
   mutate(curve = list(compute_curves(sill, alpha1, alpha2, ar1, ar2, at1, at2, model)),
@@ -60,25 +70,81 @@ data_curves <- data_all %>%
          time  = list(curve$time)) %>%
   ungroup()
 
-# Unnest the computed vectors so that each row yields 100 rows of (x, space, time)
+# Unnest the computed vectors
 data_long <- data_curves %>%
   select(id, type, year_mo, model, x, space, time) %>%
   unnest(cols = c(x, space, time))
 
-# Reshape data so that space and time values are in one column with an indicator variable "model_type"
+# Reshape data: combine space and time columns with an indicator
 data_long2 <- data_long %>%
   pivot_longer(cols = c(space, time), names_to = "model_type", values_to = "value")
 
-# Create the 2x2 panel plot:
-# - Top panels: heat_index (space on left, time on right)
-# - Bottom panels: precipitation (space on left, time on right)
-p <- ggplot(data_long2, aes(x = x, y = value, group = id)) +
-  geom_line(alpha = 0.1) +
-  facet_grid(type ~ model_type) +
-  theme_minimal() +
-  labs(x = "Index (1:100)", 
-       y = "Model Value", 
-       title = "Space and Time Models for Heat Index and Precipitation")
+# --- Compute y-axis limits ---
+# For each type, we want the maximum value at x==0 across both space and time curves
+heat_ylim_upper <- data_long2 %>% 
+  filter(type == "heat_index", x == 0) %>% 
+  summarise(max_val = max(value, na.rm = TRUE)) %>% 
+  pull(max_val)
 
-# Display the plot
-print(p)
+precip_ylim_upper <- data_long2 %>% 
+  filter(type == "precipitation", x == 0) %>% 
+  summarise(max_val = max(value, na.rm = TRUE)) %>% 
+  pull(max_val)
+
+# --- Create individual plots ---
+# Subset data for each panel
+data_heat_space   <- data_long2 %>% filter(type == "heat_index", model_type == "space")
+data_heat_time    <- data_long2 %>% filter(type == "heat_index", model_type == "time")
+data_precip_space <- data_long2 %>% filter(type == "precipitation", model_type == "space")
+data_precip_time  <- data_long2 %>% filter(type == "precipitation", model_type == "time")
+
+# Top left: Heat Index, Space
+p_heat_space <- ggplot(data_heat_space, aes(x = x, y = value, group = id)) +
+  geom_line(alpha = 0.1) +
+  theme_bw() +
+  labs(x = "Spatial Range (0.25°)", y = "Covariance of heat index (°C²)",
+       title = "a") +
+  ylim(0, heat_ylim_upper) +
+  theme(plot.title = element_text(hjust = 0, vjust = 1, face = "bold"),
+        axis.title.y = element_text(margin = margin(r = 10))) 
+
+# Top right: Heat Index, Time
+p_heat_time <- ggplot(data_heat_time, aes(x = x, y = value, group = id)) +
+  geom_line(alpha = 0.1) +
+  theme_bw() +
+  labs(x = "Temporal Lag (days)", y = NULL,
+       title = "b") +
+  ylim(0, heat_ylim_upper) +
+  theme(plot.title = element_text(hjust = 0, vjust = 1, face = "bold"))
+
+# Bottom left: Precipitation, Space
+p_precip_space <- ggplot(data_precip_space, aes(x = x, y = value, group = id)) +
+  geom_line(alpha = 0.1) +
+  theme_bw() +
+  labs(x = "Spatial Range (0.25°)", y = "Covariance of precipitation (mm²)",
+       title = "c") +
+  ylim(0, precip_ylim_upper) +
+  theme(plot.title = element_text(hjust = 0, vjust = 1, face = "bold"),
+        axis.title.y = element_text(margin = margin(r = 10))) 
+
+# Bottom right: Precipitation, Time
+p_precip_time <- ggplot(data_precip_time, aes(x = x, y = value, group = id)) +
+  geom_line(alpha = 0.1) +
+  theme_bw() +
+  labs(x = "Temporal Lag (hours)", y = NULL,
+       title = "d") +
+  ylim(0, precip_ylim_upper) +
+  theme(plot.title = element_text(hjust = 0, vjust = 1, face = "bold"))
+
+# --- Combine the plots into a 2x2 grid ---
+p_combined <- (p_heat_space + p_heat_time) / (p_precip_space + p_precip_time)
+
+# Define file paths using here
+png_path <- here("figures","02_covariance.png")
+svg_path <- here("figures","02_covariance.svg")
+
+# Save the plot as a PNG file
+ggsave(filename = png_path, plot = p_combined, width = 8, height = 6, dpi = 300)
+
+# Save the plot as an SVG file
+ggsave(filename = svg_path, plot = p_combined, width = 8, height = 6, device = "svg")

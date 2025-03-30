@@ -210,8 +210,8 @@ process_precipitation_files <- function(input_dir, output_dir, space_time_metric
   # List all NetCDF files
   nc_files <- list.files(input_dir, pattern = "\\.nc$", full.names = TRUE)
   
-  # Subset if necessary
-  nc_files <- nc_files[c(492:length(nc_files))]
+  # # Subset if necessary
+  # nc_files <- nc_files[c(492:length(nc_files))]
   
   # Progress bar setup
   handlers(global = TRUE)
