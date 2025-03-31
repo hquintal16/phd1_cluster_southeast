@@ -6,6 +6,7 @@
 
 # Load Libraries & Set Project Root ----
 library(here)
+here::set_here("V:/users/hquintal/phd1_cluster_southeast")
 here::i_am("scripts/fig_02_covariance_models.R")  # Adjust this file path as needed
 source(here::here("scripts", "01_library.R"))
 
@@ -22,6 +23,12 @@ precip_files <- list.files(precip_dir, pattern = "optimal", full.names = TRUE)
 # Read the files and add a "type" column for identification
 heat_data <- read_csv(heat_files) %>% mutate(type = "heat_index")
 precip_data <- read_csv(precip_files) %>% mutate(type = "precipitation")
+
+# count of each type of model
+sum(heat_data$model == 'Nested Exponential')
+sum(heat_data$model == 'Nested Gaussian Exponential')
+sum(precip_data$model == 'Nested Exponential')
+sum(precip_data$model == 'Nested Gaussian Exponential')
 
 # Combine the two datasets
 data_all <- bind_rows(heat_data, precip_data)
