@@ -62,6 +62,8 @@ names(wfo_df)[3] <- "advisory"
 xlims <- c(-95, -75)
 ylims <- c(24, 40)
 
+## Southeast ----
+
 # Plot 1: Precipitation with shapefile overlays
 p2 <- ggplot() +
   geom_raster(data = atlas_df, aes(x = x, y = y, fill = atlas_value)) +
@@ -92,6 +94,51 @@ combined_plot <- p1 + p2 + plot_annotation(tag_levels = 'a')
 # Define file paths using here
 png_path <- here("figures","04_threholds.png")
 svg_path <- here("figures","04_threholds.svg")
+
+# Save the plot as a PNG file
+ggsave(filename = png_path, plot = combined_plot, width = 12, height = 6, dpi = 300)
+
+# Save the plot as an SVG file
+ggsave(filename = svg_path, plot = combined_plot, width = 12, height = 6, device = "svg")
+
+## CONUS ----
+wfo_raster <- rasterize(wfo_vect, atlas.14, field = "ADVISORY")
+
+# Prepare data frames for ggplot
+atlas_df <- as.data.frame(atlas.14, xy = TRUE)
+names(atlas_df)[3] <- "atlas_value"
+
+wfo_df <- as.data.frame(wfo_raster, xy = TRUE)
+names(wfo_df)[3] <- "advisory"
+
+# Plot 1: Precipitation with shapefile overlays
+p2 <- ggplot() +
+  geom_raster(data = atlas_df, aes(x = x, y = y, fill = atlas_value)) +
+  scale_fill_viridis_c(name = "(mm)", option = "viridis") +
+  geom_sf(data = wfo.cwa, fill = NA, color = "white", size = 1) +
+  geom_sf(data = wfo.state, fill = NA, color = "black", size = 1) +
+  theme_bw() +
+  theme(axis.title = element_blank(),
+        legend.position = c(0.99, 0.01),
+        legend.justification = c("right", "bottom"))
+
+# Plot 2: Heat Index with shapefile overlays
+p1 <- ggplot() +
+  geom_raster(data = wfo_df, aes(x = x, y = y, fill = advisory)) +
+  scale_fill_viridis_c(name = "(°C)", option = "viridis") +
+  geom_sf(data = wfo.cwa, fill = NA, color = "white", size = 1) +
+  geom_sf(data = wfo.state, fill = NA, color = "black", size = 1) +
+  theme_bw() +
+  theme(axis.title = element_blank(),
+        legend.position = c(0.99, 0.01),
+        legend.justification = c("right", "bottom"))
+
+# Combine the two plots into one figure with panels labeled "a" and "b"
+combined_plot <- p1 + p2 + plot_annotation(tag_levels = 'a')
+
+# Define file paths using here
+png_path <- here("figures","04_threholds_conus.png")
+svg_path <- here("figures","04_threholds_conus.svg")
 
 # Save the plot as a PNG file
 ggsave(filename = png_path, plot = combined_plot, width = 12, height = 6, dpi = 300)
