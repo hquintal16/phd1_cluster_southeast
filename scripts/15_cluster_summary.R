@@ -148,3 +148,14 @@ hazard_name <- "heat_index"
 
 # Run the function to process the county events
 process_county_events(processed_dirs, output_path, hazard_name)
+
+## Precipitation ----
+
+### STM 1 ----
+
+processed_dirs <- list(here('data','output','03_cluster','02_cluster','points','stm1','precipitation','county'))
+output_path <- here('data','output','03_cluster','02_cluster','points','stm1','precipitation','summary')
+hazard_name <- "precipitation"
+
+# Run the function to process the county events
+process_county_events(processed_dirs, output_path, hazard_name)
