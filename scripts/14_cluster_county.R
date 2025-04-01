@@ -11,6 +11,25 @@ library(here)
 here::i_am("scripts/14_cluster_county.R")  # Adjust this file path if necessary
 source(here::here("scripts", "01_library.R"))
 
+# Load a reference raster to set the CRS
+region.crs <- terra::rast(here::here("data", "output", "01_era5", "daily", "heat_index", "heat_index_daily_maximum_194001.nc"))
+
+# Read in the Koppen-Geiger geotiff and create a "resolution" raster
+directory <- here::here("data", "input", "regional_aggregation", "koppen_geiger", "1991_2020", "koppen_geiger_0p1.tif")
+resolution <- terra::rast(directory)
+resolution <- resolution / resolution
+
+# Load US county boundaries using the maps package, convert to an sf object, then to a SpatVector
+us.states <- st_as_sf(maps::map("county", plot = FALSE, fill = TRUE))
+us.states.vect <- terra::vect(us.states)
+
+# Rasterize using the resolution from the Koppen-Geiger file (this will have character values)
+us.states.rast <- terra::rasterize(us.states.vect, resolution, field = 'ID')
+us.states.rast <- terra::crop(us.states.rast, terra::ext(region.crs))
+
+# We'll use the vector version for extraction.
+county_vect <- us.states.vect
+
 process_nc_to_county <- function(cluster_dirs, county_vect, county_rast, output_dir) {
   # Ensure the output directory exists
   if (!dir.exists(output_dir)) {
@@ -91,25 +110,6 @@ process_nc_to_county <- function(cluster_dirs, county_vect, county_rast, output_
 }
 
 # Create county boundaries using your code
-
-# Load a reference raster to set the CRS
-region.crs <- terra::rast(here::here("data", "output", "01_era5", "daily", "heat_index", "heat_index_daily_maximum_194001.nc"))
-
-# Read in the Koppen-Geiger geotiff and create a "resolution" raster
-directory <- here::here("data", "input", "regional_aggregation", "koppen_geiger", "1991_2020", "koppen_geiger_0p1.tif")
-resolution <- terra::rast(directory)
-resolution <- resolution / resolution
-
-# Load US county boundaries using the maps package, convert to an sf object, then to a SpatVector
-us.states <- st_as_sf(maps::map("county", plot = FALSE, fill = TRUE))
-us.states.vect <- terra::vect(us.states)
-
-# Rasterize using the resolution from the Koppen-Geiger file (this will have character values)
-us.states.rast <- terra::rasterize(us.states.vect, resolution, field = 'ID')
-us.states.rast <- terra::crop(us.states.rast, terra::ext(region.crs))
-
-# We'll use the vector version for extraction.
-county_vect <- us.states.vect
 
 ## Heat Index ----
 
@@ -236,12 +236,12 @@ output_dir <- here('data','output','03_cluster','02_cluster','points','stm1','pr
 # Call the function
 process_nc_to_county(cluster_dirs = list(input_dir), county_vect = county_vect, county_rast = us.states.rast, output_dir = output_dir)
 
-### STM4 ----
-
-# Define input and output directories using here()
-input_dir <- here('data','output','03_cluster','02_cluster','points','stm4','precipitation','clean')
-output_dir <- here('data','output','03_cluster','02_cluster','points','stm4','precipitation','county')
-
-# Call the function
-process_nc_to_county(cluster_dirs = list(input_dir), county_vect = county_vect, county_rast = us.states.rast, output_dir = output_dir)
-
+# ### STM4 ----
+# 
+# # Define input and output directories using here()
+# input_dir <- here('data','output','03_cluster','02_cluster','points','stm4','precipitation','clean')
+# output_dir <- here('data','output','03_cluster','02_cluster','points','stm4','precipitation','county')
+# 
+# # Call the function
+# process_nc_to_county(cluster_dirs = list(input_dir), county_vect = county_vect, county_rast = us.states.rast, output_dir = output_dir)
+# 
