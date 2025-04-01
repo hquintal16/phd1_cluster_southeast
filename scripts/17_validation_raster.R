@@ -97,113 +97,6 @@ aggregate_validation_results <- function(years, validation_dir, output_dir) {
   message("Aggregated county recall raster saved as: ", output_file)
 }
 
-
-# Week ----
-## 0.25 deg ----
-### Excess Heat ----
-years_to_process <- 2000:2023
-validation_directory <- here('data','output','05_validation','recall','week','stm1','excess_heat')
-output_directory <- here('data','output','05_validation','recall','raster')
-aggregate_validation_results(years_to_process, validation_directory, output_directory)
-
-years_to_process <- 2010:2023
-validation_directory <- here('data','output','05_validation','recall','week','stm1','excess_heat')
-output_directory <- here('data','output','05_validation','recall','raster')
-aggregate_validation_results(years_to_process, validation_directory, output_directory)
-
-years_to_process <- 2019:2023
-validation_directory <- here('data','output','05_validation','recall','week','stm1','excess_heat')
-output_directory <- here('data','output','05_validation','recall','raster')
-aggregate_validation_results(years_to_process, validation_directory, output_directory)
-# plot(terra::rast(here('data','output','05_validation','recall','raster','2019_2023_week_stm1_excess_heat.nc')))
-
-### Heat ----
-years_to_process <- 1996:2023
-validation_directory <- here('data','output','05_validation','recall','week','stm1','heat')
-output_directory <- here('data','output','05_validation','recall','raster')
-aggregate_validation_results(years_to_process, validation_directory, output_directory)
-
-years_to_process <- 2010:2023
-validation_directory <- here('data','output','05_validation','recall','week','stm1','heat')
-output_directory <- here('data','output','05_validation','recall','raster')
-aggregate_validation_results(years_to_process, validation_directory, output_directory)
-
-years_to_process <- 2019:2023
-validation_directory <- here('data','output','05_validation','recall','week','stm1','heat')
-output_directory <- here('data','output','05_validation','recall','raster')
-aggregate_validation_results(years_to_process, validation_directory, output_directory)
-# plot(terra::rast(here('data','output','05_validation','recall','raster','2019_2023_week_stm1_heat.nc')))
-
-## 0.39 deg ----
-### Excess Heat ----
-years_to_process <- 2000:2023
-validation_directory <- here('data','output','05_validation','recall','week','record','excess_heat')
-output_directory <- here('data','output','05_validation','recall','raster')
-aggregate_validation_results(years_to_process, validation_directory, output_directory)
-
-years_to_process <- 2010:2023
-validation_directory <- here('data','output','05_validation','recall','week','record','excess_heat')
-output_directory <- here('data','output','05_validation','recall','raster')
-aggregate_validation_results(years_to_process, validation_directory, output_directory)
-
-years_to_process <- 2019:2023
-validation_directory <- here('data','output','05_validation','recall','week','record','excess_heat')
-output_directory <- here('data','output','05_validation','recall','raster')
-aggregate_validation_results(years_to_process, validation_directory, output_directory)
-# plot(terra::rast(here('data','output','05_validation','recall','raster','2019_2023_week_record_excess_heat.nc')))
-
-### Heat ----
-years_to_process <- 1996:2023
-validation_directory <- here('data','output','05_validation','recall','week','record','heat')
-output_directory <- here('data','output','05_validation','recall','raster')
-aggregate_validation_results(years_to_process, validation_directory, output_directory)
-
-years_to_process <- 2010:2023
-validation_directory <- here('data','output','05_validation','recall','week','record','heat')
-output_directory <- here('data','output','05_validation','recall','raster')
-aggregate_validation_results(years_to_process, validation_directory, output_directory)
-
-years_to_process <- 2019:2023
-validation_directory <- here('data','output','05_validation','recall','week','record','heat')
-output_directory <- here('data','output','05_validation','recall','raster')
-aggregate_validation_results(years_to_process, validation_directory, output_directory)
-# plot(terra::rast(here('data','output','05_validation','recall','raster','2019_2023_week_record_heat.nc')))
-
-## 1.00 deg ----
-### Excess Heat ----
-years_to_process <- 2000:2023
-validation_directory <- here('data','output','05_validation','recall','week','stm4','excess_heat')
-output_directory <- here('data','output','05_validation','recall','raster')
-aggregate_validation_results(years_to_process, validation_directory, output_directory)
-
-years_to_process <- 2010:2023
-validation_directory <- here('data','output','05_validation','recall','week','stm4','excess_heat')
-output_directory <- here('data','output','05_validation','recall','raster')
-aggregate_validation_results(years_to_process, validation_directory, output_directory)
-
-years_to_process <- 2019:2023
-validation_directory <- here('data','output','05_validation','recall','week','stm4','excess_heat')
-output_directory <- here('data','output','05_validation','recall','raster')
-aggregate_validation_results(years_to_process, validation_directory, output_directory)
-# plot(terra::rast(here('data','output','05_validation','recall','raster','2019_2023_week_stm4_excess_heat.nc')))
-
-### Heat ----
-years_to_process <- 1996:2023
-validation_directory <- here('data','output','05_validation','recall','week','stm4','heat')
-output_directory <- here('data','output','05_validation','recall','raster')
-aggregate_validation_results(years_to_process, validation_directory, output_directory)
-
-years_to_process <- 2010:2023
-validation_directory <- here('data','output','05_validation','recall','week','stm4','heat')
-output_directory <- here('data','output','05_validation','recall','raster')
-aggregate_validation_results(years_to_process, validation_directory, output_directory)
-
-years_to_process <- 2019:2023
-validation_directory <- here('data','output','05_validation','recall','week','stm4','heat')
-output_directory <- here('data','output','05_validation','recall','raster')
-aggregate_validation_results(years_to_process, validation_directory, output_directory)
-# plot(terra::rast(here('data','output','05_validation','recall','raster','2019_2023_week_stm4_heat.nc')))
-
 # Day ----
 ## 0.25 deg ----
 ### Excess Heat ----
@@ -309,3 +202,109 @@ validation_directory <- here('data','output','05_validation','recall','day','stm
 output_directory <- here('data','output','05_validation','recall','raster')
 aggregate_validation_results(years_to_process, validation_directory, output_directory)
 # plot(terra::rast(here('data','output','05_validation','recall','raster','2019_2023_day_stm4_heat.nc')))
+
+# # Week ----
+# ## 0.25 deg ----
+# ### Excess Heat ----
+# years_to_process <- 2000:2023
+# validation_directory <- here('data','output','05_validation','recall','week','stm1','excess_heat')
+# output_directory <- here('data','output','05_validation','recall','raster')
+# aggregate_validation_results(years_to_process, validation_directory, output_directory)
+# 
+# years_to_process <- 2010:2023
+# validation_directory <- here('data','output','05_validation','recall','week','stm1','excess_heat')
+# output_directory <- here('data','output','05_validation','recall','raster')
+# aggregate_validation_results(years_to_process, validation_directory, output_directory)
+# 
+# years_to_process <- 2019:2023
+# validation_directory <- here('data','output','05_validation','recall','week','stm1','excess_heat')
+# output_directory <- here('data','output','05_validation','recall','raster')
+# aggregate_validation_results(years_to_process, validation_directory, output_directory)
+# # plot(terra::rast(here('data','output','05_validation','recall','raster','2019_2023_week_stm1_excess_heat.nc')))
+# 
+# ### Heat ----
+# years_to_process <- 1996:2023
+# validation_directory <- here('data','output','05_validation','recall','week','stm1','heat')
+# output_directory <- here('data','output','05_validation','recall','raster')
+# aggregate_validation_results(years_to_process, validation_directory, output_directory)
+# 
+# years_to_process <- 2010:2023
+# validation_directory <- here('data','output','05_validation','recall','week','stm1','heat')
+# output_directory <- here('data','output','05_validation','recall','raster')
+# aggregate_validation_results(years_to_process, validation_directory, output_directory)
+# 
+# years_to_process <- 2019:2023
+# validation_directory <- here('data','output','05_validation','recall','week','stm1','heat')
+# output_directory <- here('data','output','05_validation','recall','raster')
+# aggregate_validation_results(years_to_process, validation_directory, output_directory)
+# # plot(terra::rast(here('data','output','05_validation','recall','raster','2019_2023_week_stm1_heat.nc')))
+# 
+# ## 0.39 deg ----
+# ### Excess Heat ----
+# years_to_process <- 2000:2023
+# validation_directory <- here('data','output','05_validation','recall','week','record','excess_heat')
+# output_directory <- here('data','output','05_validation','recall','raster')
+# aggregate_validation_results(years_to_process, validation_directory, output_directory)
+# 
+# years_to_process <- 2010:2023
+# validation_directory <- here('data','output','05_validation','recall','week','record','excess_heat')
+# output_directory <- here('data','output','05_validation','recall','raster')
+# aggregate_validation_results(years_to_process, validation_directory, output_directory)
+# 
+# years_to_process <- 2019:2023
+# validation_directory <- here('data','output','05_validation','recall','week','record','excess_heat')
+# output_directory <- here('data','output','05_validation','recall','raster')
+# aggregate_validation_results(years_to_process, validation_directory, output_directory)
+# # plot(terra::rast(here('data','output','05_validation','recall','raster','2019_2023_week_record_excess_heat.nc')))
+# 
+# ### Heat ----
+# years_to_process <- 1996:2023
+# validation_directory <- here('data','output','05_validation','recall','week','record','heat')
+# output_directory <- here('data','output','05_validation','recall','raster')
+# aggregate_validation_results(years_to_process, validation_directory, output_directory)
+# 
+# years_to_process <- 2010:2023
+# validation_directory <- here('data','output','05_validation','recall','week','record','heat')
+# output_directory <- here('data','output','05_validation','recall','raster')
+# aggregate_validation_results(years_to_process, validation_directory, output_directory)
+# 
+# years_to_process <- 2019:2023
+# validation_directory <- here('data','output','05_validation','recall','week','record','heat')
+# output_directory <- here('data','output','05_validation','recall','raster')
+# aggregate_validation_results(years_to_process, validation_directory, output_directory)
+# # plot(terra::rast(here('data','output','05_validation','recall','raster','2019_2023_week_record_heat.nc')))
+# 
+# ## 1.00 deg ----
+# ### Excess Heat ----
+# years_to_process <- 2000:2023
+# validation_directory <- here('data','output','05_validation','recall','week','stm4','excess_heat')
+# output_directory <- here('data','output','05_validation','recall','raster')
+# aggregate_validation_results(years_to_process, validation_directory, output_directory)
+# 
+# years_to_process <- 2010:2023
+# validation_directory <- here('data','output','05_validation','recall','week','stm4','excess_heat')
+# output_directory <- here('data','output','05_validation','recall','raster')
+# aggregate_validation_results(years_to_process, validation_directory, output_directory)
+# 
+# years_to_process <- 2019:2023
+# validation_directory <- here('data','output','05_validation','recall','week','stm4','excess_heat')
+# output_directory <- here('data','output','05_validation','recall','raster')
+# aggregate_validation_results(years_to_process, validation_directory, output_directory)
+# # plot(terra::rast(here('data','output','05_validation','recall','raster','2019_2023_week_stm4_excess_heat.nc')))
+# 
+# ### Heat ----
+# years_to_process <- 1996:2023
+# validation_directory <- here('data','output','05_validation','recall','week','stm4','heat')
+# output_directory <- here('data','output','05_validation','recall','raster')
+# aggregate_validation_results(years_to_process, validation_directory, output_directory)
+# 
+# years_to_process <- 2010:2023
+# validation_directory <- here('data','output','05_validation','recall','week','stm4','heat')
+# output_directory <- here('data','output','05_validation','recall','raster')
+# aggregate_validation_results(years_to_process, validation_directory, output_directory)
+# 
+# years_to_process <- 2019:2023
+# validation_directory <- here('data','output','05_validation','recall','week','stm4','heat')
+# output_directory <- here('data','output','05_validation','recall','raster')
+# aggregate_validation_results(years_to_process, validation_directory, output_directory)
+# # plot(terra::rast(here('data','output','05_validation','recall','raster','2019_2023_week_stm4_heat.nc')))
