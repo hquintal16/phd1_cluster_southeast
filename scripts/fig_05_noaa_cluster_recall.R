@@ -4,6 +4,9 @@
 #Author: Hunter Quintal
 #purpose: Produce multiple 9 panel figures of noaa events, clusters, and recall by county
 
+# leftoff calculating both 2019-2023 and 1996-2023 recall. update year range, 
+# file extensions, save file names
+
 # Load Libraries & Set Project Root ----
 library(here)
 here::i_am("scripts/fig_05_noaa_cluster_recall.R")  # Adjust this file path as needed
@@ -213,12 +216,47 @@ output_directory <- here("figures")
 figure <- make_6panel_figure(noaa_directory, cluster_dirs, recall_dirs, year_range, output_directory)
 
 # Define file paths using here
-png_path <- here("figures","05_recall_excess_heat_day.png")
-svg_path <- here("figures","05_recall_excess_heat_day.svg")
+png_path <- here("figures","05_recall_excess_heat_day_2019_2023.png")
+svg_path <- here("figures","05_recall_excess_heat_day_2019_2023.svg")
 
 # Save the plot as a PNG + SVG file
 ggsave(filename = png_path, plot = figure, width = 6, height = 6, dpi = 300)
 ggsave(filename = svg_path, plot = figure, width = 6, height = 6, device = "svg")
+
+# Define the year range
+year_range <- 1996:2023
+
+# NOAA directory: example path
+noaa_directory <- here("data", "output", "05_noaa", "southeast", "summary", "excess_heat")
+
+# Cluster directories: a named list of three directories
+cluster_dirs <- list(
+  stm1 = here("data", "output", "03_cluster", "02_cluster", "points", "stm1", "heat_index", "summary"),
+  record = here("data", "output", "03_cluster", "02_cluster", "points", "record", "heat_index", "summary"),
+  stm4 = here("data", "output", "03_cluster", "02_cluster", "points", "stm4", "heat_index", "summary")
+)
+
+# Recall directories: a named list of three file paths to .nc files
+recall_dirs <- list(
+  stm1 = here("data", "output", "05_validation", "recall", "raster", "2019_2023_day_stm1_excess_heat.nc"),
+  record = here("data", "output", "05_validation", "recall", "raster", "2019_2023_day_record_excess_heat.nc"),
+  stm4 = here("data", "output", "05_validation", "recall", "raster", "2019_2023_day_stm4_excess_heat.nc")
+)
+
+# Output directory for the figure
+output_directory <- here("figures")
+
+# Create the 9-panel figure
+figure <- make_6panel_figure(noaa_directory, cluster_dirs, recall_dirs, year_range, output_directory)
+
+# Define file paths using here
+png_path <- here("figures","05_recall_excess_heat_day_1996_2023.png")
+svg_path <- here("figures","05_recall_excess_heat_day_1996_2023.svg")
+
+# Save the plot as a PNG + SVG file
+ggsave(filename = png_path, plot = figure, width = 6, height = 6, dpi = 300)
+ggsave(filename = svg_path, plot = figure, width = 6, height = 6, device = "svg")
+
 
 ## Heat ----
 
@@ -249,12 +287,47 @@ output_directory <- here("figures")
 figure <- make_6panel_figure(noaa_directory, cluster_dirs, recall_dirs, year_range, output_directory)
 
 # Define file paths using here
-png_path <- here("figures","05_recall_heat_day.png")
-svg_path <- here("figures","05_recall_heat_day.svg")
+png_path <- here("figures","05_recall_heat_day_2019_2023.png")
+svg_path <- here("figures","05_recall_heat_day_2019_2023.svg")
 
 # Save the plot as a PNG + SVG file
 ggsave(filename = png_path, plot = figure, width = 6, height = 6, dpi = 300)
 ggsave(filename = svg_path, plot = figure, width = 6, height = 6, device = "svg")
+
+# Define the year range
+year_range <- 2019:2023
+
+# NOAA directory: example path
+noaa_directory <- here("data", "output", "05_noaa", "southeast", "summary", "heat")
+
+# Cluster directories: a named list of three directories
+cluster_dirs <- list(
+  stm1 = here("data", "output", "03_cluster", "02_cluster", "points", "stm1", "heat_index", "summary"),
+  record = here("data", "output", "03_cluster", "02_cluster", "points", "record", "heat_index", "summary"),
+  stm4 = here("data", "output", "03_cluster", "02_cluster", "points", "stm4", "heat_index", "summary")
+)
+
+# Recall directories: a named list of three file paths to .nc files
+recall_dirs <- list(
+  stm1 = here("data", "output", "05_validation", "recall", "raster", "2019_2023_day_stm1_heat.nc"),
+  record = here("data", "output", "05_validation", "recall", "raster", "2019_2023_day_record_heat.nc"),
+  stm4 = here("data", "output", "05_validation", "recall", "raster", "2019_2023_day_stm4_heat.nc")
+)
+
+# Output directory for the figure
+output_directory <- here("figures")
+
+# Create the 9-panel figure
+figure <- make_6panel_figure(noaa_directory, cluster_dirs, recall_dirs, year_range, output_directory)
+
+# Define file paths using here
+png_path <- here("figures","05_recall_heat_day_1996_2023.png")
+svg_path <- here("figures","05_recall_heat_day_1996_2023.svg")
+
+# Save the plot as a PNG + SVG file
+ggsave(filename = png_path, plot = figure, width = 6, height = 6, dpi = 300)
+ggsave(filename = svg_path, plot = figure, width = 6, height = 6, device = "svg")
+
 
 make_3panel_figure <- function(noaa_dir, cluster_dir, recall_file, year_range, output_dir) {
   # library(terra)
