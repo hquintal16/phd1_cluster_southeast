@@ -143,7 +143,7 @@ for (year in year_month){
     ylim(0,sill) + 
     xlim(0,10) + 
     guides(colour="none") +
-    annotate("text", x=5, y=1,
+    annotate("text", x=5, y=0,
              label= paste0(year,' SSE = ',
                            round(min(optimal.gau.exp.sse),2))) +
     theme_bw()
@@ -314,7 +314,7 @@ for (year in year_month){
     ylim(0,sill) + 
     xlim(0,10) + 
     guides(colour="none") +
-    annotate("text", x=5, y=1,
+    annotate("text", x=5, y=0,
              label= paste0(year,' SSE = ',
                            round(min(optimal.gau.exp.sse),2))) +
     theme_bw()
