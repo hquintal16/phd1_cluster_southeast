@@ -6,7 +6,7 @@
 
 # Load Libraries & Set Project Root ----
 library(here)
-here::i_am("scripts/fig_02_covariance_models.R")  # Adjust this file path as needed
+here::i_am("scripts/fig_03_space_time_metric_2.R")  # Adjust this file path as needed
 source(here::here("scripts", "01_library.R"))
 
 # Define a helper function to floor a year to the start of its decade
@@ -149,8 +149,8 @@ combined_plot <- (p_hi_raw + p_hi_month + p_hi_season) /
   plot_annotation(tag_levels = "a")
 
 # Define file paths using here
-png_path <- here("figures","02_space_time_metric.png")
-svg_path <- here("figures","02_space_time_metric.svg")
+png_path <- here("figures","03_space_time_metric.png")
+svg_path <- here("figures","03_space_time_metric.svg")
 
 # Save the plot as a PNG file
 ggsave(filename = png_path, plot = combined_plot, width = 9, height = 6, dpi = 300)

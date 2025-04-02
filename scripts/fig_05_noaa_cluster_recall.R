@@ -6,7 +6,7 @@
 
 # Load Libraries & Set Project Root ----
 library(here)
-here::i_am("scripts/fig_04_noaa_cluster_recall.R")  # Adjust this file path as needed
+here::i_am("scripts/fig_05_noaa_cluster_recall.R")  # Adjust this file path as needed
 source(here::here("scripts", "01_library.R"))
 
 make_6panel_figure <- function(noaa_dir, cluster_dirs, recall_dirs, year_range, output_dir) {
@@ -190,7 +190,7 @@ make_6panel_figure <- function(noaa_dir, cluster_dirs, recall_dirs, year_range, 
 year_range <- 2019:2023
 
 # NOAA directory: example path
-noaa_directory <- here("data", "output", "04_noaa", "southeast", "summary", "excess_heat")
+noaa_directory <- here("data", "output", "05_noaa", "southeast", "summary", "excess_heat")
 
 # Cluster directories: a named list of three directories
 cluster_dirs <- list(
@@ -201,9 +201,9 @@ cluster_dirs <- list(
 
 # Recall directories: a named list of three file paths to .nc files
 recall_dirs <- list(
-  stm1 = here("data", "output", "04_validation", "recall", "raster", "2019_2023_day_stm1_excess_heat.nc"),
-  record = here("data", "output", "04_validation", "recall", "raster", "2019_2023_day_record_excess_heat.nc"),
-  stm4 = here("data", "output", "04_validation", "recall", "raster", "2019_2023_day_stm4_excess_heat.nc")
+  stm1 = here("data", "output", "05_validation", "recall", "raster", "2019_2023_day_stm1_excess_heat.nc"),
+  record = here("data", "output", "05_validation", "recall", "raster", "2019_2023_day_record_excess_heat.nc"),
+  stm4 = here("data", "output", "05_validation", "recall", "raster", "2019_2023_day_stm4_excess_heat.nc")
 )
 
 # Output directory for the figure
@@ -213,8 +213,8 @@ output_directory <- here("figures")
 figure <- make_6panel_figure(noaa_directory, cluster_dirs, recall_dirs, year_range, output_directory)
 
 # Define file paths using here
-png_path <- here("figures","04_recall_excess_heat_day.png")
-svg_path <- here("figures","04_recall_excess_heat_day.svg")
+png_path <- here("figures","05_recall_excess_heat_day.png")
+svg_path <- here("figures","05_recall_excess_heat_day.svg")
 
 # Save the plot as a PNG + SVG file
 ggsave(filename = png_path, plot = figure, width = 6, height = 6, dpi = 300)
@@ -226,7 +226,7 @@ ggsave(filename = svg_path, plot = figure, width = 6, height = 6, device = "svg"
 year_range <- 2019:2023
 
 # NOAA directory: example path
-noaa_directory <- here("data", "output", "04_noaa", "southeast", "summary", "heat")
+noaa_directory <- here("data", "output", "05_noaa", "southeast", "summary", "heat")
 
 # Cluster directories: a named list of three directories
 cluster_dirs <- list(
@@ -237,9 +237,9 @@ cluster_dirs <- list(
 
 # Recall directories: a named list of three file paths to .nc files
 recall_dirs <- list(
-  stm1 = here("data", "output", "04_validation", "recall", "raster", "2019_2023_day_stm1_heat.nc"),
-  record = here("data", "output", "04_validation", "recall", "raster", "2019_2023_day_record_heat.nc"),
-  stm4 = here("data", "output", "04_validation", "recall", "raster", "2019_2023_day_stm4_heat.nc")
+  stm1 = here("data", "output", "05_validation", "recall", "raster", "2019_2023_day_stm1_heat.nc"),
+  record = here("data", "output", "05_validation", "recall", "raster", "2019_2023_day_record_heat.nc"),
+  stm4 = here("data", "output", "05_validation", "recall", "raster", "2019_2023_day_stm4_heat.nc")
 )
 
 # Output directory for the figure
@@ -249,8 +249,8 @@ output_directory <- here("figures")
 figure <- make_6panel_figure(noaa_directory, cluster_dirs, recall_dirs, year_range, output_directory)
 
 # Define file paths using here
-png_path <- here("figures","04_recall_heat_day.png")
-svg_path <- here("figures","04_recall_heat_day.svg")
+png_path <- here("figures","05_recall_heat_day.png")
+svg_path <- here("figures","05_recall_heat_day.svg")
 
 # Save the plot as a PNG + SVG file
 ggsave(filename = png_path, plot = figure, width = 6, height = 6, dpi = 300)
@@ -408,13 +408,13 @@ make_3panel_figure <- function(noaa_dir, cluster_dir, recall_file, year_range, o
 year_range <- 2019:2023
 
 # NOAA directory: example path
-noaa_directory <- here("data", "output", "04_noaa", "southeast", "summary", "flash_flood")
+noaa_directory <- here("data", "output", "05_noaa", "southeast", "summary", "flash_flood")
 
 # Cluster directories: a named list of three directories
 cluster_dirs <- here("data", "output", "03_cluster", "02_cluster", "points", "stm1", "precipitation", "summary")
 
 # Recall directories: a named list of three file paths to .nc files
-recall_dirs <- here("data", "output", "04_validation", "recall", "raster", "2019_2023_day_stm1_flash_flood.nc")
+recall_dirs <- here("data", "output", "05_validation", "recall", "raster", "2019_2023_day_stm1_flash_flood.nc")
 
 # Output directory for the figure
 output_directory <- here("figures")
@@ -423,8 +423,8 @@ output_directory <- here("figures")
 figure <- make_3panel_figure(noaa_directory, cluster_dirs, recall_dirs, year_range, output_directory)
 
 # Define file paths using here
-png_path <- here("figures","04_recall_flash_flood_day.png")
-svg_path <- here("figures","04_recall_flash_flood_day.svg")
+png_path <- here("figures","05_recall_flash_flood_day.png")
+svg_path <- here("figures","05_recall_flash_flood_day.svg")
 
 # Save the plot as a PNG + SVG file
 ggsave(filename = png_path, plot = figure, width = 3, height = 6, dpi = 300)
@@ -436,13 +436,13 @@ ggsave(filename = svg_path, plot = figure, width = 3, height = 6, device = "svg"
 year_range <- 2019:2023
 
 # NOAA directory: example path
-noaa_directory <- here("data", "output", "04_noaa", "southeast", "summary", "flood")
+noaa_directory <- here("data", "output", "05_noaa", "southeast", "summary", "flood")
 
 # Cluster directories: a named list of three directories
 cluster_dirs <- here("data", "output", "03_cluster", "02_cluster", "points", "stm1", "precipitation", "summary")
 
 # Recall directories: a named list of three file paths to .nc files
-recall_dirs <- here("data", "output", "04_validation", "recall", "raster", "2019_2023_day_stm1_flood.nc")
+recall_dirs <- here("data", "output", "05_validation", "recall", "raster", "2019_2023_day_stm1_flood.nc")
 
 # Output directory for the figure
 output_directory <- here("figures")
@@ -451,8 +451,8 @@ output_directory <- here("figures")
 figure <- make_3panel_figure(noaa_directory, cluster_dirs, recall_dirs, year_range, output_directory)
 
 # Define file paths using here
-png_path <- here("figures","04_recall_flood_day.png")
-svg_path <- here("figures","04_recall_flood_day.svg")
+png_path <- here("figures","05_recall_flood_day.png")
+svg_path <- here("figures","05_recall_flood_day.svg")
 
 # Save the plot as a PNG + SVG file
 ggsave(filename = png_path, plot = figure, width = 3, height = 6, dpi = 300)
@@ -464,13 +464,13 @@ ggsave(filename = svg_path, plot = figure, width = 3, height = 6, device = "svg"
 year_range <- 2019:2023
 
 # NOAA directory: example path
-noaa_directory <- here("data", "output", "04_noaa", "southeast", "summary", "heavy_rain")
+noaa_directory <- here("data", "output", "05_noaa", "southeast", "summary", "heavy_rain")
 
 # Cluster directories: a named list of three directories
 cluster_dirs <- here("data", "output", "03_cluster", "02_cluster", "points", "stm1", "precipitation", "summary")
 
 # Recall directories: a named list of three file paths to .nc files
-recall_dirs <- here("data", "output", "04_validation", "recall", "raster", "2019_2023_day_stm1_heavy_rain.nc")
+recall_dirs <- here("data", "output", "05_validation", "recall", "raster", "2019_2023_day_stm1_heavy_rain.nc")
 
 # Output directory for the figure
 output_directory <- here("figures")
@@ -479,8 +479,8 @@ output_directory <- here("figures")
 figure <- make_3panel_figure(noaa_directory, cluster_dirs, recall_dirs, year_range, output_directory)
 
 # Define file paths using here
-png_path <- here("figures","04_recall_heavy_rain_day.png")
-svg_path <- here("figures","04_recall_heavy_rain_day.svg")
+png_path <- here("figures","05_recall_heavy_rain_day.png")
+svg_path <- here("figures","05_recall_heavy_rain_day.svg")
 
 # Save the plot as a PNG + SVG file
 ggsave(filename = png_path, plot = figure, width = 3, height = 6, dpi = 300)
@@ -492,13 +492,13 @@ ggsave(filename = svg_path, plot = figure, width = 3, height = 6, device = "svg"
 year_range <- 2019:2023
 
 # NOAA directory: example path
-noaa_directory <- here("data", "output", "04_noaa", "southeast", "summary", "hurricane")
+noaa_directory <- here("data", "output", "05_noaa", "southeast", "summary", "hurricane")
 
 # Cluster directories: a named list of three directories
 cluster_dirs <- here("data", "output", "03_cluster", "02_cluster", "points", "stm1", "precipitation", "summary")
 
 # Recall directories: a named list of three file paths to .nc files
-recall_dirs <- here("data", "output", "04_validation", "recall", "raster", "2019_2023_day_stm1_hurricane.nc")
+recall_dirs <- here("data", "output", "05_validation", "recall", "raster", "2019_2023_day_stm1_hurricane.nc")
 
 # Output directory for the figure
 output_directory <- here("figures")
@@ -507,8 +507,8 @@ output_directory <- here("figures")
 figure <- make_3panel_figure(noaa_directory, cluster_dirs, recall_dirs, year_range, output_directory)
 
 # Define file paths using here
-png_path <- here("figures","04_recall_hurricane_day.png")
-svg_path <- here("figures","04_recall_hurricane_day.svg")
+png_path <- here("figures","05_recall_hurricane_day.png")
+svg_path <- here("figures","05_recall_hurricane_day.svg")
 
 # Save the plot as a PNG + SVG file
 ggsave(filename = png_path, plot = figure, width = 3, height = 6, dpi = 300)
@@ -520,13 +520,13 @@ ggsave(filename = svg_path, plot = figure, width = 3, height = 6, device = "svg"
 year_range <- 2019:2023
 
 # NOAA directory: example path
-noaa_directory <- here("data", "output", "04_noaa", "southeast", "summary", "tropical_depression")
+noaa_directory <- here("data", "output", "05_noaa", "southeast", "summary", "tropical_depression")
 
 # Cluster directories: a named list of three directories
 cluster_dirs <- here("data", "output", "03_cluster", "02_cluster", "points", "stm1", "precipitation", "summary")
 
 # Recall directories: a named list of three file paths to .nc files
-recall_dirs <- here("data", "output", "04_validation", "recall", "raster", "2019_2023_day_stm1_tropical_depression.nc")
+recall_dirs <- here("data", "output", "05_validation", "recall", "raster", "2019_2023_day_stm1_tropical_depression.nc")
 
 # Output directory for the figure
 output_directory <- here("figures")
@@ -535,8 +535,8 @@ output_directory <- here("figures")
 figure <- make_3panel_figure(noaa_directory, cluster_dirs, recall_dirs, year_range, output_directory)
 
 # Define file paths using here
-png_path <- here("figures","04_recall_tropical_depression_day.png")
-svg_path <- here("figures","04_recall_tropical_depression_day.svg")
+png_path <- here("figures","05_recall_tropical_depression_day.png")
+svg_path <- here("figures","05_recall_tropical_depression_day.svg")
 
 # Save the plot as a PNG + SVG file
 ggsave(filename = png_path, plot = figure, width = 3, height = 6, dpi = 300)
@@ -548,13 +548,13 @@ ggsave(filename = svg_path, plot = figure, width = 3, height = 6, device = "svg"
 year_range <- 2019:2023
 
 # NOAA directory: example path
-noaa_directory <- here("data", "output", "04_noaa", "southeast", "summary", "tropical_storm")
+noaa_directory <- here("data", "output", "05_noaa", "southeast", "summary", "tropical_storm")
 
 # Cluster directories: a named list of three directories
 cluster_dirs <- here("data", "output", "03_cluster", "02_cluster", "points", "stm1", "precipitation", "summary")
 
 # Recall directories: a named list of three file paths to .nc files
-recall_dirs <- here("data", "output", "04_validation", "recall", "raster", "2019_2023_day_stm1_tropical_storm.nc")
+recall_dirs <- here("data", "output", "05_validation", "recall", "raster", "2019_2023_day_stm1_tropical_storm.nc")
 
 # Output directory for the figure
 output_directory <- here("figures")
@@ -563,8 +563,8 @@ output_directory <- here("figures")
 figure <- make_3panel_figure(noaa_directory, cluster_dirs, recall_dirs, year_range, output_directory)
 
 # Define file paths using here
-png_path <- here("figures","04_recall_tropical_storm_day.png")
-svg_path <- here("figures","04_recall_tropical_storm_day.svg")
+png_path <- here("figures","05_recall_tropical_storm_day.png")
+svg_path <- here("figures","05_recall_tropical_storm_day.svg")
 
 # Save the plot as a PNG + SVG file
 ggsave(filename = png_path, plot = figure, width = 3, height = 6, dpi = 300)
@@ -576,13 +576,13 @@ ggsave(filename = svg_path, plot = figure, width = 3, height = 6, device = "svg"
 year_range <- 2019:2023
 
 # NOAA directory: example path
-noaa_directory <- here("data", "output", "04_noaa", "southeast", "summary", "typhoon")
+noaa_directory <- here("data", "output", "05_noaa", "southeast", "summary", "typhoon")
 
 # Cluster directories: a named list of three directories
 cluster_dirs <- here("data", "output", "03_cluster", "02_cluster", "points", "stm1", "precipitation", "summary")
 
 # Recall directories: a named list of three file paths to .nc files
-recall_dirs <- here("data", "output", "04_validation", "recall", "raster", "2019_2023_day_stm1_typhoon.nc")
+recall_dirs <- here("data", "output", "05_validation", "recall", "raster", "2019_2023_day_stm1_typhoon.nc")
 
 # Output directory for the figure
 output_directory <- here("figures")
@@ -591,8 +591,8 @@ output_directory <- here("figures")
 figure <- make_3panel_figure(noaa_directory, cluster_dirs, recall_dirs, year_range, output_directory)
 
 # Define file paths using here
-png_path <- here("figures","04_recall_typhoon_day.png")
-svg_path <- here("figures","04_recall_typhoon_day.svg")
+png_path <- here("figures","05_recall_typhoon_day.png")
+svg_path <- here("figures","05_recall_typhoon_day.svg")
 
 # Save the plot as a PNG + SVG file
 ggsave(filename = png_path, plot = figure, width = 3, height = 6, dpi = 300)
@@ -654,47 +654,47 @@ aggregate_validation_csv_overall <- function(input_folder, year_range) {
 
 ## 0.25 ----
 
-input_folder <- here("data", "output", "04_validation", "recall", "day", "stm1", "excess_heat")
+input_folder <- here("data", "output", "05_validation", "recall", "day", "stm1", "excess_heat")
 year_range <- 2019:2023
 overall_results <- aggregate_validation_csv_overall(input_folder, year_range)
 excess_heat <- overall_results
 
-input_folder <- here("data", "output", "04_validation", "recall", "day", "stm1", "flash_flood")
+input_folder <- here("data", "output", "05_validation", "recall", "day", "stm1", "flash_flood")
 year_range <- 2019:2023
 overall_results <- aggregate_validation_csv_overall(input_folder, year_range)
 flash_flood <- overall_results
 
-input_folder <- here("data", "output", "04_validation", "recall", "day", "stm1", "flood")
+input_folder <- here("data", "output", "05_validation", "recall", "day", "stm1", "flood")
 year_range <- 2019:2023
 overall_results <- aggregate_validation_csv_overall(input_folder, year_range)
 flood <- overall_results
 
-input_folder <- here("data", "output", "04_validation", "recall", "day", "stm1", "heat")
+input_folder <- here("data", "output", "05_validation", "recall", "day", "stm1", "heat")
 year_range <- 2019:2023
 overall_results <- aggregate_validation_csv_overall(input_folder, year_range)
 heat <- overall_results
 
-input_folder <- here("data", "output", "04_validation", "recall", "day", "stm1", "heavy_rain")
+input_folder <- here("data", "output", "05_validation", "recall", "day", "stm1", "heavy_rain")
 year_range <- 2019:2023
 overall_results <- aggregate_validation_csv_overall(input_folder, year_range)
 heavy_rain <- overall_results
 
-input_folder <- here("data", "output", "04_validation", "recall", "day", "stm1", "hurricane")
+input_folder <- here("data", "output", "05_validation", "recall", "day", "stm1", "hurricane")
 year_range <- 2019:2023
 overall_results <- aggregate_validation_csv_overall(input_folder, year_range)
 hurricane <- overall_results
 
-input_folder <- here("data", "output", "04_validation", "recall", "day", "stm1", "tropical_depression")
+input_folder <- here("data", "output", "05_validation", "recall", "day", "stm1", "tropical_depression")
 year_range <- 2019:2023
 overall_results <- aggregate_validation_csv_overall(input_folder, year_range)
 tropical_depression <- overall_results
 
-input_folder <- here("data", "output", "04_validation", "recall", "day", "stm1", "tropical_storm")
+input_folder <- here("data", "output", "05_validation", "recall", "day", "stm1", "tropical_storm")
 year_range <- 2019:2023
 overall_results <- aggregate_validation_csv_overall(input_folder, year_range)
 tropical_storm <- overall_results
 
-input_folder <- here("data", "output", "04_validation", "recall", "day", "stm1", "typhoon")
+input_folder <- here("data", "output", "05_validation", "recall", "day", "stm1", "typhoon")
 year_range <- 2019:2023
 overall_results <- aggregate_validation_csv_overall(input_folder, year_range)
 typhoon <- overall_results
@@ -704,12 +704,12 @@ agg_recall <- data.frame(stm1 = c(excess_heat$recall,flash_flood$recall,flood$re
 
 ## 0.39 ----
 
-input_folder <- here("data", "output", "04_validation", "recall", "day", "record", "excess_heat")
+input_folder <- here("data", "output", "05_validation", "recall", "day", "record", "excess_heat")
 year_range <- 2019:2023
 overall_results <- aggregate_validation_csv_overall(input_folder, year_range)
 excess_heat <- overall_results
 
-input_folder <- here("data", "output", "04_validation", "recall", "day", "record", "heat")
+input_folder <- here("data", "output", "05_validation", "recall", "day", "record", "heat")
 year_range <- 2019:2023
 overall_results <- aggregate_validation_csv_overall(input_folder, year_range)
 heat <- overall_results
@@ -718,4 +718,4 @@ agg_recall$record <- c(excess_heat$recall,NA,NA,heat$recall,NA,NA,NA,NA)
 row.names(agg_recall) <- c('Excess Heat','Flash Flood','Flood','Heat','Heavy Rain','Hurricane','Tropical Depression','Tropical Storm')
 
 # save
-write.csv(agg_recall,here('data','output','04_validation','recall','2019_2023_recall.csv'))
+write.csv(agg_recall,here('data','output','05_validation','recall','2019_2023_recall.csv'))
