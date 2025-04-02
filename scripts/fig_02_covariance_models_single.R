@@ -143,7 +143,7 @@ for (year in year_month){
     ylim(0,sill) + 
     xlim(0,10) + 
     guides(colour="none") +
-    annotate("text", x=15/2, y=sill,
+    annotate("text", x=5, y=1,
              label= paste0(year,' SSE = ',
                            round(min(optimal.gau.exp.sse),2))) +
     theme_bw()
@@ -181,7 +181,7 @@ for (year in year_month){
   stm.index <- stm.index + 1
   
 }
-
+# fitted.cov.plots.heat.index[[1]]
 ## Precipitation ----
 
 # Create data frames
@@ -314,7 +314,7 @@ for (year in year_month){
     ylim(0,sill) + 
     xlim(0,10) + 
     guides(colour="none") +
-    annotate("text", x=15/2, y=sill,
+    annotate("text", x=5, y=1,
              label= paste0(year,' SSE = ',
                            round(min(optimal.gau.exp.sse),2))) +
     theme_bw()
@@ -351,4 +351,23 @@ for (year in year_month){
   # update index
   stm.index <- stm.index + 1
   
+}
+
+# Save ----
+for (i in seq_along(year_month)) { 
+  # Combine the heat index and precipitation plots vertically
+  combined_plot <- fitted.cov.plots.heat.index[[i]] / fitted.cov.plots.precipitation[[i]] +
+    plot_annotation(tag_levels = "a")  # this will label panels as "a", "b", etc.
+  # 
+  # print(combined_plot)
+  
+  # Dynamically create file names using the current year_month value
+  current_ym <- year_month[i]
+  print(current_ym)
+  png_path <- here("figures", paste0("02_covariance_model_", current_ym, ".png"))
+  svg_path <- here("figures", paste0("02_covariance_model_", current_ym, ".svg"))
+  
+  # Save the combined plot as PNG and SVG
+  ggsave(filename = png_path, plot = combined_plot, width = 6, height = 7, dpi = 300)
+  ggsave(filename = svg_path, plot = combined_plot, width = 6, height = 7, device = "svg")
 }
