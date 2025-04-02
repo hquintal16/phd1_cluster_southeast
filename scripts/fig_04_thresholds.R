@@ -6,7 +6,7 @@
 
 # Load Libraries & Set Project Root ----
 library(here)
-here::i_am("scripts/fig_04_thresholds.R")  # Adjust this file path as needed
+here::i_am("scripts/fig_03_thresholds.R")  # Adjust this file path as needed
 source(here::here("scripts", "01_library.R"))
 
 ## Read in koppen-geiger geotiffs using here
@@ -92,8 +92,8 @@ p1 <- ggplot() +
 combined_plot <- p1 + p2 + plot_annotation(tag_levels = 'a')
 
 # Define file paths using here
-png_path <- here("figures","04_threholds.png")
-svg_path <- here("figures","04_threholds.svg")
+png_path <- here("figures","03_threholds.png")
+svg_path <- here("figures","03_threholds.svg")
 
 # Save the plot as a PNG file
 ggsave(filename = png_path, plot = combined_plot, width = 12, height = 6, dpi = 300)
@@ -137,8 +137,8 @@ p1 <- ggplot() +
 combined_plot <- p1 + p2 + plot_annotation(tag_levels = 'a')
 
 # Define file paths using here
-png_path <- here("figures","04_threholds_conus.png")
-svg_path <- here("figures","04_threholds_conus.svg")
+png_path <- here("figures","03_threholds_conus.png")
+svg_path <- here("figures","03_threholds_conus.svg")
 
 # Save the plot as a PNG file
 ggsave(filename = png_path, plot = combined_plot, width = 12, height = 6, dpi = 300)
