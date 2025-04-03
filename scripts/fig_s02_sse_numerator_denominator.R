@@ -52,83 +52,6 @@ stm_precip <- prepare_stm(precip_file, "Precipitation")
 # Combine the datasets for plotting
 raw_data <- bind_rows(stm_heat, stm_precip)
 
-# Reshape the data to long format for the three measures.
-# (Assumes the files contain columns: sse, stm1.numerator, and stm1.denominator.)
-raw_data_long <- raw_data %>%
-  pivot_longer(
-    cols = c(sse, stm1.numerator, stm1.denominator),
-    names_to = "measure",
-    values_to = "value"
-  ) %>%
-  # Set factor levels to control the order of rows in the plot:
-  mutate(measure = factor(measure, levels = c("sse", "stm1.numerator", "stm1.denominator")))
-
-# Create the base plot: facet by measure (rows) and by variable (columns)
-p <- ggplot(raw_data_long, aes(x = date, y = value)) +
-  geom_line() +
-  facet_grid(measure ~ variable, scales = "free_y") +
-  theme_minimal() +
-  labs(x = "Date", y = "Value",
-       title = "Time Series of SSE, Numerator, and Denominator")
-
-# Overlay loess smoothers on the numerator and denominator time series only
-p <- p + geom_smooth(
-  data = filter(raw_data_long, measure %in% c("stm1.numerator", "stm1.denominator")),
-  method = "loess", se = FALSE, color = "black"
-)
-
-# Display the plot
-print(p)
-
-library(tidyverse)
-library(lubridate)
-library(here)
-library(ggplot2)
-library(patchwork)
-
-# Define a helper function to floor a year to the start of its decade
-floor_decade <- function(year) {
-  year - year %% 10
-}
-
-# Function to read and prepare data
-prepare_stm <- function(file_path, var_name) {
-  stm <- readr::read_csv(file_path)
-  
-  stm <- stm %>%
-    mutate(
-      date = as.Date(paste0(as.character(year_mo), "01"), format = "%Y%m%d"),
-      year = year(date),
-      decade = floor_decade(year),
-      month_num = month(date),
-      season = case_when(
-        month_num %in% c(12, 1, 2) ~ "Winter",
-        month_num %in% c(3, 4, 5) ~ "Spring",
-        month_num %in% c(6, 7, 8) ~ "Summer",
-        TRUE ~ "Autumn"
-      ),
-      month = factor(month.abb[month_num],
-                     levels = c("Dec", "Jan", "Feb", "Mar", "Apr", "May", 
-                                "Jun", "Jul", "Aug", "Sep", "Oct", "Nov")),
-      season = factor(season, levels = c("Winter", "Spring", "Summer", "Autumn")),
-      variable = var_name
-    )
-  return(stm)
-}
-
-# Define file paths (adjust as necessary)
-heat_file <- here("data", "output", "02_covariance", "03_space_time_metric", 
-                  "heat_index", "month", "heat_index_space_time_metric_optimal.txt")
-precip_file <- here("data", "output", "02_covariance", "03_space_time_metric", 
-                    "precipitation", "month", "precipitation_space_time_metric_optimal.txt")
-
-# Prepare the datasets
-stm_heat <- prepare_stm(heat_file, "HeatIndex")
-stm_precip <- prepare_stm(precip_file, "Precipitation")
-
-# Combine the datasets for plotting
-raw_data <- bind_rows(stm_heat, stm_precip)
-
 # Define colors with 60% opacity for each variable
 colors <- c("HeatIndex" = scales::alpha("red", 0.6), 
             "Precipitation" = scales::alpha("blue", 0.6))
@@ -232,3 +155,28 @@ svg_path <- here("figures", "s02_sse_numerator_denominator.svg")
 # Save the plot as a PNG + SVG file
 ggsave(filename = png_path, plot = combined_plot, width = 9, height = 9, dpi = 300)
 ggsave(filename = svg_path, plot = combined_plot, width = 9, height = 9, device = "svg")
+
+# Define file paths (adjust as necessary)
+heat_file <- here("data", "output", "02_covariance", "03_space_time_metric", 
+                  "heat_index", "month", "heat_index_space_time_metric_optimal.txt")
+precip_file <- here("data", "output", "02_covariance", "03_space_time_metric", 
+                    "precipitation", "month", "precipitation_space_time_metric_optimal.txt")
+
+stm_heat <- readr::read_csv(heat_file)
+stm_precip <- readr::read_csv(precip_file)
+
+# calculate 1st, 3rd quantiles of stm2
+quantile(stm_heat$stm2,c(1/4,1/2,3/4))
+quantile(stm_precip$stm2,c(1/4,1/2,3/4))
+
+# calculate median of stm2
+median(stm_heat$stm2)
+median(stm_precip$stm2)
+
+# calculate # of HI stm = 1, < 1
+sum(stm_heat$stm2 == 1)
+sum(stm_heat$stm2 < 1)
+sum(stm_heat$stm2 > 1)
+sum(stm_precip$stm2 < 1)
+
+# 
