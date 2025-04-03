@@ -10,287 +10,525 @@ library(here)
 here::i_am("scripts/19_dataframe_cluster.R")
 source(here::here("scripts", "01_library.R"))
 
-process_cluster_noaa_parallel <- function(cluster_folder, era5_folder, 
-                                          noaa_excess_heat_folder, noaa_heat_folder, 
-                                          noaa_impacts_folder, output_csv) {
-  start_time_overall <- Sys.time()
-  message(sprintf("Cluster processing (parallel per file) started at: %s", start_time_overall))
+## Look up table ----
+
+create_lookup_table <- function(input_directory, output_csv_path) {
+  # Resolve the input directory using here::here
+  in_dir <- here::here(input_directory)
   
-  # --- Load NOAA summary CSVs from the impacts folder ---
-  noaa_excess_summary_file <- file.path(noaa_impacts_folder, "NOAA_excess_heat_summary.csv")
-  noaa_heat_summary_file   <- file.path(noaa_impacts_folder, "NOAA_heat_summary.csv")
+  # List all .nc files with the naming convention yyyy-mm-dd_cluster_x.nc
+  files <- list.files(
+    path = in_dir,
+    pattern = "^\\d{4}-\\d{2}-\\d{2}_cluster_\\d+\\.nc$",
+    full.names = TRUE
+  )
   
-  if(!file.exists(noaa_excess_summary_file)) {
-    stop("NOAA excess heat summary file not found: ", noaa_excess_summary_file)
-  }
-  if(!file.exists(noaa_heat_summary_file)) {
-    stop("NOAA heat summary file not found: ", noaa_heat_summary_file)
-  }
-  
-  noaa_excess_summary <- read.csv(noaa_excess_summary_file, stringsAsFactors = FALSE)
-  noaa_heat_summary   <- read.csv(noaa_heat_summary_file, stringsAsFactors = FALSE)
-  
-  # Convert the date fields from mm/dd/YYYY to Date objects.
-  noaa_excess_summary$start_time <- as.Date(noaa_excess_summary$start_time, format = "%m/%d/%Y")
-  noaa_excess_summary$end_time   <- as.Date(noaa_excess_summary$end_time,   format = "%m/%d/%Y")
-  noaa_heat_summary$start_time   <- as.Date(noaa_heat_summary$start_time,   format = "%m/%d/%Y")
-  noaa_heat_summary$end_time     <- as.Date(noaa_heat_summary$end_time,     format = "%m/%d/%Y")
-  
-  # --- List all cluster .nc files and filter to those with a date >= 1996-01-01 ---
-  nc_files <- list.files(cluster_folder, pattern = "\\.nc$", full.names = TRUE)
-  if(length(nc_files) == 0){
-    stop("No .nc files found in ", cluster_folder)
+  # Check if any files were found
+  if (length(files) == 0) {
+    message("No matching .nc files found in ", in_dir)
+    return(NULL)
   }
   
-  filtered_nc_files <- nc_files[sapply(nc_files, function(file) {
-    file_base <- basename(file)
-    m <- regexec("county_event_(\\d{4}-\\d{2}-\\d{2})_cluster_([0-9]+)\\.nc", file_base)
-    parts <- regmatches(file_base, m)
-    if(length(parts[[1]]) >= 3){
-      event_date <- as.Date(parts[[1]][2])
-      return(event_date >= as.Date("1996-01-01"))
+  # Extract the date from each filename (assumes the date is the first 10 characters)
+  file_dates <- as.Date(substr(basename(files), 1, 10))
+  
+  # Order files by date, and use the filename as a tiebreaker to ensure reproducibility
+  sorted_order <- order(file_dates, basename(files))
+  files_sorted <- files[sorted_order]
+  
+  # Build the lookup table
+  lookup_table <- data.frame(
+    original_file   = basename(files_sorted),
+    original_index  = sub(".*_cluster_(\\d+)\\.nc$", "\\1", basename(files_sorted)),
+    new_index       = sprintf("%04d", seq_along(files_sorted)),
+    new_file        = paste0(substr(basename(files_sorted), 1, 10), "_cluster_", sprintf("%04d", seq_along(files_sorted)), ".nc"),
+    stringsAsFactors = FALSE
+  )
+  
+  # Write the lookup table to a CSV file
+  write.csv(lookup_table, file = output_csv_path, row.names = FALSE)
+  
+  # Return the lookup table (invisibly)
+  invisible(lookup_table)
+}
+
+### 0.25 ----
+create_lookup_table(
+  input_directory = here('data','output','03_cluster','02_cluster','points','stm1','heat_index','raw'),
+  output_csv_path = here('data','output','03_cluster','02_cluster','points','stm1','heat_index','lookup_table.csv')
+)
+### 0.39 ----
+create_lookup_table(
+  input_directory = here('data','output','03_cluster','02_cluster','points','record','heat_index','raw'),
+  output_csv_path = here('data','output','03_cluster','02_cluster','points','record','heat_index','lookup_table.csv')
+)
+
+# Load a reference raster to set the CRS
+region.crs <- terra::rast(here::here("data", "output", "01_era5", "daily", "heat_index", "heat_index_daily_maximum_194001.nc"))
+
+# Read in the Koppen-Geiger geotiff and create a "resolution" raster
+directory <- here::here("data", "input", "regional_aggregation", "koppen_geiger", "1991_2020", "koppen_geiger_0p1.tif")
+resolution <- terra::rast(directory)
+resolution <- resolution / resolution
+
+# Load US county boundaries using the maps package, convert to an sf object, then to a SpatVector
+us.states <- st_as_sf(maps::map("county", plot = FALSE, fill = TRUE))
+us.states.vect <- terra::vect(us.states)
+
+# Rasterize using the resolution from the Koppen-Geiger file (this will have character values)
+us.states.rast <- terra::rasterize(us.states.vect, resolution, field = 'ID')
+us.states.rast <- terra::crop(us.states.rast, terra::ext(region.crs))
+
+# create_cluster_summary <- function(
+    #     lookup_file_path,
+#     cluster_file_path,
+#     cluster_folder,
+#     us_states_rast,
+#     output_csv_path = NULL
+# ) {
+#   # Load required packages
+#   # library(terra)
+#   
+#   # Read the CSV files
+#   lookup <- read.csv(lookup_file_path, stringsAsFactors = FALSE)
+#   cluster_data <- read.csv(cluster_file_path, stringsAsFactors = FALSE)
+#   
+#   # Convert the 'date' column to Date (if you still need it for other calculations)
+#   # Adjust the format string if your dates differ
+#   cluster_data$date <- as.Date(cluster_data$date, format = "%m/%d/%Y")
+#   
+#   # Ensure the lookup table is processed in sequential order (by new_index)
+#   lookup <- lookup[order(lookup$new_index), ]
+#   
+#   # Initialize a list to store summary rows for each cluster
+#   summary_list <- list()
+#   
+#   # Create a progress bar with a maximum value equal to the number of clusters
+#   pb <- txtProgressBar(min = 0, max = nrow(lookup), style = 3)
+#   
+#   # Loop over each cluster (each row in the lookup table)
+#   for (i in seq_len(nrow(lookup))) {
+#     current_lookup <- lookup[i, ]
+#     cluster_id <- current_lookup$new_index      # new_index becomes the cluster_id
+#     original_index <- as.character(current_lookup$original_index)
+#     
+#     # Subset cluster_data where 'cluster' equals the original index
+#     # (Only used for ERA5 stats now, not for date range)
+#     subset_cluster <- subset(cluster_data, as.character(cluster) == original_index)
+#     
+#     # Calculate ERA5 statistics if data exists in the CSV; otherwise, assign NA
+#     if (nrow(subset_cluster) > 0) {
+#       era5_mean   <- mean(subset_cluster$observation, na.rm = TRUE)
+#       era5_median <- median(subset_cluster$observation, na.rm = TRUE)
+#       era5_max    <- max(subset_cluster$observation, na.rm = TRUE)
+#     } else {
+#       era5_mean   <- NA
+#       era5_median <- NA
+#       era5_max    <- NA
+#     }
+#     
+#     # Default date/duration values
+#     start_date <- NA
+#     end_date   <- NA
+#     duration   <- NA
+#     
+#     # Build the file name. First try using new_file from the lookup table.
+#     file_name_candidate <- current_lookup$new_file
+#     nc_file_path <- file.path(cluster_folder, file_name_candidate)
+#     
+#     # If the file is not found, prepend "county_event_" to the file name.
+#     if (!file.exists(nc_file_path)) {
+#       file_name_candidate <- paste0("county_event_", current_lookup$new_file)
+#       nc_file_path <- file.path(cluster_folder, file_name_candidate)
+#     }
+#     
+#     # Initialize exposed_area and exposed_counties as NA by default
+#     exposed_area <- NA
+#     exposed_counties <- NA
+#     
+#     # If the file exists, proceed to read and extract info
+#     if (file.exists(nc_file_path)) {
+#       # Read in the .nc file as a raster
+#       event_rast <- rast(nc_file_path)
+#       
+#       # --- Extract Time Dimension for Start/End Dates ---
+#       # 'terra::time()' should return a vector of Dates or POSIXct times
+#       time_vector <- terra::time(event_rast)
+#       
+#       # If the time dimension is valid and non-empty, compute start_date, end_date, and duration
+#       if (!is.null(time_vector) && length(time_vector) > 0) {
+#         # Convert to Date if it is POSIXct (or numeric “days since…”). 
+#         # terra often does this automatically if the NetCDF is CF-compliant.
+#         # If it's already Date, this will be fine.
+#         time_vector <- as.Date(time_vector)
+#         
+#         start_date <- min(time_vector, na.rm = TRUE)
+#         end_date   <- max(time_vector, na.rm = TRUE)
+#         duration   <- as.numeric(end_date - start_date)
+#       }
+#       
+#       # --- Exposed Area Calculation ---
+#       # Sum over layers (if needed) and create a binary mask (nonzero cells)
+#       noaa_sum <- app(event_rast, fun = sum, na.rm = TRUE)
+#       event_mask_binary <- noaa_sum != 0
+#       
+#       # Calculate cell area, accounting for geographic coordinates if applicable
+#       res_vals <- res(event_rast)
+#       if (is.lonlat(event_rast)) {
+#         cell_area <- (111.32 * res_vals[1]) * (111.32 * res_vals[2])
+#       } else {
+#         cell_area <- (res_vals[1] * res_vals[2]) / 1e6
+#       }
+#       exposed_area <- sum(values(event_mask_binary), na.rm = TRUE) * cell_area
+#       
+#       # --- Extract Exposed Counties/States ---
+#       event_cells <- which(values(event_mask_binary) != 0)
+#       if (length(event_cells) > 0) {
+#         # Use terra::xyFromCell to get coordinates
+#         coords <- terra::xyFromCell(event_rast, event_cells)
+#         # Extract from the provided SpatRaster
+#         extracted <- terra::extract(us_states_rast, coords)
+#         # Assume the region names are stored in the first layer
+#         layer_name <- names(us_states_rast)[1]
+#         unique_regions <- unique(extracted[[layer_name]])
+#         exposed_counties <- paste(unique_regions, collapse = ";")
+#       }
+#     } else {
+#       warning("File not found: ", nc_file_path, 
+#               ". Skipping exposed area and county extraction for cluster ", cluster_id)
+#     }
+#     
+#     # Combine the metrics for the current cluster into a data frame row
+#     summary_list[[i]] <- data.frame(
+#       cluster_id       = cluster_id,
+#       start_date       = start_date,
+#       end_date         = end_date,
+#       duration         = duration,
+#       exposed_counties = exposed_counties,
+#       exposed_area     = exposed_area,
+#       era5_mean        = era5_mean,
+#       era5_median      = era5_median,
+#       era5_max         = era5_max,
+#       stringsAsFactors = FALSE
+#     )
+#     
+#     # Update the progress bar
+#     setTxtProgressBar(pb, i)
+#   }
+#   
+#   # Close the progress bar
+#   close(pb)
+#   
+#   # Combine all rows into one summary data frame
+#   summary_df <- do.call(rbind, summary_list)
+#   
+#   # Optionally write the summary to a CSV file if an output path is provided
+#   if (!is.null(output_csv_path)) {
+#     write.csv(summary_df, file = output_csv_path, row.names = FALSE)
+#   }
+#   
+#   return(summary_df)
+# }
+
+## Cluster IDF ----
+
+create_cluster_summary <- function(
+    lookup_file_path,
+    cluster_file_path,
+    cluster_folder,
+    us_states_rast,
+    output_csv_path = NULL
+) {
+  # Load required package
+  # library(terra)
+  
+  # Read the CSV files
+  lookup <- read.csv(lookup_file_path, stringsAsFactors = FALSE)
+  cluster_data <- read.csv(cluster_file_path, stringsAsFactors = FALSE)
+  
+  # Convert the 'date' column to Date (assumes format like "6/27/1940")
+  cluster_data$date <- as.Date(cluster_data$date, format = "%m/%d/%Y")
+  
+  # Order lookup by new_index
+  lookup <- lookup[order(lookup$new_index), ]
+  
+  # Initialize list to store summary rows for each cluster
+  summary_list <- list()
+  
+  # Create a progress bar
+  pb <- txtProgressBar(min = 0, max = nrow(lookup), style = 3)
+  
+  # Loop over each cluster (each row in the lookup table)
+  for (i in seq_len(nrow(lookup))) {
+    current_lookup <- lookup[i, ]
+    cluster_id <- current_lookup$new_index      # new_index becomes cluster_id
+    original_index <- as.character(current_lookup$original_index)
+    
+    # Subset cluster_data for ERA5 stats
+    subset_cluster <- subset(cluster_data, as.character(cluster) == original_index)
+    
+    if (nrow(subset_cluster) > 0) {
+      era5_mean   <- mean(subset_cluster$observation, na.rm = TRUE)
+      era5_median <- median(subset_cluster$observation, na.rm = TRUE)
+      era5_max    <- max(subset_cluster$observation, na.rm = TRUE)
     } else {
-      message("Filename does not match expected pattern: ", file_base)
-      return(FALSE)
-    }
-  })]
-  
-  if(length(filtered_nc_files) == 0){
-    stop("No cluster files on or after 1996-01-01 found in ", cluster_folder)
-  }
-  
-  # Set up progress handler (messages via message()) and parallel processing.
-  handlers(global = TRUE)
-  
-  file_results <- future_lapply(filtered_nc_files, function(cluster_file) {
-    message(sprintf("Processing cluster file: %s", basename(cluster_file)))
-    
-    # --- Read Cluster Raster ---
-    cluster_rast <- try(terra::rast(cluster_file), silent = TRUE)
-    if(inherits(cluster_rast, "try-error")){
-      message("Error reading cluster file: ", cluster_file)
-      return(NULL)
+      era5_mean   <- NA
+      era5_median <- NA
+      era5_max    <- NA
     }
     
-    # Extract cluster date and id from filename.
-    file_base <- basename(cluster_file)
-    m <- regexec("county_event_(\\d{4}-\\d{2}-\\d{2})_cluster_([0-9]+)\\.nc", file_base)
-    parts <- regmatches(file_base, m)
-    if(length(parts[[1]]) < 3){
-      message("Filename does not match expected pattern: ", file_base)
-      return(NULL)
-    }
-    cluster_date_str <- parts[[1]][2]
-    cluster_date <- as.Date(cluster_date_str)
-    cluster_id <- parts[[1]][3]
+    # Default values for dates and duration
+    start_date <- NA
+    end_date <- NA
+    duration <- NA
     
-    # --- Event Times and Exposed Area ---
-    times <- terra::time(cluster_rast)
-    if(is.null(times) || length(times) == 0){
-      times <- as.POSIXct(cluster_date_str, tz = "UTC")
-    }
-    start_time_event <- min(times, na.rm = TRUE)
-    end_time_event   <- max(times, na.rm = TRUE)
-    duration_days <- as.numeric(difftime(end_time_event, start_time_event, units = "days")) + 1
+    # Build file name using new_file from lookup
+    file_name_candidate <- current_lookup$new_file
+    nc_file_path <- file.path(cluster_folder, file_name_candidate)
     
-    cluster_sum <- terra::app(cluster_rast, fun = sum, na.rm = TRUE)
-    event_mask_binary <- cluster_sum != 0
-    res_vals <- terra::res(cluster_rast)
-    if(terra::is.lonlat(cluster_rast)) {
-      cell_area <- (111.32 * res_vals[1]) * (111.32 * res_vals[2])
-    } else {
-      cell_area <- (res_vals[1] * res_vals[2]) / 1e6
-    }
-    exposed_area <- sum(terra::values(event_mask_binary), na.rm = TRUE) * cell_area
-    
-    # --- ERA5 Statistics ---
-    era5_values <- c()
-    yearmonths <- unique(format(times, "%Y%m"))
-    for(ym in yearmonths) {
-      era5_file <- here::here(era5_folder, paste0("heat_index_daily_maximum_", ym, ".nc"))
-      if(!file.exists(era5_file)){
-        message("ERA5 file not found for yearmonth: ", ym)
-        next
-      }
-      era5_rast <- try(terra::rast(era5_file), silent = TRUE)
-      if(inherits(era5_rast, "try-error")){
-        message("Error reading ERA5 file: ", era5_file)
-        next
-      }
-      cluster_ref <- cluster_rast[[1]]
-      era5_rast_resampled <- terra::resample(era5_rast, cluster_ref, method = "near")
-      era5_times <- terra::time(era5_rast_resampled)
-      if(!is.null(era5_times)){
-        idx <- which(era5_times >= start_time_event & era5_times <= end_time_event)
-        if(length(idx) == 0) next
-        era5_rast_resampled <- era5_rast_resampled[[idx]]
-      }
-      for(layer in 1:terra::nlyr(era5_rast_resampled)) {
-        era5_layer <- era5_rast_resampled[[layer]]
-        era5_masked <- terra::mask(era5_layer, event_mask_binary, maskvalue = FALSE)
-        vals <- terra::values(era5_masked, mat = FALSE)
-        era5_values <- c(era5_values, vals[!is.na(vals)])
-      }
-    }
-    if(length(era5_values) > 0){
-      era5_mean <- mean(era5_values, na.rm = TRUE)
-      era5_median <- median(era5_values, na.rm = TRUE)
-      era5_max <- max(era5_values, na.rm = TRUE)
-    } else {
-      era5_mean <- era5_median <- era5_max <- NA
+    # If file not found, try prepending "county_event_"
+    if (!file.exists(nc_file_path)) {
+      file_name_candidate <- paste0("county_event_", current_lookup$new_file)
+      nc_file_path <- file.path(cluster_folder, file_name_candidate)
     }
     
-    # --- NOAA Processing Helper Function ---
-    # This function processes a NOAA folder (for one hazard type),
-    # checks if each NOAA file is within ±365 days of the cluster event,
-    # verifies spatial overlap, and then looks up the impacts from the NOAA summary.
-    process_noaa_folder <- function(noaa_folder, hazard_type, noaa_summary_df) {
-      noaa_files <- list.files(noaa_folder, pattern = "\\.nc$", full.names = TRUE)
-      # Filter NOAA files based on date difference from cluster_date.
-      noaa_files <- noaa_files[sapply(noaa_files, function(nc) {
-        file_base <- basename(nc)
-        m <- regexec("^(\\d{4}-\\d{2}-\\d{2})_NOAA_.*?_(\\d+)_?\\.nc$", file_base)
-        parts <- regmatches(file_base, m)
-        if(length(parts[[1]]) >= 3){
-          noaa_date <- as.Date(parts[[1]][2])
-          return(abs(as.numeric(difftime(noaa_date, cluster_date, units = "days"))) <= 365)
-        } else {
-          message("NOAA filename does not match expected pattern: ", file_base)
-          return(FALSE)
-        }
-      })]
-      
-      results <- list(ids = c(), impacts = list(injuries_direct = 0,
-                                                injuries_indirect = 0,
-                                                deaths_direct = 0,
-                                                deaths_indirect = 0,
-                                                damage_property = 0,
-                                                damage_crops = 0))
-      
-      for(nc_file in noaa_files) {
-        file_base <- basename(nc_file)
-        m <- regexec("^(\\d{4}-\\d{2}-\\d{2})_NOAA_.*?_(\\d+)_?\\.nc$", file_base)
-        parts <- regmatches(file_base, m)
-        if(length(parts[[1]]) < 3) next
-        
-        noaa_date_str <- parts[[1]][2]
-        noaa_date <- as.Date(noaa_date_str)
-        noaa_id <- parts[[1]][3]
-        
-        # Only process files matching the hazard type.
-        if(!grepl(hazard_type, file_base, ignore.case = TRUE)) next
-        
-        # Read NOAA raster.
-        noaa_rast <- try(terra::rast(nc_file), silent = TRUE)
-        if(inherits(noaa_rast, "try-error")){
-          message("Error reading NOAA file: ", nc_file)
-          next
-        }
-        cluster_ref <- cluster_rast[[1]]
-        noaa_rast_resampled <- terra::resample(noaa_rast, cluster_ref, method = "near")
-        
-        # Create binary masks.
-        noaa_mask <- noaa_rast_resampled > 0
-        cluster_mask <- cluster_rast[[1]] > 0
-        
-        # Check for spatial overlap.
-        if(sum(terra::values(noaa_mask * cluster_mask), na.rm = TRUE) > 0){
-          results$ids <- c(results$ids, noaa_id)
-          
-          # Look up the NOAA impacts from the summary data.
-          summary_row <- noaa_summary_df[as.character(noaa_summary_df$episode_id) == noaa_id, ]
-          if(nrow(summary_row) > 0){
-            results$impacts$injuries_direct   <- results$impacts$injuries_direct   + sum(as.numeric(summary_row$injuries_direct), na.rm = TRUE)
-            results$impacts$injuries_indirect <- results$impacts$injuries_indirect + sum(as.numeric(summary_row$injuries_indirect), na.rm = TRUE)
-            results$impacts$deaths_direct     <- results$impacts$deaths_direct     + sum(as.numeric(summary_row$deaths_direct), na.rm = TRUE)
-            results$impacts$deaths_indirect   <- results$impacts$deaths_indirect   + sum(as.numeric(summary_row$deaths_indirect), na.rm = TRUE)
-            results$impacts$damage_property   <- results$impacts$damage_property   + sum(as.numeric(summary_row$damage_property), na.rm = TRUE)
-            results$impacts$damage_crops      <- results$impacts$damage_crops      + sum(as.numeric(summary_row$damage_crops), na.rm = TRUE)
-          }
-        }
-      }
-      return(results)
-    }
-    
-    # --- Process NOAA Folders for Excess Heat and Heat ---
-    excess_heat_results <- process_noaa_folder(noaa_excess_heat_folder, "excess_heat", noaa_excess_summary)
-    heat_results        <- process_noaa_folder(noaa_heat_folder, "heat", noaa_heat_summary)
-    
-    noaa_excess_ids <- paste(unique(excess_heat_results$ids), collapse = ";")
-    noaa_heat_ids   <- paste(unique(heat_results$ids), collapse = ";")
-    
-    # Sum impacts from both NOAA sources.
-    injuries_direct_total   <- excess_heat_results$impacts$injuries_direct   + heat_results$impacts$injuries_direct
-    injuries_indirect_total <- excess_heat_results$impacts$injuries_indirect + heat_results$impacts$injuries_indirect
-    deaths_direct_total     <- excess_heat_results$impacts$deaths_direct     + heat_results$impacts$deaths_direct
-    deaths_indirect_total   <- excess_heat_results$impacts$deaths_indirect   + heat_results$impacts$deaths_indirect
-    damage_property_total   <- excess_heat_results$impacts$damage_property   + heat_results$impacts$damage_property
-    damage_crops_total      <- excess_heat_results$impacts$damage_crops      + heat_results$impacts$damage_crops
-    
-    # Optionally, merge NOAA ids from both hazards.
-    all_noaa_ids <- paste(c(noaa_excess_ids, noaa_heat_ids), collapse = ";")
-    
-    # For this example, we'll leave exposed_counties as NA.
+    # Initialize exposed_area and exposed_counties as NA
+    exposed_area <- NA
     exposed_counties <- NA
     
-    res_row <- data.frame(
-      cluster_id = cluster_id,
-      noaa_excess_heat_id = noaa_excess_ids,
-      noaa_heat_id = noaa_heat_ids,
-      start_time = start_time_event,
-      end_time = end_time_event,
-      duration = duration_days,
+    if (file.exists(nc_file_path)) {
+      # Read the .nc file as a SpatRaster
+      event_rast <- tryCatch({
+        rast(nc_file_path)
+      }, error = function(e) {
+        message("Error reading raster file: ", nc_file_path)
+        stop(e)
+      })
+      
+      # --- Extract Time Dimension for Start/End Dates ---
+      time_vector <- terra::time(event_rast)
+      if (!is.null(time_vector) && length(time_vector) > 0) {
+        time_vector <- as.Date(time_vector)
+        start_date <- min(time_vector, na.rm = TRUE)
+        end_date <- max(time_vector, na.rm = TRUE)
+        duration <- as.numeric(end_date - start_date)
+      }
+      
+      # --- Exposed Area Calculation ---
+      # Sum across layers; this returns a single-layer raster.
+      sum_rast <- tryCatch({
+        sum(event_rast, na.rm = TRUE)
+      }, error = function(e) {
+        message("Error in terra::sum for file: ", nc_file_path)
+        stop(e)
+      })
+      
+      # Create a binary mask: cells with sum > 0 are exposed.
+      mask <- sum_rast > 0
+      
+      # Count the number of exposed cells
+      num_exposed <- sum(terra::values(mask), na.rm = TRUE)
+      
+      # Calculate cell area based on resolution
+      res_vals <- res(event_rast)
+      if (is.lonlat(event_rast)) {
+        cell_area <- (111.32 * res_vals[1]) * (111.32 * res_vals[2])
+      } else {
+        cell_area <- (res_vals[1] * res_vals[2]) / 1e6
+      }
+      
+      exposed_area <- num_exposed * cell_area
+      
+      # --- Extract Exposed Counties/States ---
+      event_cells <- which(terra::values(mask) != 0)
+      if (length(event_cells) > 0) {
+        coords <- terra::xyFromCell(event_rast, event_cells)
+        extracted <- terra::extract(us_states_rast, coords)
+        layer_name <- names(us_states_rast)[1]
+        unique_regions <- unique(extracted[[layer_name]])
+        exposed_counties <- paste(unique_regions, collapse = ";")
+      }
+    } else {
+      warning("File not found: ", nc_file_path, 
+              ". Skipping exposed area and county extraction for cluster ", cluster_id)
+    }
+    
+    # Combine metrics into a data frame row
+    summary_list[[i]] <- data.frame(
+      cluster_id       = cluster_id,
+      start_date       = start_date,
+      end_date         = end_date,
+      duration         = duration,
       exposed_counties = exposed_counties,
-      exposed_area = exposed_area,
-      era5_mean = era5_mean,
-      era5_median = era5_median,
-      era5_max = era5_max,
-      injuries_direct = injuries_direct_total,
-      injuries_indirect = injuries_indirect_total,
-      deaths_direct = deaths_direct_total,
-      deaths_indirect = deaths_indirect_total,
-      damage_property = damage_property_total,
-      damage_crops = damage_crops_total,
+      exposed_area     = exposed_area,
+      era5_mean        = era5_mean,
+      era5_median      = era5_median,
+      era5_max         = era5_max,
       stringsAsFactors = FALSE
     )
     
-    return(res_row)
-  })
+    setTxtProgressBar(pb, i)
+  }
   
-  file_results <- file_results[!sapply(file_results, is.null)]
-  results <- do.call(rbind, file_results)
+  close(pb)
   
-  end_time_overall <- Sys.time()
-  elapsed_time <- end_time_overall - start_time_overall
-  message(sprintf("Processing started at: %s", start_time_overall))
-  message(sprintf("Processing ended at: %s", end_time_overall))
-  message(sprintf("Elapsed time: %s", elapsed_time))
+  summary_df <- do.call(rbind, summary_list)
   
-  write.csv(results, output_csv, row.names = FALSE)
-  message("Results saved to: ", output_csv)
-  return(results)
+  if (!is.null(output_csv_path)) {
+    write.csv(summary_df, file = output_csv_path, row.names = FALSE)
+  }
+  
+  return(summary_df)
 }
 
-# Heat Index ----
-# Define folder paths.
-cluster_folder <- here::here("data", "output", "03_cluster", "02_cluster", "points", "stm1", "heat_index", "county")
-era5_folder <- here::here("data", "output", "01_era5", "daily", "heat_index")
-noaa_excess_heat_folder <- here::here("data", "output", "04_noaa", "southeast", "excess_heat")
-noaa_heat_folder <- here::here("data", "output", "04_noaa", "southeast", "heat")
-noaa_impacts_folder <- here::here("data", "output", "05_validation", "summary")
-
-# Define the output CSV path.
-output_csv <- here::here("data", "output", "05_validation", "summary", "Cluster_heat_index_summary.csv")
-
-# Run the new function that processes the cluster files along with NOAA and ERA5 data.
-cluster_noaa_results <- process_cluster_noaa_parallel(
-  cluster_folder = cluster_folder,
-  era5_folder = era5_folder,
-  noaa_excess_heat_folder = noaa_excess_heat_folder,
-  noaa_heat_folder = noaa_heat_folder,
-  noaa_impacts_folder = noaa_impacts_folder,
-  output_csv = output_csv
+### 0.25 ----
+summary_df <- create_cluster_summary(
+  lookup_file_path = here('data','output','03_cluster','02_cluster','points','stm1','heat_index','lookup_table.csv'),
+  cluster_file_path = here('data','output','03_cluster','02_cluster','heat_index_stm1_clustered_extremes.csv'),
+  cluster_folder = here('data','output','03_cluster','02_cluster','points','stm1','heat_index','county'),
+  us_states_rast = us.states.rast,
+  output_csv_path = here('data','output','03_cluster','02_cluster','points','stm1','heat_index','cluster_idf.csv')
 )
 
-# Optionally, combine with other results or further process.
-message("Cluster NOAA summary saved to: ", output_csv)
+### 0.39 ----
+summary_df <- create_cluster_summary(
+  lookup_file_path = here('data','output','03_cluster','02_cluster','points','record','heat_index','lookup_table.csv'),
+  cluster_file_path = here('data','output','03_cluster','02_cluster','heat_index_record_clustered_extremes.csv'),
+  cluster_folder = here('data','output','03_cluster','02_cluster','points','record','heat_index','county'),
+  us_states_rast = us.states.rast,
+  output_csv_path = here('data','output','03_cluster','02_cluster','points','record','heat_index','cluster_idf.csv')
+)
+
+# Cluster Impacts ----
+merge_cluster_with_noaa <- function(
+    cluster_idf_path,
+    noaa_summary_path,
+    output_path
+) {
+  # Load required package for string manipulation
+  # library(stringr)
+  
+  # 1. Read the two CSV files
+  cluster_df <- read.csv(cluster_idf_path, stringsAsFactors = FALSE)
+  noaa_df    <- read.csv(noaa_summary_path, stringsAsFactors = FALSE)
+  
+  # 2. Rename NOAA file date columns: start_time -> start_date, end_time -> end_date
+  names(noaa_df)[names(noaa_df) == "start_time"] <- "start_date"
+  names(noaa_df)[names(noaa_df) == "end_time"]   <- "end_date"
+  
+  # 3. Parse the date columns using the yyyy-mm-dd format for both files
+  cluster_df$start_date <- as.Date(trimws(cluster_df$start_date), format = "%Y-%m-%d")
+  cluster_df$end_date   <- as.Date(trimws(cluster_df$end_date),   format = "%Y-%m-%d")
+  
+  noaa_df$start_date <- as.Date(trimws(noaa_df$start_date), format = "%Y-%m-%d")
+  noaa_df$end_date   <- as.Date(trimws(noaa_df$end_date),   format = "%Y-%m-%d")
+  
+  # 4. Initialize new NOAA-related columns in the cluster data frame
+  cluster_df$NOAA_episode      <- NA_character_
+  cluster_df$injuries_direct   <- 0
+  cluster_df$injuries_indirect <- 0
+  cluster_df$deaths_direct     <- 0
+  cluster_df$deaths_indirect   <- 0
+  cluster_df$damage_property   <- 0
+  cluster_df$damage_crops      <- 0
+  
+  # 5. Helper function for exact county matching:
+  #    It splits the semicolon-delimited strings, trims whitespace, converts to lower case,
+  #    and returns TRUE if any chunk in the cluster string exactly appears in the NOAA string.
+  has_exact_county_overlap <- function(cluster_counties_str, noaa_counties_str) {
+    if (is.na(cluster_counties_str) || is.na(noaa_counties_str) ||
+        nchar(cluster_counties_str) == 0 || nchar(noaa_counties_str) == 0) {
+      return(FALSE)
+    }
+    cluster_counties <- tolower(str_trim(unlist(strsplit(cluster_counties_str, ";"))))
+    noaa_counties    <- tolower(str_trim(unlist(strsplit(noaa_counties_str, ";"))))
+    return(length(intersect(cluster_counties, noaa_counties)) > 0)
+  }
+  
+  # 6. Create a progress bar for processing each row in the cluster data
+  pb <- txtProgressBar(min = 0, max = nrow(cluster_df), style = 3)
+  
+  # 7. Loop through each row in the cluster data frame
+  for (i in seq_len(nrow(cluster_df))) {
+    c_start    <- cluster_df$start_date[i]
+    c_end      <- cluster_df$end_date[i]
+    c_counties <- cluster_df$exposed_counties[i]
+    
+    # If either date is NA, skip processing this row
+    if (is.na(c_start) || is.na(c_end)) {
+      setTxtProgressBar(pb, i)
+      next
+    }
+    
+    # Subset NOAA rows that overlap in time.
+    # Condition: cluster start_date <= NOAA end_date AND cluster end_date >= NOAA start_date.
+    noaa_sub <- subset(
+      noaa_df,
+      !is.na(start_date) & !is.na(end_date) &
+        (c_start <= end_date) & (c_end >= start_date)
+    )
+    
+    # Further filter to NOAA rows that share at least one exact county match
+    if (!is.na(c_counties) && nchar(c_counties) > 0 && nrow(noaa_sub) > 0) {
+      keep_index <- sapply(noaa_sub$exposed_counties, function(x) {
+        has_exact_county_overlap(c_counties, x)
+      })
+      noaa_matched <- noaa_sub[keep_index, ]
+    } else {
+      noaa_matched <- data.frame()
+    }
+    
+    # If any NOAA rows matched, update the NOAA-related columns in the cluster row
+    if (nrow(noaa_matched) > 0) {
+      cluster_df$NOAA_episode[i]      <- paste(noaa_matched$episode_id, collapse = ";")
+      cluster_df$injuries_direct[i]   <- sum(noaa_matched$injuries_direct, na.rm = TRUE)
+      cluster_df$injuries_indirect[i] <- sum(noaa_matched$injuries_indirect, na.rm = TRUE)
+      cluster_df$deaths_direct[i]     <- sum(noaa_matched$deaths_direct, na.rm = TRUE)
+      cluster_df$deaths_indirect[i]   <- sum(noaa_matched$deaths_indirect, na.rm = TRUE)
+      cluster_df$damage_property[i]   <- sum(noaa_matched$damage_property, na.rm = TRUE)
+      cluster_df$damage_crops[i]      <- sum(noaa_matched$damage_crops, na.rm = TRUE)
+    }
+    
+    # Update the progress bar
+    setTxtProgressBar(pb, i)
+  }
+  
+  # 8. Close the progress bar
+  close(pb)
+  
+  # 9. Write the merged data frame to the output CSV file
+  write.csv(cluster_df, file = output_path, row.names = FALSE)
+  
+  # Return the final merged data frame
+  return(cluster_df)
+}
+
+### 0.25 ----
+#### Excess Heat ----
+merged_df <- merge_cluster_with_noaa(
+  cluster_idf_path   = here::here("data","output","03_cluster","02_cluster","points","stm1","heat_index","cluster_idf.csv"),
+  noaa_summary_path  = here::here("data","output","05_validation","summary","NOAA_excess_heat_summary.csv"),
+  output_path        = here::here("data","output","05_validation","summary","cluster_stm1_excess_heat_summary.csv")
+)
+
+#### Heat ----
+merged_df <- merge_cluster_with_noaa(
+  cluster_idf_path   = here::here("data","output","03_cluster","02_cluster","points","stm1","heat_index","cluster_idf.csv"),
+  noaa_summary_path  = here::here("data","output","05_validation","summary","NOAA_heat_summary.csv"),
+  output_path        = here::here("data","output","05_validation","summary","cluster_stm1_heat_summary.csv")
+)
+
+### 0.39 ----
+#### Excess Heat ----
+merged_df <- merge_cluster_with_noaa(
+  cluster_idf_path   = here::here("data","output","03_cluster","02_cluster","points","record","heat_index","cluster_idf.csv"),
+  noaa_summary_path  = here::here("data","output","05_validation","summary","NOAA_excess_heat_summary.csv"),
+  output_path        = here::here("data","output","05_validation","summary","cluster_record_excess_heat_summary.csv")
+)
+
+#### Heat ----
+merged_df <- merge_cluster_with_noaa(
+  cluster_idf_path   = here::here("data","output","03_cluster","02_cluster","points","record","heat_index","cluster_idf.csv"),
+  noaa_summary_path  = here::here("data","output","05_validation","summary","NOAA_heat_summary.csv"),
+  output_path        = here::here("data","output","05_validation","summary","cluster_record_heat_summary.csv")
+)
