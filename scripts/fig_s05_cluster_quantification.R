@@ -1,15 +1,15 @@
 #Setup----
-#Updated March 2025
+#Updated April 2025
 #Linked to GitHub
 #Author: Hunter Quintal
 #purpose: Produce multiple 7 panel figures of noaa events, intensity, duration, exposed area, impacts
 
 # Load Libraries & Set Project Root ----
 library(here)
-here::i_am("scripts/fig_s04_noaa_quantification.R")  # Adjust this file path as needed
+here::i_am("scripts/fig_s05_cluster_quantification.R")  # Adjust this file path as needed
 source(here::here("scripts", "01_library.R"))
 
-plot_excess_heat <- function(dir_path) {
+plot_excess_heat <- function(dir_path, date_format = "%m/%d/%Y") {
   
   # Identify all CSV files in the specified directory
   csv_files <- list.files(path = dir_path, pattern = "\\.csv$", full.names = TRUE)
@@ -22,9 +22,23 @@ plot_excess_heat <- function(dir_path) {
     # Read the data
     df <- read_csv(file)
     
-    # Convert start_time to a Date object (adjust format if necessary)
+    # If "start_date" exists (new cluster CSV), rename it to "start_time"
+    # so the plotting code works the same way.
+    if ("start_date" %in% names(df)) {
+      df <- df %>% rename(start_time = start_date)
+    }
+    
+    # If "end_date" exists and you'd like to keep it consistent with the old
+    # structure, rename it to "end_time" (only if you plan to use `end_time`):
+    if ("end_date" %in% names(df)) {
+      df <- df %>% rename(end_time = end_date)
+    }
+    
+    # Convert start_time to a Date object
+    # NOTE: Adjust date_format = "%d/%m/%Y" vs. "%m/%d/%Y" depending on
+    # how your CSV files are actually formatted.
     df <- df %>% 
-      mutate(start_time = as.Date(start_time, format = "%d/%m/%Y"))
+      mutate(start_time = as.Date(start_time, format = date_format))
     
     ## Create individual plots
     
@@ -39,67 +53,91 @@ plot_excess_heat <- function(dir_path) {
     # Plot 2: Injuries Direct
     p2 <- ggplot(df, aes(x = start_time, y = era5_max)) +
       # First, plot hollow points for injuries_direct <= 0
-      geom_point(data = df %>% filter(injuries_direct <= 0),
-                 shape = 21, size = 3, color = "black", fill = NA) +
+      geom_point(
+        data = df %>% filter(injuries_direct <= 0),
+        shape = 21, size = 3, color = "black", fill = NA
+      ) +
       # Then, plot filled points for injuries_direct > 0
-      geom_point(data = df %>% filter(injuries_direct > 0),
-                 aes(fill = injuries_direct),
-                 shape = 21, size = 3, color = "black") +
+      geom_point(
+        data = df %>% filter(injuries_direct > 0),
+        aes(fill = injuries_direct),
+        shape = 21, size = 3, color = "black"
+      ) +
       labs(x = "Start Time", y = "ERA5 max", fill = "Injuries Direct") +
       scale_fill_gradient(low = "yellow", high = "red", na.value = NA) +
       theme_bw()
     
     # Plot 3: Injuries Indirect
     p3 <- ggplot(df, aes(x = start_time, y = era5_max)) +
-      geom_point(data = df %>% filter(injuries_indirect <= 0),
-                 shape = 21, size = 3, color = "black", fill = NA) +
-      geom_point(data = df %>% filter(injuries_indirect > 0),
-                 aes(fill = injuries_indirect),
-                 shape = 21, size = 3, color = "black") +
+      geom_point(
+        data = df %>% filter(injuries_indirect <= 0),
+        shape = 21, size = 3, color = "black", fill = NA
+      ) +
+      geom_point(
+        data = df %>% filter(injuries_indirect > 0),
+        aes(fill = injuries_indirect),
+        shape = 21, size = 3, color = "black"
+      ) +
       labs(x = "Start Time", y = "ERA5 max", fill = "Injuries Indirect") +
       scale_fill_gradient(low = "yellow", high = "red", na.value = NA) +
       theme_bw()
     
     # Plot 4: Deaths Direct
     p4 <- ggplot(df, aes(x = start_time, y = era5_max)) +
-      geom_point(data = df %>% filter(deaths_direct <= 0),
-                 shape = 21, size = 3, color = "black", fill = NA) +
-      geom_point(data = df %>% filter(deaths_direct > 0),
-                 aes(fill = deaths_direct),
-                 shape = 21, size = 3, color = "black") +
+      geom_point(
+        data = df %>% filter(deaths_direct <= 0),
+        shape = 21, size = 3, color = "black", fill = NA
+      ) +
+      geom_point(
+        data = df %>% filter(deaths_direct > 0),
+        aes(fill = deaths_direct),
+        shape = 21, size = 3, color = "black"
+      ) +
       labs(x = "Start Time", y = "ERA5 max", fill = "Deaths Direct") +
       scale_fill_gradient(low = "yellow", high = "red", na.value = NA) +
       theme_bw()
     
-    # Plot 5: Deaths Direct (again; adjust if needed)
+    # Plot 5: Deaths Indirect
     p5 <- ggplot(df, aes(x = start_time, y = era5_max)) +
-      geom_point(data = df %>% filter(deaths_indirect <= 0),
-                 shape = 21, size = 3, color = "black", fill = NA) +
-      geom_point(data = df %>% filter(deaths_indirect > 0),
-                 aes(fill = deaths_indirect),
-                 shape = 21, size = 3, color = "black") +
+      geom_point(
+        data = df %>% filter(deaths_indirect <= 0),
+        shape = 21, size = 3, color = "black", fill = NA
+      ) +
+      geom_point(
+        data = df %>% filter(deaths_indirect > 0),
+        aes(fill = deaths_indirect),
+        shape = 21, size = 3, color = "black"
+      ) +
       labs(x = "Start Time", y = "ERA5 max", fill = "Deaths Indirect") +
       scale_fill_gradient(low = "yellow", high = "red", na.value = NA) +
       theme_bw()
     
     # Plot 6: Damage Property
     p6 <- ggplot(df, aes(x = start_time, y = era5_max)) +
-      geom_point(data = df %>% filter(damage_property <= 0),
-                 shape = 21, size = 3, color = "black", fill = NA) +
-      geom_point(data = df %>% filter(damage_property > 0),
-                 aes(fill = damage_property),
-                 shape = 21, size = 3, color = "black") +
+      geom_point(
+        data = df %>% filter(damage_property <= 0),
+        shape = 21, size = 3, color = "black", fill = NA
+      ) +
+      geom_point(
+        data = df %>% filter(damage_property > 0),
+        aes(fill = damage_property),
+        shape = 21, size = 3, color = "black"
+      ) +
       labs(x = "Start Time", y = "ERA5 max", fill = "Damage Property") +
       scale_fill_gradient(low = "yellow", high = "red", na.value = NA) +
       theme_bw()
     
     # Plot 7: Damage Crops
     p7 <- ggplot(df, aes(x = start_time, y = era5_max)) +
-      geom_point(data = df %>% filter(damage_crops <= 0),
-                 shape = 21, size = 3, color = "black", fill = NA) +
-      geom_point(data = df %>% filter(damage_crops > 0),
-                 aes(fill = damage_crops),
-                 shape = 21, size = 3, color = "black") +
+      geom_point(
+        data = df %>% filter(damage_crops <= 0),
+        shape = 21, size = 3, color = "black", fill = NA
+      ) +
+      geom_point(
+        data = df %>% filter(damage_crops > 0),
+        aes(fill = damage_crops),
+        shape = 21, size = 3, color = "black"
+      ) +
       labs(x = "Start Time", y = "ERA5 max", fill = "Damage Crops") +
       scale_fill_gradient(low = "yellow", high = "red", na.value = NA) +
       theme_bw()
@@ -118,16 +156,16 @@ plot_excess_heat <- function(dir_path) {
 }
 
 # Assume final_plots is the list returned by plot_excess_heat()
-final_plots <- plot_excess_heat(here::here("data", "output", "05_validation", "summary"))
+final_plots <- plot_excess_heat(here::here("data", "output", "05_validation", "summary","cluster"))
 
 for(name in names(final_plots)){
   plot_obj <- final_plots[[name]]
   
   # Create file names (modify as needed)
-  png_path_p1   <- here("figures", paste0("06_",name, "_p1.png"))
-  svg_path_p1   <- here("figures", paste0("06_",name, "_p1.svg"))
-  png_path_patch <- here("figures", paste0("06_",name, "_patch.png"))
-  svg_path_patch <- here("figures", paste0("06_",name, "_patch.svg"))
+  png_path_p1   <- here("figures", paste0("05_",name, "_p1.png"))
+  svg_path_p1   <- here("figures", paste0("05_",name, "_p1.svg"))
+  png_path_patch <- here("figures", paste0("05_",name, "_patch.png"))
+  svg_path_patch <- here("figures", paste0("05_",name, "_patch.svg"))
   
   # Save p1
   ggsave(filename = png_path_p1, plot = plot_obj$p1, width = 9, height = 6, dpi = 300)

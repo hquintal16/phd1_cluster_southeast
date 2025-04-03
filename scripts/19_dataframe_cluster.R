@@ -539,6 +539,110 @@ merge_cluster_with_noaa <- function(
   return(cluster_df)
 }
 
+merge_cluster_with_noaa_datetime <- function(
+    cluster_idf_path,
+    noaa_summary_path,
+    output_path
+) {
+  # Load required package for string manipulation
+  # library(stringr)
+  
+  # 1. Read the two CSV files
+  cluster_df <- read.csv(cluster_idf_path, stringsAsFactors = FALSE)
+  noaa_df    <- read.csv(noaa_summary_path, stringsAsFactors = FALSE)
+  
+  # 2. Rename NOAA file date columns: start_time -> start_date, end_time -> end_date
+  names(noaa_df)[names(noaa_df) == "start_time"] <- "start_datetime"
+  names(noaa_df)[names(noaa_df) == "end_time"]   <- "end_datetime"
+  
+  # 3. Parse the date columns using the yyyy-mm-dd format for both files
+  cluster_df$start_date <- as.Date(trimws(cluster_df$start_date), format = "%Y-%m-%d")
+  cluster_df$end_date   <- as.Date(trimws(cluster_df$end_date),   format = "%Y-%m-%d")
+  
+  noaa_df$start_date <- as.Date(trimws(noaa_df$start_date), format = "%Y-%m-%d")
+  noaa_df$end_date   <- as.Date(trimws(noaa_df$end_date),   format = "%Y-%m-%d")
+  
+  # 4. Initialize new NOAA-related columns in the cluster data frame
+  cluster_df$NOAA_episode      <- NA_character_
+  cluster_df$injuries_direct   <- 0
+  cluster_df$injuries_indirect <- 0
+  cluster_df$deaths_direct     <- 0
+  cluster_df$deaths_indirect   <- 0
+  cluster_df$damage_property   <- 0
+  cluster_df$damage_crops      <- 0
+  
+  # 5. Helper function for exact county matching:
+  #    It splits the semicolon-delimited strings, trims whitespace, converts to lower case,
+  #    and returns TRUE if any chunk in the cluster string exactly appears in the NOAA string.
+  has_exact_county_overlap <- function(cluster_counties_str, noaa_counties_str) {
+    if (is.na(cluster_counties_str) || is.na(noaa_counties_str) ||
+        nchar(cluster_counties_str) == 0 || nchar(noaa_counties_str) == 0) {
+      return(FALSE)
+    }
+    cluster_counties <- tolower(str_trim(unlist(strsplit(cluster_counties_str, ";"))))
+    noaa_counties    <- tolower(str_trim(unlist(strsplit(noaa_counties_str, ";"))))
+    return(length(intersect(cluster_counties, noaa_counties)) > 0)
+  }
+  
+  # 6. Create a progress bar for processing each row in the cluster data
+  pb <- txtProgressBar(min = 0, max = nrow(cluster_df), style = 3)
+  
+  # 7. Loop through each row in the cluster data frame
+  for (i in seq_len(nrow(cluster_df))) {
+    c_start    <- cluster_df$start_date[i]
+    c_end      <- cluster_df$end_date[i]
+    c_counties <- cluster_df$exposed_counties[i]
+    
+    # If either date is NA, skip processing this row
+    if (is.na(c_start) || is.na(c_end)) {
+      setTxtProgressBar(pb, i)
+      next
+    }
+    
+    # Subset NOAA rows that overlap in time.
+    # Condition: cluster start_date <= NOAA end_date AND cluster end_date >= NOAA start_date.
+    noaa_sub <- subset(
+      noaa_df,
+      !is.na(start_date) & !is.na(end_date) &
+        (c_start <= end_date) & (c_end >= start_date)
+    )
+    
+    # Further filter to NOAA rows that share at least one exact county match
+    if (!is.na(c_counties) && nchar(c_counties) > 0 && nrow(noaa_sub) > 0) {
+      keep_index <- sapply(noaa_sub$exposed_counties, function(x) {
+        has_exact_county_overlap(c_counties, x)
+      })
+      noaa_matched <- noaa_sub[keep_index, ]
+    } else {
+      noaa_matched <- data.frame()
+    }
+    
+    # If any NOAA rows matched, update the NOAA-related columns in the cluster row
+    if (nrow(noaa_matched) > 0) {
+      cluster_df$NOAA_episode[i]      <- paste(noaa_matched$episode_id, collapse = ";")
+      cluster_df$injuries_direct[i]   <- sum(noaa_matched$injuries_direct, na.rm = TRUE)
+      cluster_df$injuries_indirect[i] <- sum(noaa_matched$injuries_indirect, na.rm = TRUE)
+      cluster_df$deaths_direct[i]     <- sum(noaa_matched$deaths_direct, na.rm = TRUE)
+      cluster_df$deaths_indirect[i]   <- sum(noaa_matched$deaths_indirect, na.rm = TRUE)
+      cluster_df$damage_property[i]   <- sum(noaa_matched$damage_property, na.rm = TRUE)
+      cluster_df$damage_crops[i]      <- sum(noaa_matched$damage_crops, na.rm = TRUE)
+    }
+    
+    # Update the progress bar
+    setTxtProgressBar(pb, i)
+  }
+  
+  # 8. Close the progress bar
+  close(pb)
+  
+  # 9. Write the merged data frame to the output CSV file
+  write.csv(cluster_df, file = output_path, row.names = FALSE)
+  
+  # Return the final merged data frame
+  return(cluster_df)
+}
+
+
 ### 0.25 ----
 #### Excess Heat ----
 merged_df <- merge_cluster_with_noaa(
@@ -548,14 +652,14 @@ merged_df <- merge_cluster_with_noaa(
 )
 
 #### Flash Flood ----
-merged_df <- merge_cluster_with_noaa(
+merged_df <- merge_cluster_with_noaa_datetime(
   cluster_idf_path   = here::here("data","output","03_cluster","02_cluster","points","stm1","precipitation","cluster_idf.csv"),
   noaa_summary_path  = here::here("data","output","05_validation","summary","NOAA_flash_flood_summary.csv"),
   output_path        = here::here("data","output","05_validation","summary","cluster_stm1_flash_flood_summary.csv")
 )
 
 #### Flood ----
-merged_df <- merge_cluster_with_noaa(
+merged_df <- merge_cluster_with_noaa_datetime(
   cluster_idf_path   = here::here("data","output","03_cluster","02_cluster","points","stm1","precipitation","cluster_idf.csv"),
   noaa_summary_path  = here::here("data","output","05_validation","summary","NOAA_flood_summary.csv"),
   output_path        = here::here("data","output","05_validation","summary","cluster_stm1_flood_summary.csv")
@@ -569,35 +673,35 @@ merged_df <- merge_cluster_with_noaa(
 )
 
 #### Heavy Rain ----
-merged_df <- merge_cluster_with_noaa(
+merged_df <- merge_cluster_with_noaa_datetime(
   cluster_idf_path   = here::here("data","output","03_cluster","02_cluster","points","stm1","precipitation","cluster_idf.csv"),
   noaa_summary_path  = here::here("data","output","05_validation","summary","NOAA_heavy_rain_summary.csv"),
   output_path        = here::here("data","output","05_validation","summary","cluster_stm1_heavy_rain_summary.csv")
 )
 
 #### Hurricane ----
-merged_df <- merge_cluster_with_noaa(
+merged_df <- merge_cluster_with_noaa_datetime(
   cluster_idf_path   = here::here("data","output","03_cluster","02_cluster","points","stm1","precipitation","cluster_idf.csv"),
   noaa_summary_path  = here::here("data","output","05_validation","summary","NOAA_hurricane_summary.csv"),
   output_path        = here::here("data","output","05_validation","summary","cluster_stm1_hurricane_summary.csv")
 )
 
 #### Tropical Depression ----
-merged_df <- merge_cluster_with_noaa(
+merged_df <- merge_cluster_with_noaa_datetime(
   cluster_idf_path   = here::here("data","output","03_cluster","02_cluster","points","stm1","precipitation","cluster_idf.csv"),
   noaa_summary_path  = here::here("data","output","05_validation","summary","NOAA_tropical_depression_summary.csv"),
   output_path        = here::here("data","output","05_validation","summary","cluster_stm1_tropical_depression_summary.csv")
 )
 
 #### Tropical Storm ----
-merged_df <- merge_cluster_with_noaa(
+merged_df <- merge_cluster_with_noaa_datetime(
   cluster_idf_path   = here::here("data","output","03_cluster","02_cluster","points","stm1","precipitation","cluster_idf.csv"),
   noaa_summary_path  = here::here("data","output","05_validation","summary","NOAA_tropical_storm_summary.csv"),
   output_path        = here::here("data","output","05_validation","summary","cluster_stm1_tropical_storm_summary.csv")
 )
 
 #### Typhoon ----
-merged_df <- merge_cluster_with_noaa(
+merged_df <- merge_cluster_with_noaa_datetime(
   cluster_idf_path   = here::here("data","output","03_cluster","02_cluster","points","stm1","precipitation","cluster_idf.csv"),
   noaa_summary_path  = here::here("data","output","05_validation","summary","NOAA_typhoon_summary.csv"),
   output_path        = here::here("data","output","05_validation","summary","cluster_stm1_typhoon_summary.csv")

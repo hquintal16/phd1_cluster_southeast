@@ -64,7 +64,7 @@ ylims <- c(24, 40)
 
 ## Southeast ----
 
-# Plot 1: Precipitation with shapefile overlays
+# Plot 2: Precipitation with shapefile overlays
 p2 <- ggplot() +
   geom_raster(data = atlas_df, aes(x = x, y = y, fill = atlas_value)) +
   scale_fill_viridis_c(name = "Precipitation (mm)", option = "viridis") +
@@ -76,7 +76,7 @@ p2 <- ggplot() +
         legend.position = c(0.99, 0.01),
         legend.justification = c("right", "bottom"))
 
-# Plot 2: Heat Index with shapefile overlays
+# Plot 1: Heat Index with shapefile overlays
 p1 <- ggplot() +
   geom_raster(data = wfo_df, aes(x = x, y = y, fill = advisory)) +
   scale_fill_viridis_c(name = "Heat Index (°C)", option = "viridis") +
@@ -97,9 +97,16 @@ svg_path <- here("figures","04_threholds_southeast.svg")
 
 # Save the plot as a PNG file
 ggsave(filename = png_path, plot = combined_plot, width = 12, height = 6, dpi = 300)
-
-# Save the plot as an SVG file
 ggsave(filename = svg_path, plot = combined_plot, width = 12, height = 6, device = "svg")
+
+### Heat Index only ----
+# Define file paths using here
+png_path <- here("figures","04_threholds_southeast_heatindex.png")
+svg_path <- here("figures","04_threholds_southeast_heatindex.svg")
+
+# Save the plot as a PNG file
+ggsave(filename = png_path, plot = p1, width = 6, height = 6, dpi = 300)
+ggsave(filename = svg_path, plot = p1, width = 6, height = 6, device = "svg")
 
 ## CONUS ----
 wfo_raster <- rasterize(wfo_vect, atlas.14, field = "ADVISORY")
