@@ -397,6 +397,7 @@ all_precip_results <- future_lapply(precip_hazard_folders, function(h_folder) {
   
   return(res)
 })
+
 names(all_precip_results) <- sapply(precip_hazard_folders, basename)
 combined_precip_results <- do.call(rbind, all_precip_results)
 combined_csv <- here::here("data", "output", "05_validation", "summary", "southeast_precip_combined_summary.csv")
