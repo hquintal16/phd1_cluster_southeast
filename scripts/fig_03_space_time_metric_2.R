@@ -157,3 +157,22 @@ ggsave(filename = png_path, plot = combined_plot, width = 9, height = 6, dpi = 3
 
 # Save the plot as an SVG file
 ggsave(filename = svg_path, plot = combined_plot, width = 9, height = 6, device = "svg")
+
+# Hyp testing ----
+stm_heat <- readr::read_csv(here("data", "output", "02_covariance", "03_space_time_metric", 
+                                 "heat_index", "month", "heat_index_space_time_metric_optimal.txt"))
+stm_precip <- readr::read_csv(here("data", "output", "02_covariance", "03_space_time_metric", 
+                                    "precipitation", "month", "precipitation_space_time_metric_optimal.txt"))
+## Shapiro-Wilk test ----
+# Test for normality
+# Extract the sample of interest (ar2 column)
+stm_heat <- stm_heat$stm2
+stm_precip <- stm_precip$stm2
+
+# Test for normality using the Shapiro-Wilk test
+stm_heat_shapiro_result <- shapiro.test(stm_heat)
+stm_precip_shapiro_result <- shapiro.test(stm_precip)
+
+## Wilcoxon-signed rank test ----
+stm_heat_wilcox_test_result <- wilcox.test(stm_heat, mu = 1)
+stm_precip_wilcox_test_result <- wilcox.test(stm_precip, mu = 1)

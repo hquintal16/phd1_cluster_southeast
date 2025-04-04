@@ -1,15 +1,15 @@
 #Setup----
-#Updated March 2025
+#Updated April 2025
 #Linked to GitHub
 #Author: Hunter Quintal
 #purpose: Produce multiple 7 panel figures of noaa events, intensity, duration, exposed area, impacts
 
 # Load Libraries & Set Project Root ----
 library(here)
-here::i_am("scripts/fig_s04_noaa_quantification.R")  # Adjust this file path as needed
+here::i_am("scripts/fig_s04_cluster_noaa_idf_impacts.R")  # Adjust this file path as needed
 source(here::here("scripts", "01_library.R"))
 
-plot_excess_heat <- function(dir_path) {
+plot_excess_heat <- function(dir_path, date_format = "%m/%d/%Y") {
   
   # Identify all CSV files in the specified directory
   csv_files <- list.files(path = dir_path, pattern = "\\.csv$", full.names = TRUE)
@@ -22,9 +22,35 @@ plot_excess_heat <- function(dir_path) {
     # Read the data
     df <- read_csv(file)
     
-    # Convert start_time to a Date object (adjust format if necessary)
-    df <- df %>% 
-      mutate(start_time = as.Date(start_time, format = "%d/%m/%Y"))
+    # Standardize date/time columns: Check for start_time alternatives
+    if (!"start_time" %in% names(df)) {
+      if ("start_datetime" %in% names(df)) {
+        df <- df %>% rename(start_time = start_datetime)
+      } else if ("start_date" %in% names(df)) {
+        df <- df %>% rename(start_time = start_date)
+      }
+    }
+    
+    # Standardize date/time columns: Check for end_time alternatives
+    if (!"end_time" %in% names(df)) {
+      if ("end_date_time" %in% names(df)) {
+        df <- df %>% rename(end_time = end_date_time)
+      } else if ("end_date" %in% names(df)) {
+        df <- df %>% rename(end_time = end_date)
+      }
+    }
+    
+    # Standardize duration: Look for duration_hours if duration is missing.
+    if (!"duration" %in% names(df)) {
+      if ("duration_hours" %in% names(df)) {
+        df <- df %>% rename(duration = duration_hours)
+        # Convert duration from hours to days
+        df <- df %>% mutate(duration = duration / 24)
+      }
+    }
+    
+    # Convert start_time to a Date object using the specified format
+    df <- df %>% mutate(start_time = as.Date(start_time, format = date_format))
     
     ## Create individual plots
     
@@ -38,10 +64,8 @@ plot_excess_heat <- function(dir_path) {
     
     # Plot 2: Injuries Direct
     p2 <- ggplot(df, aes(x = start_time, y = era5_max)) +
-      # First, plot hollow points for injuries_direct <= 0
       geom_point(data = df %>% filter(injuries_direct <= 0),
                  shape = 21, size = 3, color = "black", fill = NA) +
-      # Then, plot filled points for injuries_direct > 0
       geom_point(data = df %>% filter(injuries_direct > 0),
                  aes(fill = injuries_direct),
                  shape = 21, size = 3, color = "black") +
@@ -71,7 +95,7 @@ plot_excess_heat <- function(dir_path) {
       scale_fill_gradient(low = "yellow", high = "red", na.value = NA) +
       theme_bw()
     
-    # Plot 5: Deaths Direct (again; adjust if needed)
+    # Plot 5: Deaths Indirect
     p5 <- ggplot(df, aes(x = start_time, y = era5_max)) +
       geom_point(data = df %>% filter(deaths_indirect <= 0),
                  shape = 21, size = 3, color = "black", fill = NA) +
@@ -118,7 +142,28 @@ plot_excess_heat <- function(dir_path) {
 }
 
 # Assume final_plots is the list returned by plot_excess_heat()
-final_plots <- plot_excess_heat(here::here("data", "output", "05_validation", "summary"))
+final_plots <- plot_excess_heat(here::here("data", "output", "05_validation", "summary","cluster"))
+
+for(name in names(final_plots)){
+  plot_obj <- final_plots[[name]]
+  
+  # Create file names (modify as needed)
+  png_path_p1   <- here("figures", paste0("05_",name, "_p1.png"))
+  svg_path_p1   <- here("figures", paste0("05_",name, "_p1.svg"))
+  png_path_patch <- here("figures", paste0("05_",name, "_patch.png"))
+  svg_path_patch <- here("figures", paste0("05_",name, "_patch.svg"))
+  
+  # Save p1
+  ggsave(filename = png_path_p1, plot = plot_obj$p1, width = 9, height = 6, dpi = 300)
+  ggsave(filename = svg_path_p1, plot = plot_obj$p1, width = 9, height = 6, device = "svg")
+  
+  # Save patch panel (p2 to p7)
+  ggsave(filename = png_path_patch, plot = plot_obj$patch, width = 9, height = 6, dpi = 300)
+  ggsave(filename = svg_path_patch, plot = plot_obj$patch, width = 9, height = 6, device = "svg")
+}
+
+# Assume final_plots is the list returned by plot_excess_heat()
+final_plots <- plot_excess_heat(here::here("data", "output", "05_validation", "summary","noaa"))
 
 for(name in names(final_plots)){
   plot_obj <- final_plots[[name]]
