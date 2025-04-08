@@ -118,7 +118,6 @@ process_heat_index_files <- function(input_dir,
   print(paste("Total elapsed time:", elapsed_time))
 }
 
-
 ## Covariance ----
 stm <- read.csv(here::here("data", "output", "02_covariance", "03_space_time_metric", "heat_index", "month", "heat_index_space_time_metric_optimal.txt"))
 
@@ -177,26 +176,28 @@ month.heat <- stm %>%
 
 ### 0.25 deg / day ----
 process_heat_index_files(
-  input_dir = here::here("data", "output", "01_era5", "daily", "heat_index"), 
-  output_dir = here::here("data", "output", "03_cluster", "stm1", "heat_index"), 
-  threshold_shapefile = here::here("data", "input", "threshold", "wfo_usa.shp"), 
+  input_dir = here::here("data", "output", "01_era5", "daily", "heat_index"),
+  output_dir = here::here("data", "output", "03_cluster", "01_extreme_points", "0.25", "heat_index"),
+  threshold_shapefile = here::here("data", "input", "threshold", "wfo_usa.shp"),
   space_time_metric = 1
 )
 
-### 0.39 deg / day ----
+### 0.3075 deg / day ----
+# stm:1.23 * res:0.25 = res: 0.3075
 process_heat_index_files(
   input_dir = here::here("data", "output", "01_era5", "daily", "heat_index"), 
-  output_dir = here::here("data", "output", "03_cluster", "record", "heat_index"), 
+  output_dir = here::here("data", "output", "03_cluster", "01_extreme_points", "0.3075", "heat_index"), 
   threshold_shapefile = here::here("data", "input", "threshold", "wfo_usa.shp"), 
-  space_time_metric = 'record'
+  space_time_metric = season.heat$median[3]
 )
 
-### 1.00 deg / day ----
+### 0.39 deg / day ----
+# stm:1.56 * res:0.25 = res: 0.39
 process_heat_index_files(
   input_dir = here::here("data", "output", "01_era5", "daily", "heat_index"), 
-  output_dir = here::here("data", "output", "03_cluster", "stm4", "heat_index"), 
+  output_dir = here::here("data", "output", "03_cluster", "01_extreme_points", "0.39", "heat_index"), 
   threshold_shapefile = here::here("data", "input", "threshold", "wfo_usa.shp"), 
-  space_time_metric = 4
+  space_time_metric = 'record'
 )
 
 # Precipitation ----
@@ -339,13 +340,5 @@ process_precipitation_files(
   input_dir = here::here("data", "output", "01_era5", "hourly", "precipitation"),
   output_dir = here::here("data", "output", "03_cluster", "stm1", "precipitation"),
   space_time_metric = 1,
-  atlas_sf = atlas_sf
-)
-
-## 1.00 deg / hour ----
-process_precipitation_files(
-  input_dir = here::here("data", "output", "01_era5", "hourly", "precipitation"),
-  output_dir = here::here("data", "output", "03_cluster", "stm4", "precipitation"),
-  space_time_metric = 4,
   atlas_sf = atlas_sf
 )
