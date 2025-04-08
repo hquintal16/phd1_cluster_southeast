@@ -175,8 +175,6 @@ month.heat <- stm %>%
   ) %>%
   ungroup()
 
-record.heat <- median(stm$stm2)
-
 ### 0.25 deg / day ----
 process_heat_index_files(
   input_dir = here::here("data", "output", "01_era5", "daily", "heat_index"), 

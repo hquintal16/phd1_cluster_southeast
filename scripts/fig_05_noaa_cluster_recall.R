@@ -12,6 +12,179 @@ library(here)
 here::i_am("scripts/fig_05_noaa_cluster_recall.R")  # Adjust this file path as needed
 source(here::here("scripts", "01_library.R"))
 
+# make_6panel_figure <- function(noaa_dir, cluster_dirs, recall_dirs, year_range, output_dir) {
+#   # library(terra)
+#   # library(sf)
+#   # library(ggplot2)
+#   # library(patchwork)
+#   # library(maps)
+#   # library(dplyr)
+#   # library(here)
+#   # library(pbapply)
+#   # library(stringr)
+#   # library(scales)
+#   
+#   message("DEBUG: noaa_dir: ", noaa_dir)
+#   message("DEBUG: output_dir: ", output_dir)
+#   message("DEBUG: year_range: ", paste(year_range, collapse = ", "))
+#   message("DEBUG: cluster_dirs:")
+#   for(nm in names(cluster_dirs)){
+#     message("  ", nm, ": ", cluster_dirs[[nm]])
+#   }
+#   message("DEBUG: recall_dirs:")
+#   for(nm in names(recall_dirs)){
+#     message("  ", nm, ": ", recall_dirs[[nm]])
+#   }
+#   
+#   message("Loading reference raster and county boundaries...")
+#   # Load a reference raster (for target CRS and extent)
+#   region.crs <- rast(here("data", "output", "01_era5", "daily", "heat_index",
+#                           "heat_index_daily_maximum_194001.nc"))
+#   
+#   # Load Koppen-Geiger raster and derive a binary resolution raster
+#   kg_path <- here("data", "input", "regional_aggregation", "koppen_geiger",
+#                   "1991_2020", "koppen_geiger_0p1.tif")
+#   resolution <- rast(kg_path)
+#   resolution <- resolution / resolution
+#   
+#   # Load US county boundaries via maps and convert to an sf object and SpatVector
+#   us.states <- st_as_sf(maps::map("state", plot = FALSE, fill = TRUE))
+#   us.states.vect <- vect(us.states)
+#   us.states.rast <- rasterize(us.states.vect, resolution, field = "ID")
+#   us.states.rast <- crop(us.states.rast, ext(region.crs))
+#   
+#   ### Helper function: Process files by summing layers over a year range and masking to counties.
+#   process_sum_mask <- function(dir_path, file_prefix, yr_range, required_substring = "") {
+#     if (required_substring != "") {
+#       files <- list.files(dir_path, pattern = required_substring, full.names = TRUE)
+#       message("Found ", length(files), " files in ", dir_path, " containing '", required_substring, "'.")
+#       if (length(files) > 0) {
+#         extracted_years <- as.numeric(str_extract(basename(files), "\\d{4}"))
+#         message("Extracted years: ", paste(extracted_years, collapse = ", "))
+#         files <- files[extracted_years %in% yr_range]
+#         message("After year filtering, ", length(files), " files remain.")
+#       }
+#     } else {
+#       pattern <- paste0(file_prefix, ".*(", paste(yr_range, collapse = "|"), ").*\\.nc$")
+#       files <- list.files(dir_path, pattern = pattern, full.names = TRUE)
+#     }
+#     if (length(files) == 0) {
+#       warning("No files found in ", dir_path, " for years ", paste(yr_range, collapse = ", "))
+#       return(NULL)
+#     }
+#     message("Reading ", length(files), " files from ", dir_path)
+#     rast_obj <- rast(files)  # Each file becomes one layer.
+#     message("Summing ", nlyr(rast_obj), " layers using sum()...")
+#     summed <- sum(rast_obj)
+#     message("Global sum after summing: ", global(summed, fun = "sum", na.rm = TRUE)[1])
+#     masked <- mask(summed, us.states.rast, maskvalue = NA)
+#     return(masked)
+#   }
+#   
+#   ### Process NOAA data:
+#   message("Processing NOAA data...")
+#   noaa_raster <- process_sum_mask(noaa_dir, "NOAA_", year_range, required_substring = "")
+#   if (is.null(noaa_raster)) stop("NOAA raster not found!")
+#   
+#   ### Process Cluster directories:
+#   message("Processing Cluster data...")
+#   cluster_rasters <- lapply(names(cluster_dirs), function(name) {
+#     dir_path <- cluster_dirs[[name]]
+#     r <- process_sum_mask(dir_path, "County_heat_index_", year_range, required_substring = "Daily_Extent")
+#     if (is.null(r)) return(NULL)
+#     mask(r, us.states.rast, maskvalue = NA)
+#   })
+#   names(cluster_rasters) <- names(cluster_dirs)
+#   
+#   ### Process Recall files (direct file paths):
+#   message("Processing Recall data...")
+#   recall_rasters <- lapply(names(recall_dirs), function(name) {
+#     file_path <- recall_dirs[[name]]
+#     r <- rast(file_path)
+#     mask(r, us.states.rast, maskvalue = NA)
+#   })
+#   names(recall_rasters) <- names(recall_dirs)
+#   
+#   ### Determine separate common scale limits for NOAA and Cluster:
+#   noaa_max <- as.numeric(global(noaa_raster, fun = "max", na.rm = TRUE)[1])
+#   message("NOAA range: 0 - ", noaa_max)
+#   
+#   valid_cluster <- cluster_rasters[c("stm1", "record")]
+#   cluster_max <- as.numeric(max(unlist(sapply(valid_cluster, function(r) {
+#     global(r, fun = "max", na.rm = TRUE)[1]
+#   })), na.rm = TRUE))
+#   message("Cluster range: 0 - ", cluster_max)
+#   
+#   ### Plotting helper: Convert a SpatRaster to a ggplot object using geom_tile() and coord_sf().
+#   ### Accepts an optional scale_limits argument, a palette argument, and na_color for NA values.
+#   plot_raster <- function(r, scale_limits = NULL, 
+#                           palette = c("grey40", "blue", "white", "red"), na_color = "white") {
+#     df <- as.data.frame(r, xy = TRUE)
+#     if (ncol(df) < 3) stop("Raster does not have expected columns.")
+#     value_col <- names(df)[3]
+#     if(is.null(scale_limits)) {
+#       max_val <- max(df[[value_col]], na.rm = TRUE)
+#       scale_limits <- c(0, max_val)
+#     }
+#     lower <- scale_limits[1]
+#     upper <- scale_limits[2]
+#     eps <- ifelse(upper - lower > 0, (upper - lower) * 1e-3, 1e-6)
+#     
+#     # Define breakpoints based on the length of the palette
+#     if(length(palette) == 3) {
+#       brks <- c(lower, lower + eps, upper)
+#     } else if(length(palette) == 4) {
+#       brks <- c(lower, lower + eps, (lower + upper) / 2, upper)
+#     } else {
+#       brks <- seq(lower, upper, length.out = length(palette))
+#     }
+#     
+#     p <- ggplot() +
+#       geom_tile(data = df, aes(x = x, y = y, fill = get(value_col))) +
+#       scale_fill_gradientn(name = "",
+#                            colors = palette,
+#                            values = scales::rescale(brks, from = scale_limits),
+#                            limits = scale_limits,
+#                            na.value = na_color, oob = squish) +
+#       geom_sf(data = us.states, fill = NA, color = "black", size = 0.3) +
+#       coord_sf(xlim = c(-95, -75), ylim = c(24, 40), expand = FALSE) +
+#       theme_minimal() +
+#       theme(axis.title = element_blank(),
+#             axis.text = element_blank(),
+#             axis.ticks = element_blank(),
+#             plot.title = element_blank())
+#     return(p)
+#   }
+#   
+#   ### Create panels:
+#   message("Creating panels...")
+#   # Top row: NOAA panels (2 panels) using red–white–blue with common limits and NA as white.
+#   p_a <- plot_raster(noaa_raster, scale_limits = c(0, noaa_max), 
+#                      palette = c("grey40", "blue", "white", "red"))
+#   p_b <- plot_raster(noaa_raster, scale_limits = c(0, noaa_max), 
+#                      palette = c("grey40", "blue", "white", "red"))
+#   
+#   # Middle row: Cluster panels (for stm1 and record) using red–white–blue with common limits.
+#   p_d <- plot_raster(cluster_rasters[["stm1"]], scale_limits = c(0, cluster_max), 
+#                      palette = c("grey40", "blue", "white", "red"))
+#   p_e <- plot_raster(cluster_rasters[["record"]], scale_limits = c(0, cluster_max), 
+#                      palette = c("grey40", "blue", "white", "red"))
+#   
+#   # Bottom row: Recall panels (for stm1 and record) using an orange to purple gradient
+#   # and NA values colored as black.
+#   p_g <- plot_raster(recall_rasters[["stm1"]], scale_limits = c(0, 1), 
+#                      palette = c("orange", "purple"), na_color = "black")
+#   p_h <- plot_raster(recall_rasters[["record"]], scale_limits = c(0, 1), 
+#                      palette = c("orange", "purple"), na_color = "black")
+#   
+#   message("Assembling 6-panel figure using patchwork...")
+#   library(patchwork)
+#   figure <- (p_a + p_b) / (p_d + p_e) / (p_g + p_h) +
+#     plot_annotation(tag_levels = "a")
+#   
+#   message("Figure creation complete.")
+#   return(figure)
+# }
 make_6panel_figure <- function(noaa_dir, cluster_dirs, recall_dirs, year_range, output_dir) {
   # library(terra)
   # library(sf)
@@ -105,15 +278,19 @@ make_6panel_figure <- function(noaa_dir, cluster_dirs, recall_dirs, year_range, 
   })
   names(recall_rasters) <- names(recall_dirs)
   
-  ### Determine separate common scale limits for NOAA and Cluster:
+  ### Determine common scale limits for NOAA and Cluster:
   noaa_max <- as.numeric(global(noaa_raster, fun = "max", na.rm = TRUE)[1])
-  message("NOAA range: 0 - ", noaa_max)
+  message("NOAA max value: ", noaa_max)
   
   valid_cluster <- cluster_rasters[c("stm1", "record")]
   cluster_max <- as.numeric(max(unlist(sapply(valid_cluster, function(r) {
     global(r, fun = "max", na.rm = TRUE)[1]
   })), na.rm = TRUE))
-  message("Cluster range: 0 - ", cluster_max)
+  message("Cluster max value: ", cluster_max)
+  
+  # Set a common maximum for both NOAA and Cluster datasets.
+  common_max <- max(noaa_max, cluster_max)
+  message("Common NOAA and Cluster range: 0 - ", common_max)
   
   ### Plotting helper: Convert a SpatRaster to a ggplot object using geom_tile() and coord_sf().
   ### Accepts an optional scale_limits argument, a palette argument, and na_color for NA values.
@@ -130,7 +307,9 @@ make_6panel_figure <- function(noaa_dir, cluster_dirs, recall_dirs, year_range, 
     upper <- scale_limits[2]
     eps <- ifelse(upper - lower > 0, (upper - lower) * 1e-3, 1e-6)
     
-    # Define breakpoints based on the length of the palette
+    # Define breakpoints based on the length of the palette.
+    # When using a 3-color palette (grey40, yellow, red), the breakpoints are set so that
+    # the value 0 maps exactly to grey40 and values just above 0 start at yellow.
     if(length(palette) == 3) {
       brks <- c(lower, lower + eps, upper)
     } else if(length(palette) == 4) {
@@ -158,24 +337,23 @@ make_6panel_figure <- function(noaa_dir, cluster_dirs, recall_dirs, year_range, 
   
   ### Create panels:
   message("Creating panels...")
-  # Top row: NOAA panels (2 panels) using red–white–blue with common limits and NA as white.
-  p_a <- plot_raster(noaa_raster, scale_limits = c(0, noaa_max), 
-                     palette = c("grey40", "blue", "white", "red"))
-  p_b <- plot_raster(noaa_raster, scale_limits = c(0, noaa_max), 
-                     palette = c("grey40", "blue", "white", "red"))
+  # Top row: NOAA panels with a grey40 at 0 and a yellow-to-red ramp using common scale limits.
+  p_a <- plot_raster(noaa_raster, scale_limits = c(0, common_max), 
+                     palette = c("grey40", "yellow", "red"))
+  p_b <- plot_raster(noaa_raster, scale_limits = c(0, common_max), 
+                     palette = c("grey40", "yellow", "red"))
+
+  # Middle row: Cluster panels (for stm1 and record) with the same palette and common limits.
+  p_d <- plot_raster(cluster_rasters[["stm1"]], scale_limits = c(0, common_max), 
+                     palette = c("grey40", "yellow", "red"))
+  p_e <- plot_raster(cluster_rasters[["record"]], scale_limits = c(0, common_max), 
+                     palette = c("grey40", "yellow", "red"))
   
-  # Middle row: Cluster panels (for stm1 and record) using red–white–blue with common limits.
-  p_d <- plot_raster(cluster_rasters[["stm1"]], scale_limits = c(0, cluster_max), 
-                     palette = c("grey40", "blue", "white", "red"))
-  p_e <- plot_raster(cluster_rasters[["record"]], scale_limits = c(0, cluster_max), 
-                     palette = c("grey40", "blue", "white", "red"))
-  
-  # Bottom row: Recall panels (for stm1 and record) using an orange to purple gradient
-  # and NA values colored as black.
+  # Bottom row: Recall panels remain unchanged.
   p_g <- plot_raster(recall_rasters[["stm1"]], scale_limits = c(0, 1), 
-                     palette = c("orange", "purple"), na_color = "black")
+                     palette = c("orange", "purple"))
   p_h <- plot_raster(recall_rasters[["record"]], scale_limits = c(0, 1), 
-                     palette = c("orange", "purple"), na_color = "black")
+                     palette = c("orange", "purple"))
   
   message("Assembling 6-panel figure using patchwork...")
   library(patchwork)
@@ -193,7 +371,7 @@ make_6panel_figure <- function(noaa_dir, cluster_dirs, recall_dirs, year_range, 
 year_range <- 2019:2023
 
 # NOAA directory: example path
-noaa_directory <- here("data", "output", "05_noaa", "southeast", "summary", "excess_heat")
+noaa_directory <- here("data", "output", "04_noaa", "southeast", "summary", "excess_heat")
 
 # Cluster directories: a named list of three directories
 cluster_dirs <- list(
@@ -223,40 +401,39 @@ svg_path <- here("figures","05_recall_excess_heat_day_2019_2023.svg")
 ggsave(filename = png_path, plot = figure, width = 6, height = 6, dpi = 300)
 ggsave(filename = svg_path, plot = figure, width = 6, height = 6, device = "svg")
 
-# Define the year range
-year_range <- 1996:2023
-
-# NOAA directory: example path
-noaa_directory <- here("data", "output", "05_noaa", "southeast", "summary", "excess_heat")
-
-# Cluster directories: a named list of three directories
-cluster_dirs <- list(
-  stm1 = here("data", "output", "03_cluster", "02_cluster", "points", "stm1", "heat_index", "summary"),
-  record = here("data", "output", "03_cluster", "02_cluster", "points", "record", "heat_index", "summary"),
-  stm4 = here("data", "output", "03_cluster", "02_cluster", "points", "stm4", "heat_index", "summary")
-)
-
-# Recall directories: a named list of three file paths to .nc files
-recall_dirs <- list(
-  stm1 = here("data", "output", "05_validation", "recall", "raster", "2019_2023_day_stm1_excess_heat.nc"),
-  record = here("data", "output", "05_validation", "recall", "raster", "2019_2023_day_record_excess_heat.nc"),
-  stm4 = here("data", "output", "05_validation", "recall", "raster", "2019_2023_day_stm4_excess_heat.nc")
-)
-
-# Output directory for the figure
-output_directory <- here("figures")
-
-# Create the 9-panel figure
-figure <- make_6panel_figure(noaa_directory, cluster_dirs, recall_dirs, year_range, output_directory)
-
-# Define file paths using here
-png_path <- here("figures","05_recall_excess_heat_day_1996_2023.png")
-svg_path <- here("figures","05_recall_excess_heat_day_1996_2023.svg")
-
-# Save the plot as a PNG + SVG file
-ggsave(filename = png_path, plot = figure, width = 6, height = 6, dpi = 300)
-ggsave(filename = svg_path, plot = figure, width = 6, height = 6, device = "svg")
-
+# # Define the year range
+# year_range <- 1996:2023
+# 
+# # NOAA directory: example path
+# noaa_directory <- here("data", "output", "04_noaa", "southeast", "summary", "excess_heat")
+# 
+# # Cluster directories: a named list of three directories
+# cluster_dirs <- list(
+#   stm1 = here("data", "output", "03_cluster", "02_cluster", "points", "stm1", "heat_index", "summary"),
+#   record = here("data", "output", "03_cluster", "02_cluster", "points", "record", "heat_index", "summary"),
+#   stm4 = here("data", "output", "03_cluster", "02_cluster", "points", "stm4", "heat_index", "summary")
+# )
+# 
+# # Recall directories: a named list of three file paths to .nc files
+# recall_dirs <- list(
+#   stm1 = here("data", "output", "05_validation", "recall", "raster", "2019_2023_day_stm1_excess_heat.nc"),
+#   record = here("data", "output", "05_validation", "recall", "raster", "2019_2023_day_record_excess_heat.nc"),
+#   stm4 = here("data", "output", "05_validation", "recall", "raster", "2019_2023_day_stm4_excess_heat.nc")
+# )
+# 
+# # Output directory for the figure
+# output_directory <- here("figures")
+# 
+# # Create the 9-panel figure
+# figure <- make_6panel_figure(noaa_directory, cluster_dirs, recall_dirs, year_range, output_directory)
+# 
+# # Define file paths using here
+# png_path <- here("figures","05_recall_excess_heat_day_1996_2023.png")
+# svg_path <- here("figures","05_recall_excess_heat_day_1996_2023.svg")
+# 
+# # Save the plot as a PNG + SVG file
+# ggsave(filename = png_path, plot = figure, width = 6, height = 6, dpi = 300)
+# ggsave(filename = svg_path, plot = figure, width = 6, height = 6, device = "svg")
 
 ## Heat ----
 
@@ -264,7 +441,7 @@ ggsave(filename = svg_path, plot = figure, width = 6, height = 6, device = "svg"
 year_range <- 2019:2023
 
 # NOAA directory: example path
-noaa_directory <- here("data", "output", "05_noaa", "southeast", "summary", "heat")
+noaa_directory <- here("data", "output", "04_noaa", "southeast", "summary", "heat")
 
 # Cluster directories: a named list of three directories
 cluster_dirs <- list(
@@ -294,40 +471,39 @@ svg_path <- here("figures","05_recall_heat_day_2019_2023.svg")
 ggsave(filename = png_path, plot = figure, width = 6, height = 6, dpi = 300)
 ggsave(filename = svg_path, plot = figure, width = 6, height = 6, device = "svg")
 
-# Define the year range
-year_range <- 2019:2023
-
-# NOAA directory: example path
-noaa_directory <- here("data", "output", "05_noaa", "southeast", "summary", "heat")
-
-# Cluster directories: a named list of three directories
-cluster_dirs <- list(
-  stm1 = here("data", "output", "03_cluster", "02_cluster", "points", "stm1", "heat_index", "summary"),
-  record = here("data", "output", "03_cluster", "02_cluster", "points", "record", "heat_index", "summary"),
-  stm4 = here("data", "output", "03_cluster", "02_cluster", "points", "stm4", "heat_index", "summary")
-)
-
-# Recall directories: a named list of three file paths to .nc files
-recall_dirs <- list(
-  stm1 = here("data", "output", "05_validation", "recall", "raster", "2019_2023_day_stm1_heat.nc"),
-  record = here("data", "output", "05_validation", "recall", "raster", "2019_2023_day_record_heat.nc"),
-  stm4 = here("data", "output", "05_validation", "recall", "raster", "2019_2023_day_stm4_heat.nc")
-)
-
-# Output directory for the figure
-output_directory <- here("figures")
-
-# Create the 9-panel figure
-figure <- make_6panel_figure(noaa_directory, cluster_dirs, recall_dirs, year_range, output_directory)
-
-# Define file paths using here
-png_path <- here("figures","05_recall_heat_day_1996_2023.png")
-svg_path <- here("figures","05_recall_heat_day_1996_2023.svg")
-
-# Save the plot as a PNG + SVG file
-ggsave(filename = png_path, plot = figure, width = 6, height = 6, dpi = 300)
-ggsave(filename = svg_path, plot = figure, width = 6, height = 6, device = "svg")
-
+# # Define the year range
+# year_range <- 2019:2023
+# 
+# # NOAA directory: example path
+# noaa_directory <- here("data", "output", "05_noaa", "southeast", "summary", "heat")
+# 
+# # Cluster directories: a named list of three directories
+# cluster_dirs <- list(
+#   stm1 = here("data", "output", "03_cluster", "02_cluster", "points", "stm1", "heat_index", "summary"),
+#   record = here("data", "output", "03_cluster", "02_cluster", "points", "record", "heat_index", "summary"),
+#   stm4 = here("data", "output", "03_cluster", "02_cluster", "points", "stm4", "heat_index", "summary")
+# )
+# 
+# # Recall directories: a named list of three file paths to .nc files
+# recall_dirs <- list(
+#   stm1 = here("data", "output", "05_validation", "recall", "raster", "2019_2023_day_stm1_heat.nc"),
+#   record = here("data", "output", "05_validation", "recall", "raster", "2019_2023_day_record_heat.nc"),
+#   stm4 = here("data", "output", "05_validation", "recall", "raster", "2019_2023_day_stm4_heat.nc")
+# )
+# 
+# # Output directory for the figure
+# output_directory <- here("figures")
+# 
+# # Create the 9-panel figure
+# figure <- make_6panel_figure(noaa_directory, cluster_dirs, recall_dirs, year_range, output_directory)
+# 
+# # Define file paths using here
+# png_path <- here("figures","05_recall_heat_day_1996_2023.png")
+# svg_path <- here("figures","05_recall_heat_day_1996_2023.svg")
+# 
+# # Save the plot as a PNG + SVG file
+# ggsave(filename = png_path, plot = figure, width = 6, height = 6, dpi = 300)
+# ggsave(filename = svg_path, plot = figure, width = 6, height = 6, device = "svg")
 
 make_3panel_figure <- function(noaa_dir, cluster_dir, recall_file, year_range, output_dir) {
   # library(terra)
@@ -792,3 +968,77 @@ row.names(agg_recall) <- c('Excess Heat','Flash Flood','Flood','Heat','Heavy Rai
 
 # save
 write.csv(agg_recall,here('data','output','05_validation','recall','2019_2023_recall.csv'))
+
+# Key Figure ----
+# Load a reference raster (for target CRS and extent)
+region.crs <- rast(here("data", "output", "01_era5", "daily", "heat_index",
+                        "heat_index_daily_maximum_194001.nc"))
+
+# Load Koppen-Geiger raster and derive a binary resolution raster
+kg_path <- here("data", "input", "regional_aggregation", "koppen_geiger",
+                "1991_2020", "koppen_geiger_0p1.tif")
+resolution <- rast(kg_path)
+resolution <- resolution / resolution
+
+# Load US county boundaries via maps and convert to an sf object and SpatVector
+us.states <- st_as_sf(maps::map("state", plot = FALSE, fill = TRUE))
+us.states.vect <- vect(us.states)
+us.states.rast <- rasterize(us.states.vect, resolution, field = "ID")
+us.states.rast <- crop(us.states.rast, ext(region.crs))
+file_path <- here("data", "output", "05_validation", "recall", "raster", "2019_2023_day_record_excess_heat.nc")
+### Process Recall files (direct file paths):
+r <- rast(file_path)
+recall_rasters <- mask(r, us.states.rast, maskvalue = NA)
+# plot(recall_rasters)
+### Plotting helper: Convert a SpatRaster to a ggplot object using geom_tile() and coord_sf().
+### Accepts an optional scale_limits argument, a palette argument, and na_color for NA values.
+plot_raster <- function(r, scale_limits = NULL, 
+                        palette = c("grey40", "blue", "white", "red"), na_color = "white") {
+  df <- as.data.frame(r, xy = TRUE)
+  if (ncol(df) < 3) stop("Raster does not have expected columns.")
+  value_col <- names(df)[3]
+  if(is.null(scale_limits)) {
+    max_val <- max(df[[value_col]], na.rm = TRUE)
+    scale_limits <- c(0, max_val)
+  }
+  lower <- scale_limits[1]
+  upper <- scale_limits[2]
+  eps <- ifelse(upper - lower > 0, (upper - lower) * 1e-3, 1e-6)
+  
+  # Define breakpoints based on the length of the palette
+  if(length(palette) == 3) {
+    brks <- c(lower, lower + eps, upper)
+  } else if(length(palette) == 4) {
+    brks <- c(lower, lower + eps, (lower + upper) / 2, upper)
+  } else {
+    brks <- seq(lower, upper, length.out = length(palette))
+  }
+  
+  p <- ggplot() +
+    geom_tile(data = df, aes(x = x, y = y, fill = get(value_col))) +
+    scale_fill_gradientn(name = "",
+                         colors = palette,
+                         values = scales::rescale(brks, from = scale_limits),
+                         limits = scale_limits,
+                         na.value = na_color, oob = squish) +
+    geom_sf(data = us.states, fill = NA, color = "black", size = 0.3) +
+    coord_sf(xlim = c(-95, -75), ylim = c(24, 40), expand = F) +
+    theme_bw() +
+    theme(axis.title = element_blank(),
+          axis.text = element_blank(),
+          axis.ticks = element_blank(),
+          plot.title = element_blank(),
+          legend.position = c(.9,.25))
+  return(p)
+}
+key_figure <- plot_raster(recall_rasters, scale_limits = c(0, 1), 
+                   palette = c("orange", "purple"), na_color = "black")
+key_figure
+
+# Define file paths using here
+png_path <- here("figures","00_key_figure.png")
+svg_path <- here("figures","00_key_figure.svg")
+
+# Save the plot as a PNG + SVG file
+ggsave(filename = png_path, plot = key_figure, width = 4, height = 4, dpi = 300)
+ggsave(filename = svg_path, plot = key_figure, width = 4, height = 4, device = "svg")
