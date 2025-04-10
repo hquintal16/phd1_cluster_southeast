@@ -122,28 +122,28 @@ process_county_events <- function(processed_dirs, output_path, hazard_name) {
 
 ## Heat index ----
 
-### STM 1 ----
+### 0.25 / day ----
 
-processed_dirs <- list(here('data','output','03_cluster','02_cluster','points','stm1','heat_index','county'))
-output_path <- here('data','output','03_cluster','02_cluster','points','stm1','heat_index','summary')
+processed_dirs <- list(here('data','output','03_cluster','02_cluster','points','0.25','heat_index','county'))
+output_path <- here('data','output','03_cluster','02_cluster','points','0.25','heat_index','summary')
 hazard_name <- "heat_index"
 
 # Run the function to process the county events
 process_county_events(processed_dirs, output_path, hazard_name)
 
-### Record ----
+### 0.3075 / day ----
 
-processed_dirs <- list(here('data','output','03_cluster','02_cluster','points','record','heat_index','county'))
-output_path <- here('data','output','03_cluster','02_cluster','points','record','heat_index','summary')
+processed_dirs <- list(here('data','output','03_cluster','02_cluster','points','0.3075','heat_index','county'))
+output_path <- here('data','output','03_cluster','02_cluster','points','0.3075','heat_index','summary')
 hazard_name <- "heat_index"
 
 # Run the function to process the county events
 process_county_events(processed_dirs, output_path, hazard_name)
 
-### STM 4 ----
+### 0.39 / day ----
 
-processed_dirs <- list(here('data','output','03_cluster','02_cluster','points','stm4','heat_index','county'))
-output_path <- here('data','output','03_cluster','02_cluster','points','stm4','heat_index','summary')
+processed_dirs <- list(here('data','output','03_cluster','02_cluster','points','0.39','heat_index','county'))
+output_path <- here('data','output','03_cluster','02_cluster','points','0.39','heat_index','summary')
 hazard_name <- "heat_index"
 
 # Run the function to process the county events
@@ -151,7 +151,7 @@ process_county_events(processed_dirs, output_path, hazard_name)
 
 ## Precipitation ----
 
-### STM 1 ----
+### 0.25 deg / hour ----
 
 processed_dirs <- list(here('data','output','03_cluster','02_cluster','points','stm1','precipitation','county'))
 output_path <- here('data','output','03_cluster','02_cluster','points','stm1','precipitation','summary')

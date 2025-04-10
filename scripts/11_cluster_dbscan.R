@@ -199,13 +199,10 @@ process_extremes_data <- function(input_dir, output_dir) {
 }
 
 # Calc Clusters ----
-# Define input directories (with descriptive names as comments)
 input_dirs <- c(
-  here::here("data", "output", "03_cluster", "01_extreme_points", "stm1", "heat_index"),    # 0.25 deg / day
-  here::here("data", "output", "03_cluster", "01_extreme_points", "record", "heat_index"),    # 0.39 deg / day
-  here::here("data", "output", "03_cluster", "01_extreme_points", "stm4", "heat_index"),      # 1.00 deg / day
-  here::here("data", "output", "03_cluster", "01_extreme_points", "stm1", "precipitation"),   # 0.25 deg / hour
-  here::here("data", "output", "03_cluster", "01_extreme_points", "stm4", "precipitation")    # 1.00 deg / hour
+  here::here("data", "output", "03_cluster", "01_extreme_points", "0.25", "heat_index"),
+  here::here("data", "output", "03_cluster", "01_extreme_points", "0.3075", "heat_index"),
+  here::here("data", "output", "03_cluster", "01_extreme_points", "0.39", "heat_index")
 )
 
 # Define the common output directory
@@ -218,40 +215,34 @@ for (in_dir in input_dirs) {
 }
 
 # Summary Info ----
-heat_index_0.25_deg_day <- read.csv(here::here("data", "output", "03_cluster", "02_cluster", "heat_index_stm1_clustered_extremes.csv"))
-heat_index_0.39_deg_day <- read.csv(here::here("data", "output", "03_cluster", "02_cluster", "heat_index_record_clustered_extremes.csv"))
-heat_index_1.00_deg_day <- read.csv(here::here("data", "output", "03_cluster", "02_cluster", "heat_index_stm4_clustered_extremes.csv"))
+heat_index_0.25_deg_day <- read.csv(here::here("data", "output", "03_cluster", "02_cluster", "heat_index_0.25_clustered_extremes.csv"))
+heat_index_0.39_deg_day <- read.csv(here::here("data", "output", "03_cluster", "02_cluster", "heat_index_0.39_clustered_extremes.csv"))
+heat_index_0.3075_deg_day <- read.csv(here::here("data", "output", "03_cluster", "02_cluster", "heat_index_0.3075_clustered_extremes.csv"))
 precipitation_0.25_deg_hour <- read.csv(here::here("data", "output", "03_cluster", "02_cluster", "precipitation_stm1_clustered_extremes.csv"))
-precipitation_1.00_deg_hour <- read.csv(here::here("data", "output", "03_cluster", "02_cluster", "precipitation_stm4_clustered_extremes.csv"))
 
 cluster_results <- data.frame(
-  hazard = c('Heat','Heat','Heat','Precipitation','Precipitation'),
-  resolution = c(0.25, 0.39, 1.00, 0.25, 1.00),
+  hazard = c('Heat','Heat','Heat','Precipitation'),
+  resolution = c(0.25, 0.3075, 0.39, 0.25),
   mu = c(heat_index_0.25_deg_day$mu[1],
+         heat_index_0.3075_deg_day$mu[1],
          heat_index_0.39_deg_day$mu[1],
-         heat_index_1.00_deg_day$mu[1],
-         precipitation_0.25_deg_hour$mu[1],
-         precipitation_1.00_deg_hour$mu[1]),
+         precipitation_0.25_deg_hour$mu[1]),
   eps = c(heat_index_0.25_deg_day$eps[1],
+          heat_index_0.3075_deg_day$eps[1],
           heat_index_0.39_deg_day$eps[1],
-          heat_index_1.00_deg_day$eps[1],
-          precipitation_0.25_deg_hour$eps[1],
-          precipitation_1.00_deg_hour$eps[1]),
+          precipitation_0.25_deg_hour$eps[1]),
   points = c(nrow(heat_index_0.25_deg_day),
+             nrow(heat_index_0.3075_deg_day),
              nrow(heat_index_0.39_deg_day),
-             nrow(heat_index_1.00_deg_day),
-             nrow(precipitation_0.25_deg_hour),
-             nrow(precipitation_1.00_deg_hour)),
+             nrow(precipitation_0.25_deg_hour)),
   noise = c(sum(heat_index_0.25_deg_day$cluster == 0),
+            sum(heat_index_0.3075_deg_day$cluster == 0),
             sum(heat_index_0.39_deg_day$cluster == 0),
-            sum(heat_index_1.00_deg_day$cluster == 0),
-            sum(precipitation_0.25_deg_hour$cluster == 0),
-            sum(precipitation_1.00_deg_hour$cluster == 0)),
+            sum(precipitation_0.25_deg_hour$cluster == 0)),
   clusters = c(max(unique(heat_index_0.25_deg_day$cluster)),
+               max(unique(heat_index_0.3075_deg_day$cluster)),
                max(unique(heat_index_0.39_deg_day$cluster)),
-               max(unique(heat_index_1.00_deg_day$cluster)),
-               max(unique(precipitation_0.25_deg_hour$cluster)),
-               max(unique(precipitation_1.00_deg_hour$cluster)))
+               max(unique(precipitation_0.25_deg_hour$cluster)))
 )
 
 write.csv(cluster_results, here::here("data", "output", "03_cluster", "02_cluster", "summary.csv"))

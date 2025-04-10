@@ -167,11 +167,11 @@ process_validation_day <- function(year, cluster_dir, noaa_dir, output_dir, haza
 ## 0.25 deg ----
 ### Excess Heat ----
 
-years_to_process <- 2000:2023
-cluster_directory <- here('data','output','03_cluster','02_cluster','points','stm1','heat_index','clean')
+years_to_process <- 1996:2023
+cluster_directory <- here('data','output','03_cluster','02_cluster','points','0.25','heat_index','clean')
 noaa_directory <- here('data','output','04_noaa','southeast','summary','excess_heat')
 hazard <- "Excess_Heat"
-output_directory <- here('data','output','05_validation','recall', 'day','stm1','excess_heat')
+output_directory <- here('data','output','05_validation','recall', 'day','0.25','excess_heat')
 koppen_raster_path <- here("data", "input", "regional_aggregation", "koppen_geiger", "1991_2020", "koppen_geiger_0p1.tif")
 
 lapply(years_to_process, 
@@ -216,10 +216,10 @@ lapply(years_to_process,
 ### Heat ----
 
 years_to_process <- 1996:2023
-cluster_directory <- here('data','output','03_cluster','02_cluster','points','stm1','heat_index','clean')
+cluster_directory <- here('data','output','03_cluster','02_cluster','points','0.25','heat_index','clean')
 noaa_directory <- here('data','output','04_noaa','southeast','summary','heat')
 hazard <- "Heat"
-output_directory <- here('data','output','05_validation','recall', 'day','stm1','heat')
+output_directory <- here('data','output','05_validation','recall', 'day','0.25','heat')
 koppen_raster_path <- here("data", "input", "regional_aggregation", "koppen_geiger", "1991_2020", "koppen_geiger_0p1.tif")
 
 lapply(years_to_process, 
@@ -309,14 +309,31 @@ lapply(years_to_process,
        output_directory, 
        hazard)
 
+## 0.3075 deg ----
+### Excess Heat ----
+
+years_to_process <- 1996:2023
+cluster_directory <- here('data','output','03_cluster','02_cluster','points','0.3075','heat_index','clean')
+noaa_directory <- here('data','output','04_noaa','southeast','summary','excess_heat')
+hazard <- "Excess_Heat"
+output_directory <- here('data','output','05_validation','recall', 'day','0.3075','excess_heat')
+koppen_raster_path <- here("data", "input", "regional_aggregation", "koppen_geiger", "1991_2020", "koppen_geiger_0p1.tif")
+
+lapply(years_to_process, 
+       process_validation_day, 
+       cluster_directory, 
+       noaa_directory, 
+       output_directory, 
+       hazard)
+
 ## 0.39 deg ----
 ### Excess Heat ----
 
-years_to_process <- 2000:2023
-cluster_directory <- here('data','output','03_cluster','02_cluster','points','record','heat_index','clean')
+years_to_process <- 1996:2023
+cluster_directory <- here('data','output','03_cluster','02_cluster','points','0.39','heat_index','clean')
 noaa_directory <- here('data','output','04_noaa','southeast','summary','excess_heat')
 hazard <- "Excess_Heat"
-output_directory <- here('data','output','05_validation','recall', 'day','record','excess_heat')
+output_directory <- here('data','output','05_validation','recall', 'day','0.39','excess_heat')
 koppen_raster_path <- here("data", "input", "regional_aggregation", "koppen_geiger", "1991_2020", "koppen_geiger_0p1.tif")
 
 lapply(years_to_process, 

@@ -55,21 +55,26 @@ create_lookup_table <- function(input_directory, output_csv_path) {
 ### 0.25 ----
 #### Heat Index ----
 create_lookup_table(
-  input_directory = here('data','output','03_cluster','02_cluster','points','stm1','heat_index','raw'),
-  output_csv_path = here('data','output','03_cluster','02_cluster','points','stm1','heat_index','lookup_table.csv')
+  input_directory = here('data','output','03_cluster','02_cluster','points','0.25','heat_index','raw'),
+  output_csv_path = here('data','output','03_cluster','02_cluster','points','0.25','heat_index','lookup_table.csv')
 )
 #### Precipitation ----
 create_lookup_table(
   input_directory = here('data','output','03_cluster','02_cluster','points','stm1','precipitation','raw'),
   output_csv_path = here('data','output','03_cluster','02_cluster','points','stm1','precipitation','lookup_table.csv')
 )
+### 0.3075 ----
+#### Heat Index ----
+create_lookup_table(
+  input_directory = here('data','output','03_cluster','02_cluster','points','0.3075','heat_index','raw'),
+  output_csv_path = here('data','output','03_cluster','02_cluster','points','0.3075','heat_index','lookup_table.csv')
+)
 ### 0.39 ----
 #### Heat Index ----
 create_lookup_table(
-  input_directory = here('data','output','03_cluster','02_cluster','points','record','heat_index','raw'),
-  output_csv_path = here('data','output','03_cluster','02_cluster','points','record','heat_index','lookup_table.csv')
+  input_directory = here('data','output','03_cluster','02_cluster','points','0.39','heat_index','raw'),
+  output_csv_path = here('data','output','03_cluster','02_cluster','points','0.39','heat_index','lookup_table.csv')
 )
-
 # Load a reference raster to set the CRS
 region.crs <- terra::rast(here::here("data", "output", "01_era5", "daily", "heat_index", "heat_index_daily_maximum_194001.nc"))
 
@@ -127,10 +132,12 @@ create_cluster_summary <- function(
       era5_mean   <- mean(subset_cluster$observation, na.rm = TRUE)
       era5_median <- median(subset_cluster$observation, na.rm = TRUE)
       era5_max    <- max(subset_cluster$observation, na.rm = TRUE)
+      era5_min    <- min(subset_cluster$observation, na.rm = TRUE)
     } else {
       era5_mean   <- NA
       era5_median <- NA
       era5_max    <- NA
+      era5_min    <- NA
     }
     
     # Default values for dates and duration
@@ -220,6 +227,7 @@ create_cluster_summary <- function(
       era5_mean        = era5_mean,
       era5_median      = era5_median,
       era5_max         = era5_max,
+      era5_min         = era5_min,
       stringsAsFactors = FALSE
     )
     
@@ -389,6 +397,7 @@ create_cluster_summary_hourly <- function(
       era5_mean        = era5_mean,
       era5_median      = era5_median,
       era5_max         = era5_max,
+      era5_min         = era5_min,
       stringsAsFactors = FALSE
     )
     
@@ -410,11 +419,11 @@ create_cluster_summary_hourly <- function(
 ### 0.25 ----
 #### Heat Index ----
 summary_df <- create_cluster_summary(
-  lookup_file_path = here('data','output','03_cluster','02_cluster','points','stm1','heat_index','lookup_table.csv'),
-  cluster_file_path = here('data','output','03_cluster','02_cluster','heat_index_stm1_clustered_extremes.csv'),
-  cluster_folder = here('data','output','03_cluster','02_cluster','points','stm1','heat_index','county'),
+  lookup_file_path = here('data','output','03_cluster','02_cluster','points','0.25','heat_index','lookup_table.csv'),
+  cluster_file_path = here('data','output','03_cluster','02_cluster','heat_index_0.25_clustered_extremes.csv'),
+  cluster_folder = here('data','output','03_cluster','02_cluster','points','0.25','heat_index','county'),
   us_states_rast = us.states.rast,
-  output_csv_path = here('data','output','03_cluster','02_cluster','points','stm1','heat_index','cluster_idf.csv')
+  output_csv_path = here('data','output','03_cluster','02_cluster','points','0.25','heat_index','cluster_idf.csv')
 )
 #### Precipitation ----
 summary_df <- create_cluster_summary_hourly(
@@ -424,15 +433,23 @@ summary_df <- create_cluster_summary_hourly(
   us_states_rast = us.states.rast,
   output_csv_path = here('data','output','03_cluster','02_cluster','points','stm1','precipitation','cluster_idf.csv')
 )
-
+### 0.3075 ----
+#### Heat Index ----
+summary_df <- create_cluster_summary(
+  lookup_file_path = here('data','output','03_cluster','02_cluster','points','0.3075','heat_index','lookup_table.csv'),
+  cluster_file_path = here('data','output','03_cluster','02_cluster','heat_index_0.3075_clustered_extremes.csv'),
+  cluster_folder = here('data','output','03_cluster','02_cluster','points','0.3075','heat_index','county'),
+  us_states_rast = us.states.rast,
+  output_csv_path = here('data','output','03_cluster','02_cluster','points','0.3075','heat_index','cluster_idf.csv')
+)
 ### 0.39 ----
 #### Heat Index ----
 summary_df <- create_cluster_summary(
-  lookup_file_path = here('data','output','03_cluster','02_cluster','points','record','heat_index','lookup_table.csv'),
-  cluster_file_path = here('data','output','03_cluster','02_cluster','heat_index_record_clustered_extremes.csv'),
-  cluster_folder = here('data','output','03_cluster','02_cluster','points','record','heat_index','county'),
+  lookup_file_path = here('data','output','03_cluster','02_cluster','points','0.39','heat_index','lookup_table.csv'),
+  cluster_file_path = here('data','output','03_cluster','02_cluster','heat_index_0.39_clustered_extremes.csv'),
+  cluster_folder = here('data','output','03_cluster','02_cluster','points','0.39','heat_index','county'),
   us_states_rast = us.states.rast,
-  output_csv_path = here('data','output','03_cluster','02_cluster','points','record','heat_index','cluster_idf.csv')
+  output_csv_path = here('data','output','03_cluster','02_cluster','points','0.39','heat_index','cluster_idf.csv')
 )
 
 # Cluster Impacts ----

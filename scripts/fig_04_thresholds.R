@@ -18,6 +18,12 @@ domain <- terra::rast(here::here("data", "output", "01_era5", "daily", "heat_ind
 domain <- domain[[1]]/domain[[1]]
 
 # Read in united states shapefile and convert to sf
+cache_dir <- getOption("tigris_cache_dir")
+if (is.null(cache_dir)) {
+  cache_dir <- tempdir()
+}
+print(cache_dir)
+list.files(cache_dir, full.names = TRUE)
 united_states <- tigris::counties(state = c('AL','AR','CO','CT','DE','DC','FL','GA','AZ',
                                             'IL','IN','IA','KS','KY','LA','ME','MD','MA',
                                             'MI','MN','MS','MO','NE','NH','NJ','NM','UT',

@@ -13,38 +13,178 @@ here::i_am("scripts/10_cluster_points.R")
 source(here::here("scripts", "01_library.R"))
 
 # Heat Index ----
-process_heat_index_files <- function(input_dir, 
-                                     output_dir, 
+# process_heat_index_files <- function(input_dir, output_dir, 
+#                                      threshold_shapefile, 
+#                                      space_time_metric,
+#                                      num_cores = 19) {
+#   
+#   # Start time
+#   start_time <- Sys.time()
+#   
+#   # Local helper: create.st.cube defined within the main function
+#   create.st.cube <- function(target.raster, space.time.metric) {
+#     # Create a temporary raster with adjusted resolution based on space.time.metric
+#     temp <- terra::rast(crs = terra::crs(target.raster),
+#                         res = terra::res(target.raster) * space.time.metric,
+#                         ext = terra::ext(target.raster),
+#                         nlyr = terra::nlyr(target.raster))
+#     terra::values(temp) <- 0
+#     
+#     # Resample the target raster to the temporary raster using the max method
+#     result <- terra::resample(target.raster, temp, method = 'max')
+#     names(result) <- terra::time(target.raster)
+#     
+#     return(result)
+#   }
+#   
+#   # List all NetCDF files
+#   nc_files <- list.files(input_dir, pattern = "\\.nc$", full.names = TRUE)
+#   
+#   # Read in threshold shapefile as an sf object
+#   threshold_sf <- sf::st_as_sf(sf::read_sf(threshold_shapefile))
+#   
+#   # Determine which space-time metric to use
+#   stm.relavent <- switch(space_time_metric,
+#                          "annual" = year.heat,
+#                          "record" = record.heat,
+#                          "month" = month.heat,
+#                          "seasonal" = season.heat,
+#                          space_time_metric)
+#   
+#   # Setup progress bar
+#   progressr::handlers(global = TRUE)
+#   progressr::with_progress({
+#     p <- progressr::progressor(along = nc_files)
+#     
+#     # Set up multisession parallel plan
+#     future::plan(future::multisession, workers = num_cores)
+#     
+#     results <- future.apply::future_lapply(seq_along(nc_files), function(i) {
+#       
+#       # Load necessary libraries within each worker
+#       library(terra)
+#       library(sf)
+#       library(dplyr)
+#       library(tidyr)
+#       
+#       # Update progress bar
+#       p(sprintf("Processing %d/%d: %s", i, length(nc_files), basename(nc_files)))
+#       
+#       # Get current file
+#       nc_file <- nc_files[[i]]
+#       
+#       # Read NetCDF file as a raster using terra
+#       var <- terra::rast(nc_file)
+#       
+#       # Determine current time slice (assumes stm is defined in your global environment)
+#       timeslice <- stm[which(nc_files == nc_file), ]
+#       
+#       # Select the appropriate space-time metric based on the available columns
+#       stm.final <- if ("year" %in% colnames(stm.relavent)) {
+#         stm.relavent[stm.relavent$year == timeslice$year, ]$median
+#       } else if ("month" %in% colnames(stm.relavent)) {
+#         stm.relavent[stm.relavent$month == timeslice$month, ]$median
+#       } else if ("season" %in% colnames(stm.relavent)) {
+#         stm.relavent[stm.relavent$season == timeslice$season, ]$median
+#       } else {
+#         stm.relavent
+#       }
+#       
+#       # Create space-time cube using the embedded function
+#       cube <- create.st.cube(target.raster = var, space.time.metric = stm.final)
+#       # message(paste0('Space Time Cube resolution = ',terra::res(cube)))
+#       
+#       # Convert the cube to a data frame and then to a long format
+#       cube.df <- as.data.frame(cube, xy = TRUE)
+#       cube_long <- cube.df %>%
+#         pivot_longer(-c(x, y), names_to = "date", values_to = "heat_index") %>%
+#         mutate(date = as.Date(date))
+#       
+#       # Convert long format into an sf object using NAD83 CRS
+#       cube_sf <- sf::st_as_sf(cube_long, coords = c("x", "y"), crs = 4269)
+#       
+#       # Spatial join with the threshold data and manage missing threshold values
+#       cube_sf <- sf::st_join(cube_sf, threshold_sf, left = TRUE) %>%
+#         mutate(ADVISORY = ifelse(is.na(ADVISORY), min(threshold_sf$ADVISORY, na.rm = TRUE), ADVISORY))
+#       
+#       # Flag extreme heat indices and set coordinates as lat-long columns
+#       cube_sf <- cube_sf %>%
+#         mutate(extreme = ifelse(heat_index >= ADVISORY, 1, 0)) %>%
+#         mutate(lat = sf::st_coordinates(.)[, 2],
+#                long = sf::st_coordinates(.)[, 1]) %>%
+#         mutate(threshold = ADVISORY,
+#                observation = heat_index) %>%
+#         select(lat, long, date, observation, threshold, extreme)
+#       
+#       # Filter to only extreme values (i.e., extreme == 1)
+#       cube_sf_filtered <- dplyr::filter(cube_sf, extreme == 1)
+#       
+#       # Only write out file if there are extreme observations
+#       if (nrow(cube_sf_filtered) > 0) {
+#         output_file <- file.path(output_dir, paste0("extreme_", 
+#                                                     substr(basename(nc_file), 1, nchar(basename(nc_file))-3), 
+#                                                     ".csv"))
+#         write.csv(cube_sf_filtered, output_file, row.names = FALSE)
+#       }
+#       
+#       gc()
+#     }, future.seed = TRUE)  # Ensure reproducibility in parallel
+#   })
+#   
+#   # Stop time and elapsed time calculations
+#   stop_time <- Sys.time()
+#   elapsed_time <- stop_time - start_time
+#   
+#   print(paste("Processing started at:", start_time))
+#   print(paste("Processing completed at:", stop_time))
+#   print(paste("Total elapsed time:", elapsed_time))
+# }
+
+process_heat_index_files <- function(input_dir, output_dir, 
                                      threshold_shapefile, 
                                      space_time_metric,
-                                     num_cores = parallel::detectCores() - 1) {
+                                     num_cores = 19) {
   
   # Start time
   start_time <- Sys.time()
   
+  # Local helper: create.st.cube defined within the main function
+  create.st.cube <- function(target.raster, space.time.metric) {
+    # Create a temporary raster with adjusted resolution based on space.time.metric
+    temp <- terra::rast(crs = terra::crs(target.raster),
+                        res = terra::res(target.raster) * space.time.metric,
+                        ext = terra::ext(target.raster),
+                        nlyr = terra::nlyr(target.raster))
+    terra::values(temp) <- 0
+    
+    # Resample the target raster to the temporary raster using the max method
+    result <- terra::resample(target.raster, temp, method = 'max')
+    names(result) <- terra::time(target.raster)
+    
+    return(result)
+  }
+  
   # List all NetCDF files
   nc_files <- list.files(input_dir, pattern = "\\.nc$", full.names = TRUE)
   
-  # Read in thresholds as an sf object
-  threshold_sf <- st_as_sf(read_sf(threshold_shapefile))
-  
-  # Determine space-time metric
-  stm.relavent <- switch(space_time_metric,
-                         "annual" = year.heat,
-                         "record" = record.heat,
-                         "month" = month.heat,
-                         "seasonal" = season.heat,
-                         space_time_metric)
+  # Read in threshold shapefile as an sf object
+  threshold_sf <- sf::st_as_sf(sf::read_sf(threshold_shapefile))
   
   # Setup progress bar
   progressr::handlers(global = TRUE)
   progressr::with_progress({
     p <- progressr::progressor(along = nc_files)
     
-    # Set up parallel processing
-    plan(multisession, workers = num_cores)  # Use one less than available cores
+    # Set up multisession parallel plan
+    future::plan(future::multisession, workers = num_cores)
     
-    results <- future_lapply(seq_along(nc_files), function(i) {
+    results <- future.apply::future_lapply(seq_along(nc_files), function(i) {
+      
+      # Load necessary libraries within each worker
+      library(terra)
+      library(sf)
+      library(dplyr)
+      library(tidyr)
       
       # Update progress bar
       p(sprintf("Processing %d/%d: %s", i, length(nc_files), basename(nc_files)))
@@ -52,64 +192,50 @@ process_heat_index_files <- function(input_dir,
       # Get current file
       nc_file <- nc_files[[i]]
       
-      # Read NetCDF file as raster
+      # Read NetCDF file as a raster using terra
       var <- terra::rast(nc_file)
       
-      # Determine which year-month we're working with
-      timeslice <- stm[which(nc_files == nc_file), ]
+      # Directly use the provided numeric space_time_metric in the create.st.cube function
+      cube <- create.st.cube(target.raster = var, space.time.metric = space_time_metric)
       
-      # Select the appropriate STM
-      stm.final <- if ("year" %in% colnames(stm.relavent)) {
-        stm.relavent[stm.relavent$year == timeslice$year,]$median
-      } else if ("month" %in% colnames(stm.relavent)) {
-        stm.relavent[stm.relavent$month == timeslice$month,]$median
-      } else if ("season" %in% colnames(stm.relavent)) {
-        stm.relavent[stm.relavent$season == timeslice$season,]$median
-      } else {
-        stm.relavent
-      }
-      
-      # Create space-time cube
-      cube <- create.st.cube(target.raster = var, space.time.metric = stm.final)
-      
-      # Convert to data frame
+      # Convert the cube to a data frame and then reshape to long format
       cube.df <- as.data.frame(cube, xy = TRUE)
-      
-      # Convert to long format
       cube_long <- cube.df %>%
         pivot_longer(-c(x, y), names_to = "date", values_to = "heat_index") %>%
         mutate(date = as.Date(date))
       
-      # Convert to sf object
-      cube_sf <- st_as_sf(cube_long, coords = c("x", "y"), crs = 4269)  # NAD83 CRS
+      # Convert long format into an sf object using NAD83 CRS
+      cube_sf <- sf::st_as_sf(cube_long, coords = c("x", "y"), crs = 4269)
       
-      # Perform spatial join
-      cube_sf <- st_join(cube_sf, threshold_sf, left = TRUE) %>%
+      # Spatial join with the threshold data and manage missing threshold values
+      cube_sf <- sf::st_join(cube_sf, threshold_sf, left = TRUE) %>%
         mutate(ADVISORY = ifelse(is.na(ADVISORY), min(threshold_sf$ADVISORY, na.rm = TRUE), ADVISORY))
       
-      # Create boolean column for exceedance
+      # Flag extreme heat indices and add coordinate columns
       cube_sf <- cube_sf %>%
         mutate(extreme = ifelse(heat_index >= ADVISORY, 1, 0)) %>%
-        mutate(lat = st_coordinates(.)[, 2], long = st_coordinates(.)[, 1]) %>%
-        mutate(threshold = ADVISORY) %>%
-        mutate(observation = heat_index) %>%
+        mutate(lat = sf::st_coordinates(.)[, 2],
+               long = sf::st_coordinates(.)[, 1]) %>%
+        mutate(threshold = ADVISORY,
+               observation = heat_index) %>%
         select(lat, long, date, observation, threshold, extreme)
       
-      # Subset to only rows where extreme == 1
-      cube_sf_filtered <- cube_sf %>% filter(extreme == 1)
+      # Filter to only extreme values (i.e., extreme == 1)
+      cube_sf_filtered <- dplyr::filter(cube_sf, extreme == 1)
       
-      # Only save if values exist
+      # Only write out file if there are extreme observations
       if (nrow(cube_sf_filtered) > 0) {
-        output_file <- file.path(output_dir, paste0("extreme_", substr(basename(nc_file), 1, nchar(basename(nc_file)) - 3), ".csv"))
+        output_file <- file.path(output_dir, paste0("extreme_", 
+                                                    substr(basename(nc_file), 1, nchar(basename(nc_file))-3), 
+                                                    ".csv"))
         write.csv(cube_sf_filtered, output_file, row.names = FALSE)
       }
       
       gc()
     }, future.seed = TRUE)  # Ensure reproducibility in parallel
-    
   })
   
-  # Stop time and elapsed time
+  # Stop time and elapsed time calculations
   stop_time <- Sys.time()
   elapsed_time <- stop_time - start_time
   
@@ -117,6 +243,7 @@ process_heat_index_files <- function(input_dir,
   print(paste("Processing completed at:", stop_time))
   print(paste("Total elapsed time:", elapsed_time))
 }
+
 
 ## Covariance ----
 stm <- read.csv(here::here("data", "output", "02_covariance", "03_space_time_metric", "heat_index", "month", "heat_index_space_time_metric_optimal.txt"))
@@ -175,6 +302,7 @@ month.heat <- stm %>%
   ungroup()
 
 ### 0.25 deg / day ----
+# stm:1 * res:0.25 = res: 0.25
 process_heat_index_files(
   input_dir = here::here("data", "output", "01_era5", "daily", "heat_index"),
   output_dir = here::here("data", "output", "03_cluster", "01_extreme_points", "0.25", "heat_index"),
@@ -188,16 +316,16 @@ process_heat_index_files(
   input_dir = here::here("data", "output", "01_era5", "daily", "heat_index"), 
   output_dir = here::here("data", "output", "03_cluster", "01_extreme_points", "0.3075", "heat_index"), 
   threshold_shapefile = here::here("data", "input", "threshold", "wfo_usa.shp"), 
-  space_time_metric = season.heat$median[3]
+  space_time_metric = 1.23
 )
 
 ### 0.39 deg / day ----
 # stm:1.56 * res:0.25 = res: 0.39
 process_heat_index_files(
   input_dir = here::here("data", "output", "01_era5", "daily", "heat_index"), 
-  output_dir = here::here("data", "output", "03_cluster", "01_extreme_points", "0.39", "heat_index"), 
+  output_dir = here::here("data", "output", "03_cluster", "01_extreme_points", "0.39","heat_index"), 
   threshold_shapefile = here::here("data", "input", "threshold", "wfo_usa.shp"), 
-  space_time_metric = 'record'
+  space_time_metric = 1.56
 )
 
 # Precipitation ----

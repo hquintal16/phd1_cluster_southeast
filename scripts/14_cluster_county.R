@@ -113,31 +113,29 @@ process_nc_to_county <- function(cluster_dirs, county_vect, county_rast, output_
 
 ## Heat Index ----
 
-### STM1 ----
+### 0.25 deg / day ----
 
 # Define input and output directories using here()
-input_dir <- here('data','output','03_cluster','02_cluster','points','stm1','heat_index','clean')
-output_dir <- here('data','output','03_cluster','02_cluster','points','stm1','heat_index','county')
+input_dir <- here('data','output','03_cluster','02_cluster','points','0.25','heat_index','clean')
+output_dir <- here('data','output','03_cluster','02_cluster','points','0.25','heat_index','county')
 
 # Call the function
 process_nc_to_county(cluster_dirs = list(input_dir), county_vect = county_vect, county_rast = us.states.rast, output_dir = output_dir)
 
-### Record ----
+### 0.3075 deg / day ----
 
 # Define input and output directories using here()
-input_dir <- here('data','output','03_cluster','02_cluster','points','record','heat_index','clean')
-output_dir <- here('data','output','03_cluster','02_cluster','points','record','heat_index','county')
+input_dir <- here('data','output','03_cluster','02_cluster','points','0.3075','heat_index','clean')
+output_dir <- here('data','output','03_cluster','02_cluster','points','0.3075','heat_index','county')
 
 # Call the function
 process_nc_to_county(cluster_dirs = list(input_dir), county_vect = county_vect, county_rast = us.states.rast, output_dir = output_dir)
 
-# test <- terra::rast(here('data','output','03_cluster','02_cluster','points','record','heat_index','county','county_event_1940-06-07_cluster_0001.nc'))
-# plot(test)
-### STM4 ----
+### 0.39 deg / day ----
 
 # Define input and output directories using here()
-input_dir <- here('data','output','03_cluster','02_cluster','points','stm4','heat_index','clean')
-output_dir <- here('data','output','03_cluster','02_cluster','points','stm4','heat_index','county')
+input_dir <- here('data','output','03_cluster','02_cluster','points','0.39','heat_index','clean')
+output_dir <- here('data','output','03_cluster','02_cluster','points','0.39','heat_index','county')
 
 # Call the function
 process_nc_to_county(cluster_dirs = list(input_dir), county_vect = county_vect, county_rast = us.states.rast, output_dir = output_dir)
@@ -227,7 +225,7 @@ process_nc_to_county <- function(cluster_dirs, county_vect, county_rast, output_
   close(overall_progress)
 }
 
-### STM1 ----
+### 0.25 deg / hour ----
 
 # Define input and output directories using here()
 input_dir <- here('data','output','03_cluster','02_cluster','points','stm1','precipitation','clean')
@@ -235,13 +233,3 @@ output_dir <- here('data','output','03_cluster','02_cluster','points','stm1','pr
 
 # Call the function
 process_nc_to_county(cluster_dirs = list(input_dir), county_vect = county_vect, county_rast = us.states.rast, output_dir = output_dir)
-
-# ### STM4 ----
-# 
-# # Define input and output directories using here()
-# input_dir <- here('data','output','03_cluster','02_cluster','points','stm4','precipitation','clean')
-# output_dir <- here('data','output','03_cluster','02_cluster','points','stm4','precipitation','county')
-# 
-# # Call the function
-# process_nc_to_county(cluster_dirs = list(input_dir), county_vect = county_vect, county_rast = us.states.rast, output_dir = output_dir)
-# 

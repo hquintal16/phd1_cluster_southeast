@@ -58,17 +58,13 @@ rename_and_copy_files <- function(input_directory, output_directory) {
 }
 
 # Example usage: loop across five input/output directory pairs
-input_dirs <- c(here('data', 'output', '03_cluster', '02_cluster', 'points', 'stm1', 'heat_index', 'raw'),
-                here('data', 'output', '03_cluster', '02_cluster', 'points', 'record', 'heat_index', 'raw'),
-                here('data', 'output', '03_cluster', '02_cluster', 'points', 'stm4', 'heat_index', 'raw'),
-                here('data', 'output', '03_cluster', '02_cluster', 'points', 'stm1', 'precipitation', 'raw'),
-                here('data', 'output', '03_cluster', '02_cluster', 'points', 'stm4', 'precipitation', 'raw'))
+input_dirs <- c(here('data', 'output', '03_cluster', '02_cluster', 'points', '0.25', 'heat_index', 'raw'),
+                here('data', 'output', '03_cluster', '02_cluster', 'points', '0.3075', 'heat_index', 'raw'),
+                here('data', 'output', '03_cluster', '02_cluster', 'points', '0.39', 'heat_index', 'raw'))
 
-output_dirs <- c(here('data', 'output', '03_cluster', '02_cluster', 'points', 'stm1', 'heat_index', 'clean'),
-                 here('data', 'output', '03_cluster', '02_cluster', 'points', 'record', 'heat_index', 'clean'),
-                 here('data', 'output', '03_cluster', '02_cluster', 'points', 'stm4', 'heat_index', 'clean'),
-                 here('data', 'output', '03_cluster', '02_cluster', 'points', 'stm1', 'precipitation', 'clean'),
-                 here('data', 'output', '03_cluster', '02_cluster', 'points', 'stm4', 'precipitation', 'clean'))
+output_dirs <- c(here('data', 'output', '03_cluster', '02_cluster', 'points', '0.25', 'heat_index', 'clean'),
+                 here('data', 'output', '03_cluster', '02_cluster', 'points', '0.3075', 'heat_index', 'clean'),
+                 here('data', 'output', '03_cluster', '02_cluster', 'points', '0.39', 'heat_index', 'clean'))
 
 for(i in seq_along(input_dirs)) {
   rename_and_copy_files(input_dirs[i], output_dirs[i])
