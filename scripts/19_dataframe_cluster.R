@@ -663,9 +663,9 @@ merge_cluster_with_noaa_datetime <- function(
 ### 0.25 ----
 #### Excess Heat ----
 merged_df <- merge_cluster_with_noaa(
-  cluster_idf_path   = here::here("data","output","03_cluster","02_cluster","points","stm1","heat_index","cluster_idf.csv"),
-  noaa_summary_path  = here::here("data","output","05_validation","summary","NOAA_excess_heat_summary.csv"),
-  output_path        = here::here("data","output","05_validation","summary","cluster_stm1_excess_heat_summary.csv")
+  cluster_idf_path   = here::here("data","output","03_cluster","02_cluster","points","0.25","heat_index","cluster_idf.csv"),
+  noaa_summary_path  = here::here("data","output","05_validation","summary","noaa","NOAA_excess_heat_summary.csv"),
+  output_path        = here::here("data","output","05_validation","summary","cluster","cluster_0.25_excess_heat_summary.csv")
 )
 
 #### Flash Flood ----
@@ -724,12 +724,20 @@ merged_df <- merge_cluster_with_noaa_datetime(
   output_path        = here::here("data","output","05_validation","summary","cluster_stm1_typhoon_summary.csv")
 )
 
+### 0.3075 ----
+#### Excess Heat ----
+merged_df <- merge_cluster_with_noaa(
+  cluster_idf_path   = here::here("data","output","03_cluster","02_cluster","points","0.3075","heat_index","cluster_idf.csv"),
+  noaa_summary_path  = here::here("data","output","05_validation","summary","noaa","NOAA_excess_heat_summary.csv"),
+  output_path        = here::here("data","output","05_validation","summary","cluster","cluster_0.3075_excess_heat_summary.csv")
+)
+
 ### 0.39 ----
 #### Excess Heat ----
 merged_df <- merge_cluster_with_noaa(
-  cluster_idf_path   = here::here("data","output","03_cluster","02_cluster","points","record","heat_index","cluster_idf.csv"),
-  noaa_summary_path  = here::here("data","output","05_validation","summary","NOAA_excess_heat_summary.csv"),
-  output_path        = here::here("data","output","05_validation","summary","cluster_record_excess_heat_summary.csv")
+  cluster_idf_path   = here::here("data","output","03_cluster","02_cluster","points","0.39","heat_index","cluster_idf.csv"),
+  noaa_summary_path  = here::here("data","output","05_validation","summary","noaa","NOAA_excess_heat_summary.csv"),
+  output_path        = here::here("data","output","05_validation","summary","cluster","cluster_0.39_excess_heat_summary.csv")
 )
 
 #### Heat ----

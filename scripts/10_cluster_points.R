@@ -306,7 +306,8 @@ month.heat <- stm %>%
 process_heat_index_files(
   input_dir = here::here("data", "output", "01_era5", "daily", "heat_index"),
   output_dir = here::here("data", "output", "03_cluster", "01_extreme_points", "0.25", "heat_index"),
-  threshold_shapefile = here::here("data", "input", "threshold", "wfo_usa.shp"),
+  threshold_shapefile = here::here("data", "output","03_cluster", "00_threshold", "wfo_southeast_expansion_dissolved.shp"),
+  # threshold_shapefile = here::here("data", "input", "threshold", "wfo_usa.shp"),
   space_time_metric = 1
 )
 
@@ -315,7 +316,7 @@ process_heat_index_files(
 process_heat_index_files(
   input_dir = here::here("data", "output", "01_era5", "daily", "heat_index"), 
   output_dir = here::here("data", "output", "03_cluster", "01_extreme_points", "0.3075", "heat_index"), 
-  threshold_shapefile = here::here("data", "input", "threshold", "wfo_usa.shp"), 
+  threshold_shapefile = here::here("data", "output","03_cluster", "00_threshold", "wfo_southeast_expansion_dissolved.shp"),
   space_time_metric = 1.23
 )
 
@@ -324,7 +325,7 @@ process_heat_index_files(
 process_heat_index_files(
   input_dir = here::here("data", "output", "01_era5", "daily", "heat_index"), 
   output_dir = here::here("data", "output", "03_cluster", "01_extreme_points", "0.39","heat_index"), 
-  threshold_shapefile = here::here("data", "input", "threshold", "wfo_usa.shp"), 
+  threshold_shapefile = here::here("data", "output","03_cluster", "00_threshold", "wfo_southeast_expansion_dissolved.shp"),
   space_time_metric = 1.56
 )
 

@@ -100,6 +100,7 @@ process_noaa_hazard_heat_parallel <- function(hazard_folder, era5_folder, noaa_i
       era5_mean <- mean(era5_values, na.rm = TRUE)
       era5_median <- median(era5_values, na.rm = TRUE)
       era5_max <- max(era5_values, na.rm = TRUE)
+      era5_min <- min(era5_values, na.rm = TRUE)
     } else {
       era5_mean <- era5_median <- era5_max <- NA
     }
@@ -140,6 +141,7 @@ process_noaa_hazard_heat_parallel <- function(hazard_folder, era5_folder, noaa_i
       era5_mean = era5_mean,
       era5_median = era5_median,
       era5_max = era5_max,
+      era5_min = era5_min,
       injuries_direct = injuries_direct,
       injuries_indirect = injuries_indirect,
       deaths_direct = deaths_direct,
@@ -169,8 +171,8 @@ process_noaa_hazard_heat_parallel <- function(hazard_folder, era5_folder, noaa_i
 
 # Define heat hazard folders (update file root to "phd1_cluster_southeast")
 heat_hazard_folders <- c(
-  here::here("data", "output", "04_noaa", "southeast", "excess_heat"),
-  here::here("data", "output", "04_noaa", "southeast", "heat")
+  here::here("data", "output", "04_noaa", "southeast", "excess_heat")#,
+  # here::here("data", "output", "04_noaa", "southeast", "heat")
 )
 
 era5_folder_heat <- here::here("data", "output", "01_era5", "daily", "heat_index")
