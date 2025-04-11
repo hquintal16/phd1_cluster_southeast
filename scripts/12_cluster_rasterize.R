@@ -103,7 +103,7 @@ values(cube) <- NA
 process_clusters(
   heat_data = heat,
   reference_raster = cube,
-  output_dir = here::here("data", "output", "03_cluster", "02_cluster", "points", "0.25", "heat_index")
+  output_dir = here::here("data", "output", "03_cluster", "02_cluster", "points", "0.25", "heat_index","raw")
 )
 
 ## 0.3075 deg / day ----
@@ -118,7 +118,7 @@ values(cube) <- NA
 process_clusters(
   heat_data = heat, 
   reference_raster = cube, 
-  output_dir = here::here("data", "output", "03_cluster", "02_cluster", "points", "0.3075", "heat_index")
+  output_dir = here::here("data", "output", "03_cluster", "02_cluster", "points", "0.3075", "heat_index","raw")
 )
 
 ## 0.39 deg / day ----
@@ -133,7 +133,7 @@ values(cube) <- NA
 process_clusters(
   heat_data = heat, 
   reference_raster = cube, 
-  output_dir = here::here("data", "output", "03_cluster", "02_cluster", "points", "0.39", "heat_index")
+  output_dir = here::here("data", "output", "03_cluster", "02_cluster", "points", "0.39", "heat_index","raw")
 )
 
 # Precipitation ----
