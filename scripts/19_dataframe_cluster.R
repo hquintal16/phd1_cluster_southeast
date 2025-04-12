@@ -58,11 +58,11 @@ create_lookup_table(
   input_directory = here('data','output','03_cluster','02_cluster','points','0.25','heat_index','raw'),
   output_csv_path = here('data','output','03_cluster','02_cluster','points','0.25','heat_index','lookup_table.csv')
 )
-#### Precipitation ----
-create_lookup_table(
-  input_directory = here('data','output','03_cluster','02_cluster','points','stm1','precipitation','raw'),
-  output_csv_path = here('data','output','03_cluster','02_cluster','points','stm1','precipitation','lookup_table.csv')
-)
+# #### Precipitation ----
+# create_lookup_table(
+#   input_directory = here('data','output','03_cluster','02_cluster','points','stm1','precipitation','raw'),
+#   output_csv_path = here('data','output','03_cluster','02_cluster','points','stm1','precipitation','lookup_table.csv')
+# )
 ### 0.3075 ----
 #### Heat Index ----
 create_lookup_table(
@@ -425,14 +425,14 @@ summary_df <- create_cluster_summary(
   us_states_rast = us.states.rast,
   output_csv_path = here('data','output','03_cluster','02_cluster','points','0.25','heat_index','cluster_idf.csv')
 )
-#### Precipitation ----
-summary_df <- create_cluster_summary_hourly(
-  lookup_file_path = here('data','output','03_cluster','02_cluster','points','stm1','precipitation','lookup_table.csv'),
-  cluster_file_path = here('data','output','03_cluster','02_cluster','precipitation_stm1_clustered_extremes.csv'),
-  cluster_folder = here('data','output','03_cluster','02_cluster','points','stm1','precipitation','county'),
-  us_states_rast = us.states.rast,
-  output_csv_path = here('data','output','03_cluster','02_cluster','points','stm1','precipitation','cluster_idf.csv')
-)
+# #### Precipitation ----
+# summary_df <- create_cluster_summary_hourly(
+#   lookup_file_path = here('data','output','03_cluster','02_cluster','points','stm1','precipitation','lookup_table.csv'),
+#   cluster_file_path = here('data','output','03_cluster','02_cluster','precipitation_stm1_clustered_extremes.csv'),
+#   cluster_folder = here('data','output','03_cluster','02_cluster','points','stm1','precipitation','county'),
+#   us_states_rast = us.states.rast,
+#   output_csv_path = here('data','output','03_cluster','02_cluster','points','stm1','precipitation','cluster_idf.csv')
+# )
 ### 0.3075 ----
 #### Heat Index ----
 summary_df <- create_cluster_summary(
@@ -668,61 +668,61 @@ merged_df <- merge_cluster_with_noaa(
   output_path        = here::here("data","output","05_validation","summary","cluster","cluster_0.25_excess_heat_summary.csv")
 )
 
-#### Flash Flood ----
-merged_df <- merge_cluster_with_noaa_datetime(
-  cluster_idf_path   = here::here("data","output","03_cluster","02_cluster","points","stm1","precipitation","cluster_idf.csv"),
-  noaa_summary_path  = here::here("data","output","05_validation","summary","NOAA_flash_flood_summary.csv"),
-  output_path        = here::here("data","output","05_validation","summary","cluster_stm1_flash_flood_summary.csv")
-)
-
-#### Flood ----
-merged_df <- merge_cluster_with_noaa_datetime(
-  cluster_idf_path   = here::here("data","output","03_cluster","02_cluster","points","stm1","precipitation","cluster_idf.csv"),
-  noaa_summary_path  = here::here("data","output","05_validation","summary","NOAA_flood_summary.csv"),
-  output_path        = here::here("data","output","05_validation","summary","cluster_stm1_flood_summary.csv")
-)
-
-#### Heat ----
-merged_df <- merge_cluster_with_noaa(
-  cluster_idf_path   = here::here("data","output","03_cluster","02_cluster","points","stm1","heat_index","cluster_idf.csv"),
-  noaa_summary_path  = here::here("data","output","05_validation","summary","NOAA_heat_summary.csv"),
-  output_path        = here::here("data","output","05_validation","summary","cluster_stm1_heat_summary.csv")
-)
-
-#### Heavy Rain ----
-merged_df <- merge_cluster_with_noaa_datetime(
-  cluster_idf_path   = here::here("data","output","03_cluster","02_cluster","points","stm1","precipitation","cluster_idf.csv"),
-  noaa_summary_path  = here::here("data","output","05_validation","summary","NOAA_heavy_rain_summary.csv"),
-  output_path        = here::here("data","output","05_validation","summary","cluster_stm1_heavy_rain_summary.csv")
-)
-
-#### Hurricane ----
-merged_df <- merge_cluster_with_noaa_datetime(
-  cluster_idf_path   = here::here("data","output","03_cluster","02_cluster","points","stm1","precipitation","cluster_idf.csv"),
-  noaa_summary_path  = here::here("data","output","05_validation","summary","NOAA_hurricane_summary.csv"),
-  output_path        = here::here("data","output","05_validation","summary","cluster_stm1_hurricane_summary.csv")
-)
-
-#### Tropical Depression ----
-merged_df <- merge_cluster_with_noaa_datetime(
-  cluster_idf_path   = here::here("data","output","03_cluster","02_cluster","points","stm1","precipitation","cluster_idf.csv"),
-  noaa_summary_path  = here::here("data","output","05_validation","summary","NOAA_tropical_depression_summary.csv"),
-  output_path        = here::here("data","output","05_validation","summary","cluster_stm1_tropical_depression_summary.csv")
-)
-
-#### Tropical Storm ----
-merged_df <- merge_cluster_with_noaa_datetime(
-  cluster_idf_path   = here::here("data","output","03_cluster","02_cluster","points","stm1","precipitation","cluster_idf.csv"),
-  noaa_summary_path  = here::here("data","output","05_validation","summary","NOAA_tropical_storm_summary.csv"),
-  output_path        = here::here("data","output","05_validation","summary","cluster_stm1_tropical_storm_summary.csv")
-)
-
-#### Typhoon ----
-merged_df <- merge_cluster_with_noaa_datetime(
-  cluster_idf_path   = here::here("data","output","03_cluster","02_cluster","points","stm1","precipitation","cluster_idf.csv"),
-  noaa_summary_path  = here::here("data","output","05_validation","summary","NOAA_typhoon_summary.csv"),
-  output_path        = here::here("data","output","05_validation","summary","cluster_stm1_typhoon_summary.csv")
-)
+# #### Flash Flood ----
+# merged_df <- merge_cluster_with_noaa_datetime(
+#   cluster_idf_path   = here::here("data","output","03_cluster","02_cluster","points","stm1","precipitation","cluster_idf.csv"),
+#   noaa_summary_path  = here::here("data","output","05_validation","summary","NOAA_flash_flood_summary.csv"),
+#   output_path        = here::here("data","output","05_validation","summary","cluster_stm1_flash_flood_summary.csv")
+# )
+# 
+# #### Flood ----
+# merged_df <- merge_cluster_with_noaa_datetime(
+#   cluster_idf_path   = here::here("data","output","03_cluster","02_cluster","points","stm1","precipitation","cluster_idf.csv"),
+#   noaa_summary_path  = here::here("data","output","05_validation","summary","NOAA_flood_summary.csv"),
+#   output_path        = here::here("data","output","05_validation","summary","cluster_stm1_flood_summary.csv")
+# )
+# 
+# #### Heat ----
+# merged_df <- merge_cluster_with_noaa(
+#   cluster_idf_path   = here::here("data","output","03_cluster","02_cluster","points","stm1","heat_index","cluster_idf.csv"),
+#   noaa_summary_path  = here::here("data","output","05_validation","summary","NOAA_heat_summary.csv"),
+#   output_path        = here::here("data","output","05_validation","summary","cluster_stm1_heat_summary.csv")
+# )
+# 
+# #### Heavy Rain ----
+# merged_df <- merge_cluster_with_noaa_datetime(
+#   cluster_idf_path   = here::here("data","output","03_cluster","02_cluster","points","stm1","precipitation","cluster_idf.csv"),
+#   noaa_summary_path  = here::here("data","output","05_validation","summary","NOAA_heavy_rain_summary.csv"),
+#   output_path        = here::here("data","output","05_validation","summary","cluster_stm1_heavy_rain_summary.csv")
+# )
+# 
+# #### Hurricane ----
+# merged_df <- merge_cluster_with_noaa_datetime(
+#   cluster_idf_path   = here::here("data","output","03_cluster","02_cluster","points","stm1","precipitation","cluster_idf.csv"),
+#   noaa_summary_path  = here::here("data","output","05_validation","summary","NOAA_hurricane_summary.csv"),
+#   output_path        = here::here("data","output","05_validation","summary","cluster_stm1_hurricane_summary.csv")
+# )
+# 
+# #### Tropical Depression ----
+# merged_df <- merge_cluster_with_noaa_datetime(
+#   cluster_idf_path   = here::here("data","output","03_cluster","02_cluster","points","stm1","precipitation","cluster_idf.csv"),
+#   noaa_summary_path  = here::here("data","output","05_validation","summary","NOAA_tropical_depression_summary.csv"),
+#   output_path        = here::here("data","output","05_validation","summary","cluster_stm1_tropical_depression_summary.csv")
+# )
+# 
+# #### Tropical Storm ----
+# merged_df <- merge_cluster_with_noaa_datetime(
+#   cluster_idf_path   = here::here("data","output","03_cluster","02_cluster","points","stm1","precipitation","cluster_idf.csv"),
+#   noaa_summary_path  = here::here("data","output","05_validation","summary","NOAA_tropical_storm_summary.csv"),
+#   output_path        = here::here("data","output","05_validation","summary","cluster_stm1_tropical_storm_summary.csv")
+# )
+# 
+# #### Typhoon ----
+# merged_df <- merge_cluster_with_noaa_datetime(
+#   cluster_idf_path   = here::here("data","output","03_cluster","02_cluster","points","stm1","precipitation","cluster_idf.csv"),
+#   noaa_summary_path  = here::here("data","output","05_validation","summary","NOAA_typhoon_summary.csv"),
+#   output_path        = here::here("data","output","05_validation","summary","cluster_stm1_typhoon_summary.csv")
+# )
 
 ### 0.3075 ----
 #### Excess Heat ----
@@ -740,9 +740,9 @@ merged_df <- merge_cluster_with_noaa(
   output_path        = here::here("data","output","05_validation","summary","cluster","cluster_0.39_excess_heat_summary.csv")
 )
 
-#### Heat ----
-merged_df <- merge_cluster_with_noaa(
-  cluster_idf_path   = here::here("data","output","03_cluster","02_cluster","points","record","heat_index","cluster_idf.csv"),
-  noaa_summary_path  = here::here("data","output","05_validation","summary","NOAA_heat_summary.csv"),
-  output_path        = here::here("data","output","05_validation","summary","cluster_record_heat_summary.csv")
-)
+# #### Heat ----
+# merged_df <- merge_cluster_with_noaa(
+#   cluster_idf_path   = here::here("data","output","03_cluster","02_cluster","points","record","heat_index","cluster_idf.csv"),
+#   noaa_summary_path  = here::here("data","output","05_validation","summary","NOAA_heat_summary.csv"),
+#   output_path        = here::here("data","output","05_validation","summary","cluster_record_heat_summary.csv")
+# )
