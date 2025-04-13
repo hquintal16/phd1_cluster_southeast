@@ -80,15 +80,14 @@ process_county_events <- function(processed_dirs, output_path, hazard_name) {
     daily_rasters <- daily_rasters / daily_rasters  # binarize: 1 for event, 0 for no event
     daily_rasters[is.na(daily_rasters)] <- 0
     
-    # Aggregate by day if time metadata is available
-    if (!is.null(terra::time(daily_rasters))) {
+    # Aggregate by day if time metadata is available AND if there is more than one layer
+    if (!is.null(terra::time(daily_rasters)) && terra::nlyr(daily_rasters) > 1) {
       daily_rasters <- terra::tapp(daily_rasters, 'day', fun = max)
+    } else if (!is.null(terra::time(daily_rasters))) {
+      message("Only one layer present for year ", year, "; skipping time aggregation.")
     } else {
-      warning("Skipping time aggregation for year", year, "due to missing time metadata.")
+      warning("Skipping time aggregation for year ", year, " due to missing time metadata.")
     }
-    
-    step_end <- Sys.time()
-    cat("[Step 3 Completed] Time Taken:", difftime(step_end, step_start, units = "mins"), "minutes\n\n")
     
     terra::writeCDF(daily_rasters,
                     filename = file.path(output_path, paste0('County_', hazard_name, '_Daily_Extent_', year, ".nc")),
@@ -97,11 +96,20 @@ process_county_events <- function(processed_dirs, output_path, hazard_name) {
                     unit = 'event',
                     overwrite = TRUE)
     
+    step_end <- Sys.time()
+    cat("[Step 3 Completed] Time Taken:", difftime(step_end, step_start, units = "mins"), "minutes\n\n")
+    
     # Step 4: Compute Event Duration (sum over daily extents)
     cat("\n[Step 4] Computing Event Duration for Year", year, "...\n")
     step_start <- Sys.time()
     
-    daily_rasters_sum <- terra::app(daily_rasters, fun = function(x) sum(x, na.rm = TRUE))
+    if (terra::nlyr(daily_rasters) > 1) {
+      daily_rasters_sum <- terra::app(daily_rasters, fun = function(x) sum(x, na.rm = TRUE))
+    } else {
+      message("Only one layer present for event duration calculation in year ", year, 
+              "; using daily raster as event duration.")
+      daily_rasters_sum <- daily_rasters
+    }
     
     step_end <- Sys.time()
     cat("[Step 4 Completed] Time Taken:", difftime(step_end, step_start, units = "mins"), "minutes\n\n")
@@ -120,23 +128,43 @@ process_county_events <- function(processed_dirs, output_path, hazard_name) {
   cat("\n✅ [All Steps Completed] Total Processing Time:", difftime(total_end_time, total_start_time, units = "mins"), "minutes\n")
 }
 
-## Heat index ----
+## Heat Index Advisory ----
 
 ### 0.25 / day ----
-processed_dirs <- list(here('data','output','03_cluster','02_cluster','points','0.25','heat_index','county'))
-output_path <- here('data','output','03_cluster','02_cluster','points','0.25','heat_index','summary')
+processed_dirs <- list(here('data','output','03_cluster','02_cluster','advisory','points','0.25','heat_index','county'))
+output_path <- here('data','output','03_cluster','02_cluster','advisory','points','0.25','heat_index','summary')
 hazard_name <- "heat_index"
 process_county_events(processed_dirs, output_path, hazard_name)
 
 ### 0.3075 / day ----
-processed_dirs <- list(here('data','output','03_cluster','02_cluster','points','0.3075','heat_index','county'))
-output_path <- here('data','output','03_cluster','02_cluster','points','0.3075','heat_index','summary')
+processed_dirs <- list(here('data','output','03_cluster','02_cluster','advisory','points','0.3075','heat_index','county'))
+output_path <- here('data','output','03_cluster','02_cluster','advisory','points','0.3075','heat_index','summary')
 hazard_name <- "heat_index"
 process_county_events(processed_dirs, output_path, hazard_name)
 
 ### 0.39 / day ----
-processed_dirs <- list(here('data','output','03_cluster','02_cluster','points','0.39','heat_index','county'))
-output_path <- here('data','output','03_cluster','02_cluster','points','0.39','heat_index','summary')
+processed_dirs <- list(here('data','output','03_cluster','02_cluster','advisory','points','0.39','heat_index','county'))
+output_path <- here('data','output','03_cluster','02_cluster','advisory','points','0.39','heat_index','summary')
+hazard_name <- "heat_index"
+process_county_events(processed_dirs, output_path, hazard_name)
+
+## Heat Index Warning ----
+
+### 0.25 / day ----
+processed_dirs <- list(here('data','output','03_cluster','02_cluster','warning','points','0.25','heat_index','county'))
+output_path <- here('data','output','03_cluster','02_cluster','warning','points','0.25','heat_index','summary')
+hazard_name <- "heat_index"
+process_county_events(processed_dirs, output_path, hazard_name)
+
+### 0.3075 / day ----
+processed_dirs <- list(here('data','output','03_cluster','02_cluster','warning','points','0.3075','heat_index','county'))
+output_path <- here('data','output','03_cluster','02_cluster','warning','points','0.3075','heat_index','summary')
+hazard_name <- "heat_index"
+process_county_events(processed_dirs, output_path, hazard_name)
+
+### 0.39 / day ----
+processed_dirs <- list(here('data','output','03_cluster','02_cluster','warning','points','0.39','heat_index','county'))
+output_path <- here('data','output','03_cluster','02_cluster','warning','points','0.39','heat_index','summary')
 hazard_name <- "heat_index"
 process_county_events(processed_dirs, output_path, hazard_name)
 

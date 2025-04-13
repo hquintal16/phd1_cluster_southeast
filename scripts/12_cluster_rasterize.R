@@ -91,9 +91,11 @@ process_clusters <- function(heat_data, reference_raster, output_dir) {
   })
 }
 
+# Heat Index Advisory ----
+
 ## 0.25 deg / day ----
 options(pillar.sigfig = 15)
-heat <- as_tibble(read.csv(here::here("data", "output", "03_cluster", "02_cluster", "heat_index_0.25_clustered_extremes.csv")))
+heat <- as_tibble(read.csv(here::here("data", "output", "03_cluster", "02_cluster","advisory", "heat_index_0.25_clustered_extremes.csv")))
 heat <- heat %>% dplyr::filter(cluster > 0)
 
 cube <- create.st.cube(target.raster = var, space.time.metric = 1)
@@ -103,12 +105,12 @@ values(cube) <- NA
 process_clusters(
   heat_data = heat,
   reference_raster = cube,
-  output_dir = here::here("data", "output", "03_cluster", "02_cluster", "points", "0.25", "heat_index","raw")
+  output_dir = here::here("data", "output", "03_cluster", "02_cluster","advisory", "points", "0.25", "heat_index","raw")
 )
 
 ## 0.3075 deg / day ----
 options(pillar.sigfig = 15)
-heat <- as_tibble(read.csv(here::here("data", "output", "03_cluster", "02_cluster", "heat_index_0.3075_clustered_extremes.csv")))
+heat <- as_tibble(read.csv(here::here("data", "output", "03_cluster", "02_cluster","advisory", "heat_index_0.3075_clustered_extremes.csv")))
 heat <- heat %>% dplyr::filter(cluster > 0)
 
 cube <- create.st.cube(target.raster = var, space.time.metric = 1.23)
@@ -118,12 +120,12 @@ values(cube) <- NA
 process_clusters(
   heat_data = heat, 
   reference_raster = cube, 
-  output_dir = here::here("data", "output", "03_cluster", "02_cluster", "points", "0.3075", "heat_index","raw")
+  output_dir = here::here("data", "output", "03_cluster", "02_cluster","advisory", "points", "0.3075", "heat_index","raw")
 )
 
 ## 0.39 deg / day ----
 options(pillar.sigfig = 15)
-heat <- as_tibble(read.csv(here::here("data", "output", "03_cluster", "02_cluster", "heat_index_0.39_clustered_extremes.csv")))
+heat <- as_tibble(read.csv(here::here("data", "output", "03_cluster", "02_cluster","advisory", "heat_index_0.39_clustered_extremes.csv")))
 heat <- heat %>% dplyr::filter(cluster > 0)
 
 cube <- create.st.cube(target.raster = var, space.time.metric = 1.56)
@@ -133,7 +135,55 @@ values(cube) <- NA
 process_clusters(
   heat_data = heat, 
   reference_raster = cube, 
-  output_dir = here::here("data", "output", "03_cluster", "02_cluster", "points", "0.39", "heat_index","raw")
+  output_dir = here::here("data", "output", "03_cluster", "02_cluster","advisory", "points", "0.39", "heat_index","raw")
+)
+
+
+# Heat Index Warning ----
+
+## 0.25 deg / day ----
+options(pillar.sigfig = 15)
+heat <- as_tibble(read.csv(here::here("data", "output", "03_cluster", "02_cluster","warning", "heat_index_0.25_clustered_extremes.csv")))
+heat <- heat %>% dplyr::filter(cluster > 0)
+
+cube <- create.st.cube(target.raster = var, space.time.metric = 1)
+cube <- cube[[1]]
+values(cube) <- NA
+
+process_clusters(
+  heat_data = heat,
+  reference_raster = cube,
+  output_dir = here::here("data", "output", "03_cluster", "02_cluster","warning", "points", "0.25", "heat_index","raw")
+)
+
+## 0.3075 deg / day ----
+options(pillar.sigfig = 15)
+heat <- as_tibble(read.csv(here::here("data", "output", "03_cluster", "02_cluster","warning", "heat_index_0.3075_clustered_extremes.csv")))
+heat <- heat %>% dplyr::filter(cluster > 0)
+
+cube <- create.st.cube(target.raster = var, space.time.metric = 1.23)
+cube <- cube[[1]]
+values(cube) <- NA
+
+process_clusters(
+  heat_data = heat, 
+  reference_raster = cube, 
+  output_dir = here::here("data", "output", "03_cluster", "02_cluster","warning", "points", "0.3075", "heat_index","raw")
+)
+
+## 0.39 deg / day ----
+options(pillar.sigfig = 15)
+heat <- as_tibble(read.csv(here::here("data", "output", "03_cluster", "02_cluster","warning", "heat_index_0.39_clustered_extremes.csv")))
+heat <- heat %>% dplyr::filter(cluster > 0)
+
+cube <- create.st.cube(target.raster = var, space.time.metric = 1.56)
+cube <- cube[[1]]
+values(cube) <- NA
+
+process_clusters(
+  heat_data = heat, 
+  reference_raster = cube, 
+  output_dir = here::here("data", "output", "03_cluster", "02_cluster","warning", "points", "0.39", "heat_index","raw")
 )
 
 # # Precipitation ----

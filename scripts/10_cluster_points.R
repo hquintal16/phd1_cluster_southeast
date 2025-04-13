@@ -12,7 +12,7 @@ library(here)
 here::i_am("scripts/10_cluster_points.R")
 source(here::here("scripts", "01_library.R"))
 
-# Heat Index ----
+# Heat Index: Advisory ----
 process_heat_index_files <- function(input_dir, output_dir, 
                                      threshold_shapefile, 
                                      space_time_metric,
@@ -117,7 +117,6 @@ process_heat_index_files <- function(input_dir, output_dir,
   print(paste("Total elapsed time:", elapsed_time))
 }
 
-
 ## Covariance ----
 stm <- read.csv(here::here("data", "output", "02_covariance", "03_space_time_metric", "heat_index", "month", "heat_index_space_time_metric_optimal.txt"))
 
@@ -178,7 +177,7 @@ month.heat <- stm %>%
 # stm:1 * res:0.25 = res: 0.25
 process_heat_index_files(
   input_dir = here::here("data", "output", "01_era5", "daily", "heat_index"),
-  output_dir = here::here("data", "output", "03_cluster", "01_extreme_points", "0.25", "heat_index"),
+  output_dir = here::here("data", "output", "03_cluster", "01_extreme_points","advisory", "0.25", "heat_index"),
   threshold_shapefile = here::here("data", "output","03_cluster", "00_threshold", "wfo_southeast_expansion_dissolved.shp"),
   # threshold_shapefile = here::here("data", "input", "threshold", "wfo_usa.shp"),
   space_time_metric = 1
@@ -188,7 +187,7 @@ process_heat_index_files(
 # stm:1.23 * res:0.25 = res: 0.3075
 process_heat_index_files(
   input_dir = here::here("data", "output", "01_era5", "daily", "heat_index"), 
-  output_dir = here::here("data", "output", "03_cluster", "01_extreme_points", "0.3075", "heat_index"), 
+  output_dir = here::here("data", "output", "03_cluster", "01_extreme_points","advisory", "0.3075", "heat_index"), 
   threshold_shapefile = here::here("data", "output","03_cluster", "00_threshold", "wfo_southeast_expansion_dissolved.shp"),
   space_time_metric = 1.23
 )
@@ -197,7 +196,140 @@ process_heat_index_files(
 # stm:1.56 * res:0.25 = res: 0.39
 process_heat_index_files(
   input_dir = here::here("data", "output", "01_era5", "daily", "heat_index"), 
-  output_dir = here::here("data", "output", "03_cluster", "01_extreme_points", "0.39","heat_index"), 
+  output_dir = here::here("data", "output", "03_cluster", "01_extreme_points","advisory", "0.39","heat_index"), 
+  threshold_shapefile = here::here("data", "output","03_cluster", "00_threshold", "wfo_southeast_expansion_dissolved.shp"),
+  space_time_metric = 1.56
+)
+
+# Heat Index: Warning ----
+process_heat_index_files <- function(input_dir, output_dir, 
+                                     threshold_shapefile, 
+                                     space_time_metric,
+                                     num_cores = 19) {
+  
+  # Start time
+  start_time <- Sys.time()
+  
+  # Local helper: create.st.cube defined within the main function
+  create.st.cube <- function(target.raster, space.time.metric) {
+    # Create a temporary raster with adjusted resolution based on space.time.metric
+    temp <- terra::rast(crs = terra::crs(target.raster),
+                        res = terra::res(target.raster) * space.time.metric,
+                        ext = terra::ext(target.raster),
+                        nlyr = terra::nlyr(target.raster))
+    terra::values(temp) <- 0
+    
+    # Resample the target raster to the temporary raster using the max method
+    result <- terra::resample(target.raster, temp, method = 'max')
+    names(result) <- terra::time(target.raster)
+    
+    return(result)
+  }
+  
+  # List all NetCDF files
+  nc_files <- list.files(input_dir, pattern = "\\.nc$", full.names = TRUE)
+  
+  # Read in threshold shapefile as an sf object
+  threshold_sf <- sf::st_as_sf(sf::read_sf(threshold_shapefile))
+  
+  # Setup progress bar
+  progressr::handlers(global = TRUE)
+  progressr::with_progress({
+    p <- progressr::progressor(along = nc_files)
+    
+    # Set up multisession parallel plan
+    future::plan(future::multisession, workers = num_cores)
+    
+    results <- future.apply::future_lapply(seq_along(nc_files), function(i) {
+      
+      # Load necessary libraries within each worker
+      library(terra)
+      library(sf)
+      library(dplyr)
+      library(tidyr)
+      
+      # Update progress bar
+      p(sprintf("Processing %d/%d: %s", i, length(nc_files), basename(nc_files)))
+      
+      # Get current file
+      nc_file <- nc_files[[i]]
+      
+      # Read NetCDF file as a raster using terra
+      var <- terra::rast(nc_file)
+      
+      # Directly use the provided numeric space_time_metric in the create.st.cube function
+      cube <- create.st.cube(target.raster = var, space.time.metric = space_time_metric)
+      
+      # Convert the cube to a data frame and then reshape to long format
+      cube.df <- as.data.frame(cube, xy = TRUE)
+      cube_long <- cube.df %>%
+        pivot_longer(-c(x, y), names_to = "date", values_to = "heat_index") %>%
+        mutate(date = as.Date(date))
+      
+      # Convert long format into an sf object using NAD83 CRS
+      cube_sf <- sf::st_as_sf(cube_long, coords = c("x", "y"), crs = 4269)
+      
+      # Spatial join with the threshold data and manage missing threshold values
+      cube_sf <- sf::st_join(cube_sf, threshold_sf, left = TRUE) %>%
+        mutate(WARNING = ifelse(is.na(WARNING), min(threshold_sf$WARNING, na.rm = TRUE), WARNING))
+      
+      # Flag extreme heat indices and add coordinate columns
+      cube_sf <- cube_sf %>%
+        mutate(extreme = ifelse(heat_index >= WARNING, 1, 0)) %>%
+        mutate(lat = sf::st_coordinates(.)[, 2],
+               long = sf::st_coordinates(.)[, 1]) %>%
+        mutate(threshold = WARNING,
+               observation = heat_index) %>%
+        select(lat, long, date, observation, threshold, extreme)
+      
+      # Filter to only extreme values (i.e., extreme == 1)
+      cube_sf_filtered <- dplyr::filter(cube_sf, extreme == 1)
+      
+      # Only write out file if there are extreme observations
+      if (nrow(cube_sf_filtered) > 0) {
+        output_file <- file.path(output_dir, paste0("extreme_", 
+                                                    substr(basename(nc_file), 1, nchar(basename(nc_file))-3), 
+                                                    ".csv"))
+        write.csv(cube_sf_filtered, output_file, row.names = FALSE)
+      }
+      
+      gc()
+    }, future.seed = TRUE)  # Ensure reproducibility in parallel
+  })
+  
+  # Stop time and elapsed time calculations
+  stop_time <- Sys.time()
+  elapsed_time <- stop_time - start_time
+  
+  print(paste("Processing started at:", start_time))
+  print(paste("Processing completed at:", stop_time))
+  print(paste("Total elapsed time:", elapsed_time))
+}
+
+### 0.25 deg / day ----
+# stm:1 * res:0.25 = res: 0.25
+process_heat_index_files(
+  input_dir = here::here("data", "output", "01_era5", "daily", "heat_index"),
+  output_dir = here::here("data", "output", "03_cluster", "01_extreme_points","warning", "0.25", "heat_index"),
+  threshold_shapefile = here::here("data", "output","03_cluster", "00_threshold", "wfo_southeast_expansion_dissolved.shp"),
+  # threshold_shapefile = here::here("data", "input", "threshold", "wfo_usa.shp"),
+  space_time_metric = 1
+)
+
+### 0.3075 deg / day ----
+# stm:1.23 * res:0.25 = res: 0.3075
+process_heat_index_files(
+  input_dir = here::here("data", "output", "01_era5", "daily", "heat_index"), 
+  output_dir = here::here("data", "output", "03_cluster", "01_extreme_points","warning", "0.3075", "heat_index"), 
+  threshold_shapefile = here::here("data", "output","03_cluster", "00_threshold", "wfo_southeast_expansion_dissolved.shp"),
+  space_time_metric = 1.23
+)
+
+### 0.39 deg / day ----
+# stm:1.56 * res:0.25 = res: 0.39
+process_heat_index_files(
+  input_dir = here::here("data", "output", "01_era5", "daily", "heat_index"), 
+  output_dir = here::here("data", "output", "03_cluster", "01_extreme_points","warning", "0.39","heat_index"), 
   threshold_shapefile = here::here("data", "output","03_cluster", "00_threshold", "wfo_southeast_expansion_dissolved.shp"),
   space_time_metric = 1.56
 )

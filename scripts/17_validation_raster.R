@@ -62,7 +62,7 @@ aggregate_validation_results <- function(years, validation_dir, output_dir) {
   aggregated$recall <- with(aggregated, ifelse((TP + FN) > 0, TP/(TP + FN), NA))
   message("Aggregation complete.")
   
-  #### Rasterization Steps ####
+  #### Rasterization Steps
   message("Checkpoint 9: Loading reference raster for target CRS and extent.")
   region.crs <- rast(here('data','output','01_era5','daily','heat_index','heat_index_daily_maximum_194001.nc'))
   
@@ -97,198 +97,245 @@ aggregate_validation_results <- function(years, validation_dir, output_dir) {
   message("Aggregated county recall raster saved as: ", output_file)
 }
 
-# Day ----
+
+# Heat Index Advisory ----
 ## 0.25 deg ----
-### Excess Heat ----
 years_to_process <- 2000:2023
-validation_directory <- here('data','output','05_validation','recall','day','0.25','excess_heat')
-output_directory <- here('data','output','05_validation','recall','raster')
+validation_directory <- here('data','output','05_validation','recall','advisory','day','0.25','excess_heat')
+output_directory <- here('data','output','05_validation','recall','advisory','raster')
 aggregate_validation_results(years_to_process, validation_directory, output_directory)
 
 years_to_process <- 2010:2023
-validation_directory <- here('data','output','05_validation','recall','day','0.25','excess_heat')
-output_directory <- here('data','output','05_validation','recall','raster')
+validation_directory <- here('data','output','05_validation','recall','advisory','day','0.25','excess_heat')
+output_directory <- here('data','output','05_validation','recall','advisory','raster')
 aggregate_validation_results(years_to_process, validation_directory, output_directory)
 
 years_to_process <- 2019:2023
-validation_directory <- here('data','output','05_validation','recall','day','0.25','excess_heat')
-output_directory <- here('data','output','05_validation','recall','raster')
-aggregate_validation_results(years_to_process, validation_directory, output_directory)
-
-### Flash Flood ----
-years_to_process <- 2000:2023
-validation_directory <- here('data','output','05_validation','recall','day','stm1','flash_flood')
-output_directory <- here('data','output','05_validation','recall','raster')
-aggregate_validation_results(years_to_process, validation_directory, output_directory)
-
-years_to_process <- 2010:2023
-validation_directory <- here('data','output','05_validation','recall','day','stm1','flash_flood')
-output_directory <- here('data','output','05_validation','recall','raster')
-aggregate_validation_results(years_to_process, validation_directory, output_directory)
-
-years_to_process <- 2019:2023
-validation_directory <- here('data','output','05_validation','recall','day','stm1','flash_flood')
-output_directory <- here('data','output','05_validation','recall','raster')
-aggregate_validation_results(years_to_process, validation_directory, output_directory)
-
-### Flood ----
-years_to_process <- 2000:2023
-validation_directory <- here('data','output','05_validation','recall','day','stm1','flood')
-output_directory <- here('data','output','05_validation','recall','raster')
-aggregate_validation_results(years_to_process, validation_directory, output_directory)
-
-years_to_process <- 2010:2023
-validation_directory <- here('data','output','05_validation','recall','day','stm1','flood')
-output_directory <- here('data','output','05_validation','recall','raster')
-aggregate_validation_results(years_to_process, validation_directory, output_directory)
-
-years_to_process <- 2019:2023
-validation_directory <- here('data','output','05_validation','recall','day','stm1','flood')
-output_directory <- here('data','output','05_validation','recall','raster')
-aggregate_validation_results(years_to_process, validation_directory, output_directory)
-
-### Heat ----
-years_to_process <- 1996:2023
-validation_directory <- here('data','output','05_validation','recall','day','stm1','heat')
-output_directory <- here('data','output','05_validation','recall','raster')
-aggregate_validation_results(years_to_process, validation_directory, output_directory)
-
-years_to_process <- 2010:2023
-validation_directory <- here('data','output','05_validation','recall','day','stm1','heat')
-output_directory <- here('data','output','05_validation','recall','raster')
-aggregate_validation_results(years_to_process, validation_directory, output_directory)
-
-years_to_process <- 2019:2023
-validation_directory <- here('data','output','05_validation','recall','day','stm1','heat')
-output_directory <- here('data','output','05_validation','recall','raster')
-aggregate_validation_results(years_to_process, validation_directory, output_directory)
-
-### Heavy Rain ----
-years_to_process <- 1996:2023
-validation_directory <- here('data','output','05_validation','recall','day','stm1','heavy_rain')
-output_directory <- here('data','output','05_validation','recall','raster')
-aggregate_validation_results(years_to_process, validation_directory, output_directory)
-
-years_to_process <- 2010:2023
-validation_directory <- here('data','output','05_validation','recall','day','stm1','heavy_rain')
-output_directory <- here('data','output','05_validation','recall','raster')
-aggregate_validation_results(years_to_process, validation_directory, output_directory)
-
-years_to_process <- 2019:2023
-validation_directory <- here('data','output','05_validation','recall','day','stm1','heavy_rain')
-output_directory <- here('data','output','05_validation','recall','raster')
-aggregate_validation_results(years_to_process, validation_directory, output_directory)
-
-### Hurricane ----
-years_to_process <- 1996:2023
-validation_directory <- here('data','output','05_validation','recall','day','stm1','hurricane')
-output_directory <- here('data','output','05_validation','recall','raster')
-aggregate_validation_results(years_to_process, validation_directory, output_directory)
-
-years_to_process <- 2010:2023
-validation_directory <- here('data','output','05_validation','recall','day','stm1','hurricane')
-output_directory <- here('data','output','05_validation','recall','raster')
-aggregate_validation_results(years_to_process, validation_directory, output_directory)
-
-years_to_process <- 2019:2023
-validation_directory <- here('data','output','05_validation','recall','day','stm1','hurricane')
-output_directory <- here('data','output','05_validation','recall','raster')
-aggregate_validation_results(years_to_process, validation_directory, output_directory)
-
-### Tropical Depression ----
-years_to_process <- 1996:2023
-validation_directory <- here('data','output','05_validation','recall','day','stm1','tropical_depression')
-output_directory <- here('data','output','05_validation','recall','raster')
-aggregate_validation_results(years_to_process, validation_directory, output_directory)
-
-years_to_process <- 2010:2023
-validation_directory <- here('data','output','05_validation','recall','day','stm1','tropical_depression')
-output_directory <- here('data','output','05_validation','recall','raster')
-aggregate_validation_results(years_to_process, validation_directory, output_directory)
-
-years_to_process <- 2019:2023
-validation_directory <- here('data','output','05_validation','recall','day','stm1','tropical_depression')
-output_directory <- here('data','output','05_validation','recall','raster')
-aggregate_validation_results(years_to_process, validation_directory, output_directory)
-
-### Tropical Storm ----
-years_to_process <- 1996:2023
-validation_directory <- here('data','output','05_validation','recall','day','stm1','tropical_storm')
-output_directory <- here('data','output','05_validation','recall','raster')
-aggregate_validation_results(years_to_process, validation_directory, output_directory)
-
-years_to_process <- 2010:2023
-validation_directory <- here('data','output','05_validation','recall','day','stm1','tropical_storm')
-output_directory <- here('data','output','05_validation','recall','raster')
-aggregate_validation_results(years_to_process, validation_directory, output_directory)
-
-years_to_process <- 2019:2023
-validation_directory <- here('data','output','05_validation','recall','day','stm1','tropical_storm')
-output_directory <- here('data','output','05_validation','recall','raster')
-aggregate_validation_results(years_to_process, validation_directory, output_directory)
-
-### Typhoon ----
-years_to_process <- 1996:2023
-validation_directory <- here('data','output','05_validation','recall','day','stm1','typhoon')
-output_directory <- here('data','output','05_validation','recall','raster')
-aggregate_validation_results(years_to_process, validation_directory, output_directory)
-
-years_to_process <- 2010:2023
-validation_directory <- here('data','output','05_validation','recall','day','stm1','typhoon')
-output_directory <- here('data','output','05_validation','recall','raster')
-aggregate_validation_results(years_to_process, validation_directory, output_directory)
-
-years_to_process <- 2019:2023
-validation_directory <- here('data','output','05_validation','recall','day','stm1','typhoon')
-output_directory <- here('data','output','05_validation','recall','raster')
+validation_directory <- here('data','output','05_validation','recall','advisory','day','0.25','excess_heat')
+output_directory <- here('data','output','05_validation','recall','advisory','raster')
 aggregate_validation_results(years_to_process, validation_directory, output_directory)
 
 ## 0.3075 deg ----
-### Excess Heat ----
 years_to_process <- 2000:2023
-validation_directory <- here('data','output','05_validation','recall','day','0.3075','excess_heat')
-output_directory <- here('data','output','05_validation','recall','raster')
+validation_directory <- here('data','output','05_validation','recall','advisory','day','0.3075','excess_heat')
+output_directory <- here('data','output','05_validation','recall','advisory','raster')
 aggregate_validation_results(years_to_process, validation_directory, output_directory)
 
 years_to_process <- 2010:2023
-validation_directory <- here('data','output','05_validation','recall','day','0.3075','excess_heat')
-output_directory <- here('data','output','05_validation','recall','raster')
+validation_directory <- here('data','output','05_validation','recall','advisory','day','0.3075','excess_heat')
+output_directory <- here('data','output','05_validation','recall','advisory','raster')
 aggregate_validation_results(years_to_process, validation_directory, output_directory)
 
 years_to_process <- 2019:2023
-validation_directory <- here('data','output','05_validation','recall','day','0.3075','excess_heat')
-output_directory <- here('data','output','05_validation','recall','raster')
+validation_directory <- here('data','output','05_validation','recall','advisory','day','0.3075','excess_heat')
+output_directory <- here('data','output','05_validation','recall','advisory','raster')
 aggregate_validation_results(years_to_process, validation_directory, output_directory)
 
 ## 0.39 deg ----
-### Excess Heat ----
 years_to_process <- 2000:2023
-validation_directory <- here('data','output','05_validation','recall','day','0.39','excess_heat')
-output_directory <- here('data','output','05_validation','recall','raster')
+validation_directory <- here('data','output','05_validation','recall','advisory','day','0.39','excess_heat')
+output_directory <- here('data','output','05_validation','recall','advisory','raster')
 aggregate_validation_results(years_to_process, validation_directory, output_directory)
 
 years_to_process <- 2010:2023
-validation_directory <- here('data','output','05_validation','recall','day','0.39','excess_heat')
-output_directory <- here('data','output','05_validation','recall','raster')
+validation_directory <- here('data','output','05_validation','recall','advisory','day','0.39','excess_heat')
+output_directory <- here('data','output','05_validation','recall','advisory','raster')
 aggregate_validation_results(years_to_process, validation_directory, output_directory)
 
 years_to_process <- 2019:2023
-validation_directory <- here('data','output','05_validation','recall','day','0.39','excess_heat')
-output_directory <- here('data','output','05_validation','recall','raster')
+validation_directory <- here('data','output','05_validation','recall','advisory','day','0.39','excess_heat')
+output_directory <- here('data','output','05_validation','recall','advisory','raster')
 aggregate_validation_results(years_to_process, validation_directory, output_directory)
 
-### Heat ----
-years_to_process <- 1996:2023
-validation_directory <- here('data','output','05_validation','recall','day','record','heat')
-output_directory <- here('data','output','05_validation','recall','raster')
+# Heat Index Warning ----
+## 0.25 deg ----
+years_to_process <- 2000:2023
+validation_directory <- here('data','output','05_validation','recall','warning','day','0.25','excess_heat')
+output_directory <- here('data','output','05_validation','recall','warning','raster')
 aggregate_validation_results(years_to_process, validation_directory, output_directory)
 
 years_to_process <- 2010:2023
-validation_directory <- here('data','output','05_validation','recall','day','record','heat')
-output_directory <- here('data','output','05_validation','recall','raster')
+validation_directory <- here('data','output','05_validation','recall','warning','day','0.25','excess_heat')
+output_directory <- here('data','output','05_validation','recall','warning','raster')
 aggregate_validation_results(years_to_process, validation_directory, output_directory)
 
 years_to_process <- 2019:2023
-validation_directory <- here('data','output','05_validation','recall','day','record','heat')
-output_directory <- here('data','output','05_validation','recall','raster')
+validation_directory <- here('data','output','05_validation','recall','warning','day','0.25','excess_heat')
+output_directory <- here('data','output','05_validation','recall','warning','raster')
 aggregate_validation_results(years_to_process, validation_directory, output_directory)
+
+## 0.3075 deg ----
+years_to_process <- 2000:2023
+validation_directory <- here('data','output','05_validation','recall','warning','day','0.3075','excess_heat')
+output_directory <- here('data','output','05_validation','recall','warning','raster')
+aggregate_validation_results(years_to_process, validation_directory, output_directory)
+
+years_to_process <- 2010:2023
+validation_directory <- here('data','output','05_validation','recall','warning','day','0.3075','excess_heat')
+output_directory <- here('data','output','05_validation','recall','warning','raster')
+aggregate_validation_results(years_to_process, validation_directory, output_directory)
+
+years_to_process <- 2019:2023
+validation_directory <- here('data','output','05_validation','recall','warning','day','0.3075','excess_heat')
+output_directory <- here('data','output','05_validation','recall','warning','raster')
+aggregate_validation_results(years_to_process, validation_directory, output_directory)
+
+## 0.39 deg ----
+years_to_process <- 2000:2023
+validation_directory <- here('data','output','05_validation','recall','warning','day','0.39','excess_heat')
+output_directory <- here('data','output','05_validation','recall','warning','raster')
+aggregate_validation_results(years_to_process, validation_directory, output_directory)
+
+years_to_process <- 2010:2023
+validation_directory <- here('data','output','05_validation','recall','warning','day','0.39','excess_heat')
+output_directory <- here('data','output','05_validation','recall','warning','raster')
+aggregate_validation_results(years_to_process, validation_directory, output_directory)
+
+years_to_process <- 2019:2023
+validation_directory <- here('data','output','05_validation','recall','warning','day','0.39','excess_heat')
+output_directory <- here('data','output','05_validation','recall','warning','raster')
+aggregate_validation_results(years_to_process, validation_directory, output_directory)
+
+# ### Heat ----
+# years_to_process <- 1996:2023
+# validation_directory <- here('data','output','05_validation','recall','day','record','heat')
+# output_directory <- here('data','output','05_validation','recall','raster')
+# aggregate_validation_results(years_to_process, validation_directory, output_directory)
+# 
+# years_to_process <- 2010:2023
+# validation_directory <- here('data','output','05_validation','recall','day','record','heat')
+# output_directory <- here('data','output','05_validation','recall','raster')
+# aggregate_validation_results(years_to_process, validation_directory, output_directory)
+# 
+# years_to_process <- 2019:2023
+# validation_directory <- here('data','output','05_validation','recall','day','record','heat')
+# output_directory <- here('data','output','05_validation','recall','raster')
+# aggregate_validation_results(years_to_process, validation_directory, output_directory)
+# 
+# ### Flash Flood ----
+# years_to_process <- 2000:2023
+# validation_directory <- here('data','output','05_validation','recall','day','stm1','flash_flood')
+# output_directory <- here('data','output','05_validation','recall','raster')
+# aggregate_validation_results(years_to_process, validation_directory, output_directory)
+# 
+# years_to_process <- 2010:2023
+# validation_directory <- here('data','output','05_validation','recall','day','stm1','flash_flood')
+# output_directory <- here('data','output','05_validation','recall','raster')
+# aggregate_validation_results(years_to_process, validation_directory, output_directory)
+# 
+# years_to_process <- 2019:2023
+# validation_directory <- here('data','output','05_validation','recall','day','stm1','flash_flood')
+# output_directory <- here('data','output','05_validation','recall','raster')
+# aggregate_validation_results(years_to_process, validation_directory, output_directory)
+# 
+# ### Flood ----
+# years_to_process <- 2000:2023
+# validation_directory <- here('data','output','05_validation','recall','day','stm1','flood')
+# output_directory <- here('data','output','05_validation','recall','raster')
+# aggregate_validation_results(years_to_process, validation_directory, output_directory)
+# 
+# years_to_process <- 2010:2023
+# validation_directory <- here('data','output','05_validation','recall','day','stm1','flood')
+# output_directory <- here('data','output','05_validation','recall','raster')
+# aggregate_validation_results(years_to_process, validation_directory, output_directory)
+# 
+# years_to_process <- 2019:2023
+# validation_directory <- here('data','output','05_validation','recall','day','stm1','flood')
+# output_directory <- here('data','output','05_validation','recall','raster')
+# aggregate_validation_results(years_to_process, validation_directory, output_directory)
+# 
+# ### Heat ----
+# years_to_process <- 1996:2023
+# validation_directory <- here('data','output','05_validation','recall','day','stm1','heat')
+# output_directory <- here('data','output','05_validation','recall','raster')
+# aggregate_validation_results(years_to_process, validation_directory, output_directory)
+# 
+# years_to_process <- 2010:2023
+# validation_directory <- here('data','output','05_validation','recall','day','stm1','heat')
+# output_directory <- here('data','output','05_validation','recall','raster')
+# aggregate_validation_results(years_to_process, validation_directory, output_directory)
+# 
+# years_to_process <- 2019:2023
+# validation_directory <- here('data','output','05_validation','recall','day','stm1','heat')
+# output_directory <- here('data','output','05_validation','recall','raster')
+# aggregate_validation_results(years_to_process, validation_directory, output_directory)
+# 
+# ### Heavy Rain ----
+# years_to_process <- 1996:2023
+# validation_directory <- here('data','output','05_validation','recall','day','stm1','heavy_rain')
+# output_directory <- here('data','output','05_validation','recall','raster')
+# aggregate_validation_results(years_to_process, validation_directory, output_directory)
+# 
+# years_to_process <- 2010:2023
+# validation_directory <- here('data','output','05_validation','recall','day','stm1','heavy_rain')
+# output_directory <- here('data','output','05_validation','recall','raster')
+# aggregate_validation_results(years_to_process, validation_directory, output_directory)
+# 
+# years_to_process <- 2019:2023
+# validation_directory <- here('data','output','05_validation','recall','day','stm1','heavy_rain')
+# output_directory <- here('data','output','05_validation','recall','raster')
+# aggregate_validation_results(years_to_process, validation_directory, output_directory)
+# 
+# ### Hurricane ----
+# years_to_process <- 1996:2023
+# validation_directory <- here('data','output','05_validation','recall','day','stm1','hurricane')
+# output_directory <- here('data','output','05_validation','recall','raster')
+# aggregate_validation_results(years_to_process, validation_directory, output_directory)
+# 
+# years_to_process <- 2010:2023
+# validation_directory <- here('data','output','05_validation','recall','day','stm1','hurricane')
+# output_directory <- here('data','output','05_validation','recall','raster')
+# aggregate_validation_results(years_to_process, validation_directory, output_directory)
+# 
+# years_to_process <- 2019:2023
+# validation_directory <- here('data','output','05_validation','recall','day','stm1','hurricane')
+# output_directory <- here('data','output','05_validation','recall','raster')
+# aggregate_validation_results(years_to_process, validation_directory, output_directory)
+# 
+# ### Tropical Depression ----
+# years_to_process <- 1996:2023
+# validation_directory <- here('data','output','05_validation','recall','day','stm1','tropical_depression')
+# output_directory <- here('data','output','05_validation','recall','raster')
+# aggregate_validation_results(years_to_process, validation_directory, output_directory)
+# 
+# years_to_process <- 2010:2023
+# validation_directory <- here('data','output','05_validation','recall','day','stm1','tropical_depression')
+# output_directory <- here('data','output','05_validation','recall','raster')
+# aggregate_validation_results(years_to_process, validation_directory, output_directory)
+# 
+# years_to_process <- 2019:2023
+# validation_directory <- here('data','output','05_validation','recall','day','stm1','tropical_depression')
+# output_directory <- here('data','output','05_validation','recall','raster')
+# aggregate_validation_results(years_to_process, validation_directory, output_directory)
+# 
+# ### Tropical Storm ----
+# years_to_process <- 1996:2023
+# validation_directory <- here('data','output','05_validation','recall','day','stm1','tropical_storm')
+# output_directory <- here('data','output','05_validation','recall','raster')
+# aggregate_validation_results(years_to_process, validation_directory, output_directory)
+# 
+# years_to_process <- 2010:2023
+# validation_directory <- here('data','output','05_validation','recall','day','stm1','tropical_storm')
+# output_directory <- here('data','output','05_validation','recall','raster')
+# aggregate_validation_results(years_to_process, validation_directory, output_directory)
+# 
+# years_to_process <- 2019:2023
+# validation_directory <- here('data','output','05_validation','recall','day','stm1','tropical_storm')
+# output_directory <- here('data','output','05_validation','recall','raster')
+# aggregate_validation_results(years_to_process, validation_directory, output_directory)
+# 
+# ### Typhoon ----
+# years_to_process <- 1996:2023
+# validation_directory <- here('data','output','05_validation','recall','day','stm1','typhoon')
+# output_directory <- here('data','output','05_validation','recall','raster')
+# aggregate_validation_results(years_to_process, validation_directory, output_directory)
+# 
+# years_to_process <- 2010:2023
+# validation_directory <- here('data','output','05_validation','recall','day','stm1','typhoon')
+# output_directory <- here('data','output','05_validation','recall','raster')
+# aggregate_validation_results(years_to_process, validation_directory, output_directory)
+# 
+# years_to_process <- 2019:2023
+# validation_directory <- here('data','output','05_validation','recall','day','stm1','typhoon')
+# output_directory <- here('data','output','05_validation','recall','raster')
+# aggregate_validation_results(years_to_process, validation_directory, output_directory)

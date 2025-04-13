@@ -111,21 +111,38 @@ process_nc_to_county <- function(cluster_dirs, county_vect, county_rast, output_
 
 # Create county boundaries using your code
 
-## Heat Index ----
+## Heat Index Advisory ----
 
 ### 0.25 deg / day ----
-input_dir <- here('data','output','03_cluster','02_cluster','points','0.25','heat_index','clean')
-output_dir <- here('data','output','03_cluster','02_cluster','points','0.25','heat_index','county')
+input_dir <- here('data','output','03_cluster','02_cluster','advisory','points','0.25','heat_index','clean')
+output_dir <- here('data','output','03_cluster','02_cluster','advisory','points','0.25','heat_index','county')
 process_nc_to_county(cluster_dirs = list(input_dir), county_vect = county_vect, county_rast = us.states.rast, output_dir = output_dir)
 
 ### 0.3075 deg / day ----
-input_dir <- here('data','output','03_cluster','02_cluster','points','0.3075','heat_index','clean')
-output_dir <- here('data','output','03_cluster','02_cluster','points','0.3075','heat_index','county')
+input_dir <- here('data','output','03_cluster','02_cluster','advisory','points','0.3075','heat_index','clean')
+output_dir <- here('data','output','03_cluster','02_cluster','advisory','points','0.3075','heat_index','county')
 process_nc_to_county(cluster_dirs = list(input_dir), county_vect = county_vect, county_rast = us.states.rast, output_dir = output_dir)
 
 ### 0.39 deg / day ----
-input_dir <- here('data','output','03_cluster','02_cluster','points','0.39','heat_index','clean')
-output_dir <- here('data','output','03_cluster','02_cluster','points','0.39','heat_index','county')
+input_dir <- here('data','output','03_cluster','02_cluster','advisory','points','0.39','heat_index','clean')
+output_dir <- here('data','output','03_cluster','02_cluster','advisory','points','0.39','heat_index','county')
+process_nc_to_county(cluster_dirs = list(input_dir), county_vect = county_vect, county_rast = us.states.rast, output_dir = output_dir)
+
+## Heat Index Warning ----
+
+### 0.25 deg / day ----
+input_dir <- here('data','output','03_cluster','02_cluster','warning','points','0.25','heat_index','clean')
+output_dir <- here('data','output','03_cluster','02_cluster','warning','points','0.25','heat_index','county')
+process_nc_to_county(cluster_dirs = list(input_dir), county_vect = county_vect, county_rast = us.states.rast, output_dir = output_dir)
+
+### 0.3075 deg / day ----
+input_dir <- here('data','output','03_cluster','02_cluster','warning','points','0.3075','heat_index','clean')
+output_dir <- here('data','output','03_cluster','02_cluster','warning','points','0.3075','heat_index','county')
+process_nc_to_county(cluster_dirs = list(input_dir), county_vect = county_vect, county_rast = us.states.rast, output_dir = output_dir)
+
+### 0.39 deg / day ----
+input_dir <- here('data','output','03_cluster','02_cluster','warning','points','0.39','heat_index','clean')
+output_dir <- here('data','output','03_cluster','02_cluster','warning','points','0.39','heat_index','county')
 process_nc_to_county(cluster_dirs = list(input_dir), county_vect = county_vect, county_rast = us.states.rast, output_dir = output_dir)
 
 # ## Precipitation ----

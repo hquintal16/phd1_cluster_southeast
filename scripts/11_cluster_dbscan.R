@@ -198,15 +198,15 @@ process_extremes_data <- function(input_dir, output_dir) {
   
 }
 
-# Calc Clusters ----
+# Heat Index Advisory ----
 input_dirs <- c(
-  here::here("data", "output", "03_cluster", "01_extreme_points", "0.25", "heat_index"),
-  here::here("data", "output", "03_cluster", "01_extreme_points", "0.3075", "heat_index"),
-  here::here("data", "output", "03_cluster", "01_extreme_points", "0.39", "heat_index")
+  here::here("data", "output", "03_cluster", "01_extreme_points", "advisory", "0.25", "heat_index"),
+  here::here("data", "output", "03_cluster", "01_extreme_points", "advisory", "0.3075", "heat_index"),
+  here::here("data", "output", "03_cluster", "01_extreme_points", "advisory", "0.39", "heat_index")
 )
 
 # Define the common output directory
-output_dir <- here::here("data", "output", "03_cluster", "02_cluster")
+output_dir <- here::here("data", "output", "03_cluster", "02_cluster","advisory")
 
 # Loop over each input directory and process the extremes data.
 for (in_dir in input_dirs) {
@@ -214,11 +214,10 @@ for (in_dir in input_dirs) {
   process_extremes_data(in_dir, output_dir)
 }
 
-# Summary Info ----
-heat_index_0.25_deg_day <- read.csv(here::here("data", "output", "03_cluster", "02_cluster", "heat_index_0.25_clustered_extremes.csv"))
-heat_index_0.39_deg_day <- read.csv(here::here("data", "output", "03_cluster", "02_cluster", "heat_index_0.39_clustered_extremes.csv"))
-heat_index_0.3075_deg_day <- read.csv(here::here("data", "output", "03_cluster", "02_cluster", "heat_index_0.3075_clustered_extremes.csv"))
-precipitation_0.25_deg_hour <- read.csv(here::here("data", "output", "03_cluster", "02_cluster", "precipitation_stm1_clustered_extremes.csv"))
+heat_index_0.25_deg_day <- read.csv(here::here("data", "output", "03_cluster", "02_cluster","advisory", "heat_index_0.25_clustered_extremes.csv"))
+heat_index_0.39_deg_day <- read.csv(here::here("data", "output", "03_cluster", "02_cluster","advisory", "heat_index_0.39_clustered_extremes.csv"))
+heat_index_0.3075_deg_day <- read.csv(here::here("data", "output", "03_cluster", "02_cluster","advisory", "heat_index_0.3075_clustered_extremes.csv"))
+precipitation_0.25_deg_hour <- read.csv(here::here("data", "output", "03_cluster", "02_cluster","advisory", "precipitation_stm1_clustered_extremes.csv"))
 
 cluster_results <- data.frame(
   hazard = c('Heat','Heat','Heat','Precipitation'),
@@ -245,4 +244,46 @@ cluster_results <- data.frame(
                max(unique(precipitation_0.25_deg_hour$cluster)))
 )
 
-write.csv(cluster_results, here::here("data", "output", "03_cluster", "02_cluster", "summary.csv"))
+write.csv(cluster_results, here::here("data", "output", "03_cluster", "02_cluster","advisory", "summary.csv"))
+
+# Heat Index Warning ----
+input_dirs <- c(
+  here::here("data", "output", "03_cluster", "01_extreme_points", "warning", "0.25", "heat_index"),
+  here::here("data", "output", "03_cluster", "01_extreme_points", "warning", "0.3075", "heat_index"),
+  here::here("data", "output", "03_cluster", "01_extreme_points", "warning", "0.39", "heat_index")
+)
+
+# Define the common output directory
+output_dir <- here::here("data", "output", "03_cluster", "02_cluster","warning")
+
+# Loop over each input directory and process the extremes data.
+for (in_dir in input_dirs) {
+  message("Processing input directory: ", in_dir)
+  process_extremes_data(in_dir, output_dir)
+}
+
+heat_index_0.25_deg_day <- read.csv(here::here("data", "output", "03_cluster", "02_cluster","warning", "heat_index_0.25_clustered_extremes.csv"))
+heat_index_0.39_deg_day <- read.csv(here::here("data", "output", "03_cluster", "02_cluster","warning", "heat_index_0.39_clustered_extremes.csv"))
+heat_index_0.3075_deg_day <- read.csv(here::here("data", "output", "03_cluster", "02_cluster","warning", "heat_index_0.3075_clustered_extremes.csv"))
+
+cluster_results <- data.frame(
+  hazard = c('Heat','Heat','Heat'),
+  resolution = c(0.25, 0.3075, 0.39),
+  mu = c(heat_index_0.25_deg_day$mu[1],
+         heat_index_0.3075_deg_day$mu[1],
+         heat_index_0.39_deg_day$mu[1]),
+  eps = c(heat_index_0.25_deg_day$eps[1],
+          heat_index_0.3075_deg_day$eps[1],
+          heat_index_0.39_deg_day$eps[1]),
+  points = c(nrow(heat_index_0.25_deg_day),
+             nrow(heat_index_0.3075_deg_day),
+             nrow(heat_index_0.39_deg_day)),
+  noise = c(sum(heat_index_0.25_deg_day$cluster == 0),
+            sum(heat_index_0.3075_deg_day$cluster == 0),
+            sum(heat_index_0.39_deg_day$cluster == 0)),
+  clusters = c(max(unique(heat_index_0.25_deg_day$cluster)),
+               max(unique(heat_index_0.3075_deg_day$cluster)),
+               max(unique(heat_index_0.39_deg_day$cluster)))
+)
+
+write.csv(cluster_results, here::here("data", "output", "03_cluster", "02_cluster","warning", "summary.csv"))
