@@ -480,3 +480,6 @@ scripts/06_matlab/tutorlib/STATLIBtutorial.m
 /figures
 figures/Thumbs.db
 *.db
+figures/Thumbs.db
+/figures
+*.db

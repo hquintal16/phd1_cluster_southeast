@@ -242,6 +242,7 @@ my_function(here::here("data", "output", "03_cluster", "02_cluster","advisory", 
             here::here("data", "output", "03_cluster", "02_cluster","warning", "heat_index_0.39_clustered_extremes.csv"))
 
 # Seasonality ----
+## Decade ----
 process_cluster_dates <- function(filepath, heat, date_col = "start_date") {
   grid_size <- str_extract(filepath, "(?<=_)[0-9.]+(?=_)") %>% as.numeric()
   df <- read_csv(filepath) %>%
@@ -373,6 +374,127 @@ my_histogram_function_start(
 )
 
 my_histogram_function_end(
+  here::here("data", "output", "05_validation", "summary", "advisory", "cluster", "cluster_0.25_excess_heat_summary.csv"),
+  here::here("data", "output", "05_validation", "summary", "advisory", "cluster", "cluster_0.3075_excess_heat_summary.csv"),
+  here::here("data", "output", "05_validation", "summary", "advisory", "cluster", "cluster_0.39_excess_heat_summary.csv"),
+  here::here("data", "output", "05_validation", "summary", "warning", "cluster", "cluster_0.25_excess_heat_summary.csv"),
+  here::here("data", "output", "05_validation", "summary", "warning", "cluster", "cluster_0.3075_excess_heat_summary.csv"),
+  here::here("data", "output", "05_validation", "summary", "warning", "cluster", "cluster_0.39_excess_heat_summary.csv")
+)
+
+## All ----
+
+process_cluster_dates <- function(filepath, heat, date_col = "start_date") {
+  grid_size <- str_extract(filepath, "(?<=_)[0-9.]+(?=_)") %>% as.numeric()
+  df <- read_csv(filepath) %>%
+    mutate(
+      date = as.Date(.data[[date_col]], format = "%m/%d/%Y"),
+      DOY  = as.numeric(format(date, "%j")),
+      year = as.numeric(format(date, "%Y")),
+      grid = as.character(grid_size),
+      heat = heat
+    )
+  # Compute decade (for informational purposes only)
+  df <- df %>%
+    mutate(decade = case_when(
+      year >= 1940 & year <= 1949 ~ "1940-1949",
+      year >= 1950 & year <= 1959 ~ "1950-1959",
+      year >= 1960 & year <= 1969 ~ "1960-1969",
+      year >= 1970 & year <= 1979 ~ "1970-1979",
+      year >= 1980 & year <= 1989 ~ "1980-1989",
+      year >= 1990 & year <= 1999 ~ "1990-1999",
+      year >= 2000 & year <= 2009 ~ "2000-2009",
+      year >= 2010 & year <= 2019 ~ "2010-2019",
+      year >= 2020 & year <= 2029 ~ "2020-2029",
+      TRUE ~ NA_character_
+    )) %>%
+    filter(!is.na(decade))
+  df$decade <- factor(df$decade, levels = c("1940-1949", "1950-1959", "1960-1969",
+                                            "1970-1979", "1980-1989", "1990-1999",
+                                            "2000-2009", "2010-2019", "2020-2029"))
+  return(df)
+}
+
+my_fourpanel_histogram_all_years_total <- function(file_adv1, file_adv2, file_adv3,
+                                                   file_warn1, file_warn2, file_warn3,
+                                                   base_filename = "fourpanel_histogram_all_years_total") {
+  # Process cluster initiation (start_date)
+  adv_start <- bind_rows(
+    process_cluster_dates(file_adv1, "Heat Advisory", date_col = "start_date"),
+    process_cluster_dates(file_adv2, "Heat Advisory", date_col = "start_date"),
+    process_cluster_dates(file_adv3, "Heat Advisory", date_col = "start_date")
+  )
+  warn_start <- bind_rows(
+    process_cluster_dates(file_warn1, "Heat Warning", date_col = "start_date"),
+    process_cluster_dates(file_warn2, "Heat Warning", date_col = "start_date"),
+    process_cluster_dates(file_warn3, "Heat Warning", date_col = "start_date")
+  )
+  
+  # Process cluster termination (end_date)
+  adv_end <- bind_rows(
+    process_cluster_dates(file_adv1, "Heat Advisory", date_col = "end_date"),
+    process_cluster_dates(file_adv2, "Heat Advisory", date_col = "end_date"),
+    process_cluster_dates(file_adv3, "Heat Advisory", date_col = "end_date")
+  )
+  warn_end <- bind_rows(
+    process_cluster_dates(file_warn1, "Heat Warning", date_col = "end_date"),
+    process_cluster_dates(file_warn2, "Heat Warning", date_col = "end_date"),
+    process_cluster_dates(file_warn3, "Heat Warning", date_col = "end_date")
+  )
+  
+  # Add an event indicator to distinguish cluster initiation vs. termination
+  adv_start <- adv_start %>% mutate(event = "Cluster Initiation")
+  warn_start <- warn_start %>% mutate(event = "Cluster Initiation")
+  adv_end   <- adv_end   %>% mutate(event = "Cluster Termination")
+  warn_end  <- warn_end  %>% mutate(event = "Cluster Termination")
+  
+  # Combine all data
+  data_all <- bind_rows(adv_start, warn_start, adv_end, warn_end)
+  
+  # Restrict the x-axis to May 1 (DOY 121) to November 1 (DOY 305)
+  data_all <- data_all %>% filter(DOY >= 121, DOY <= 305)
+  
+  # We'll use the entire dataset per panel (no breakdown by decade)
+  # Define histogram bins: 1-day bins from 120.5 to 305.5
+  bins <- seq(120.5, 305.5, by = 1)
+  
+  # Compute cumulative counts per bin for each panel (group by heat and event only)
+  cumulative_counts <- data_all %>%
+    mutate(bin = cut(DOY, breaks = bins, include.lowest = TRUE)) %>%
+    group_by(heat, event, bin) %>%
+    summarize(n = n(), .groups = "drop")
+  common_y_limit <- max(cumulative_counts$n, na.rm = TRUE)
+  
+  # Define x-axis breaks and labels for a representative year (2021) restricted to 121-305
+  all_month_breaks <- as.numeric(format(as.Date(paste0("2021-", sprintf("%02d", 1:12), "-01")), "%j"))
+  all_month_labels <- format(as.Date(paste0("2021-", sprintf("%02d", 1:12), "-01")), "%b %d")
+  month_breaks <- all_month_breaks[all_month_breaks >= 121 & all_month_breaks <= 305]
+  month_labels <- all_month_labels[all_month_breaks >= 121 & all_month_breaks <= 305]
+  
+  # Define a common theme with a shared legend at the bottom
+  common_theme <- theme_bw() +
+    theme(legend.position = "bottom")
+  
+  # Create the histogram plot using overlapping histograms with alpha = 0.5 and no outline
+  p <- ggplot(data_all, aes(x = DOY, fill = grid)) +
+    geom_histogram(breaks = bins, binwidth = 1, position = "identity", alpha = 0.5, color = NA) +
+    scale_x_continuous(breaks = month_breaks, labels = month_labels, limits = c(121, 305)) +
+    # scale_y_continuous(limits = c(0, common_y_limit * 1.1)) +
+    scale_y_continuous(limits = c(0, 85)) +
+    labs(x = "Date", y = "Cluster Count") +
+    facet_grid(rows = vars(event), cols = vars(heat)) +
+    common_theme
+  
+  # Save the figure
+  png_path <- here("figures", paste0(base_filename, ".png"))
+  svg_path <- here("figures", paste0(base_filename, ".svg"))
+  ggsave(filename = png_path, plot = p, width = 12, height = 8, dpi = 300)
+  ggsave(filename = svg_path, plot = p, width = 12, height = 8, device = "svg")
+  
+  return(invisible(data_all))
+}
+
+my_fourpanel_histogram_all_years_total(
   here::here("data", "output", "05_validation", "summary", "advisory", "cluster", "cluster_0.25_excess_heat_summary.csv"),
   here::here("data", "output", "05_validation", "summary", "advisory", "cluster", "cluster_0.3075_excess_heat_summary.csv"),
   here::here("data", "output", "05_validation", "summary", "advisory", "cluster", "cluster_0.39_excess_heat_summary.csv"),
