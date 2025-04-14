@@ -242,15 +242,8 @@ my_function(here::here("data", "output", "03_cluster", "02_cluster","advisory", 
             here::here("data", "output", "03_cluster", "02_cluster","warning", "heat_index_0.39_clustered_extremes.csv"))
 
 # Seasonality ----
-
-# 1. Helper Function: process_cluster_dates
-# This function reads a file and uses the specified date column (e.g., "start_date" or "end_date")
-# to compute the Day of Year (DOY) and assign a decade (with an "All" group).
 process_cluster_dates <- function(filepath, heat, date_col = "start_date") {
-  # Extract the grid resolution from the file name (assumes the grid value is between underscores)
   grid_size <- str_extract(filepath, "(?<=_)[0-9.]+(?=_)") %>% as.numeric()
-  
-  # Read in the CSV file and convert the chosen date column to Date.
   df <- read_csv(filepath) %>%
     mutate(
       date = as.Date(.data[[date_col]], format = "%m/%d/%Y"),
@@ -259,8 +252,6 @@ process_cluster_dates <- function(filepath, heat, date_col = "start_date") {
       grid = as.character(grid_size),
       heat = heat
     )
-  
-  # Create a 'decade' variable based on the year; includes decades from 1940 to 2029.
   df <- df %>%
     mutate(decade = case_when(
       year >= 1940 & year <= 1949 ~ "1940-1949",
@@ -275,133 +266,117 @@ process_cluster_dates <- function(filepath, heat, date_col = "start_date") {
       TRUE ~ NA_character_
     )) %>%
     filter(!is.na(decade))
-  
-  # Duplicate the data so that all rows are also assigned to the "All" group.
-  df_all <- df %>% mutate(decade = "All")
-  df <- bind_rows(df, df_all)
-  
-  # Set the factor levels for decade in the desired order.
+  # Do not create an "All" group in this version.
   df$decade <- factor(df$decade, levels = c("1940-1949", "1950-1959", "1960-1969",
                                             "1970-1979", "1980-1989", "1990-1999",
-                                            "2000-2009", "2010-2019", "2020-2029", "All"))
+                                            "2000-2009", "2010-2019", "2020-2029"))
   return(df)
 }
 
-# 2. Main Function: my_overlay_violin_function (Grouped Version)
-# This function creates grouped horizontal violin plots.
-# For each panel:
-#   - The x-axis represents the decade (with violins for each decade arranged side-by-side).
-#   - The y-axis represents the DOY.
-#   - Fill and color identify the grid resolution (0.25, 0.3075, 0.39).
-# The final output is a 2 x 2 layout:
-#  - Top row: Start of Cluster DOY distributions.
-#  - Bottom row: End of Cluster DOY distributions.
-#  - Left column: Heat Advisory; Right column: Heat Warning.
-# A single shared legend is placed at the bottom of the entire figure.
-my_overlay_violin_function <- function(file1, file2, file3, file4, file5, file6, 
-                                       base_filename = "grouped_violin_plot") {
-  # Process files for start_date:
-  start_advisory <- bind_rows(
+my_histogram_function_start <- function(file1, file2, file3, file4, file5, file6,
+                                        base_filename = "histogram_start") {
+  adv_df <- bind_rows(
     process_cluster_dates(file1, "Heat Advisory", date_col = "start_date"),
     process_cluster_dates(file2, "Heat Advisory", date_col = "start_date"),
     process_cluster_dates(file3, "Heat Advisory", date_col = "start_date")
   )
-  start_warning <- bind_rows(
+  warn_df <- bind_rows(
     process_cluster_dates(file4, "Heat Warning", date_col = "start_date"),
     process_cluster_dates(file5, "Heat Warning", date_col = "start_date"),
     process_cluster_dates(file6, "Heat Warning", date_col = "start_date")
   )
+  all_df <- bind_rows(adv_df, warn_df)
   
-  # Process files for end_date:
-  end_advisory <- bind_rows(
+  bins <- seq(0.5, 366.5, by = 1)
+  hist_counts <- all_df %>%
+    group_by(heat, decade, grid) %>%
+    summarize(count = max(table(cut(DOY, breaks = bins))), .groups = "drop")
+  global_y <- max(hist_counts$count, na.rm = TRUE)
+  
+  # Compute month breaks and labels (for a representative non-leap year; 2021)
+  all_month_breaks <- as.numeric(format(as.Date(paste0("2021-", sprintf("%02d", 1:12), "-01")),
+                                        "%j"))
+  all_month_labels <- format(as.Date(paste0("2021-", sprintf("%02d", 1:12), "-01")),
+                             "%b %d")
+  # Subset to the range May 1 (DOY 121) to November 1 (DOY 305)
+  month_breaks <- all_month_breaks[all_month_breaks >= 121 & all_month_breaks <= 305]
+  month_labels <- all_month_labels[all_month_breaks >= 121 & all_month_breaks <= 305]
+  
+  p <- ggplot(all_df, aes(x = DOY, fill = grid)) +
+    geom_histogram(breaks = bins, position = "identity", alpha = 0.5, binwidth = 1, color = NA) +
+    scale_x_continuous(breaks = month_breaks, labels = month_labels, limits = c(121, 305)) +
+    scale_y_continuous(limits = c(0, global_y * 1.1)) +
+    labs(x = "Cluster Initiation", y = "Cluster Count") +
+    facet_grid(rows = vars(decade), cols = vars(heat)) +
+    theme_bw() +
+    theme(legend.position = "bottom")
+  
+  png_path <- here("figures", paste0(base_filename, ".png"))
+  svg_path <- here("figures", paste0(base_filename, ".svg"))
+  ggsave(filename = png_path, plot = p, width = 12, height = 10, dpi = 300)
+  ggsave(filename = svg_path, plot = p, width = 12, height = 10, device = "svg")
+  
+  return(invisible(all_df))
+}
+
+my_histogram_function_end <- function(file1, file2, file3, file4, file5, file6,
+                                      base_filename = "histogram_end") {
+  adv_df <- bind_rows(
     process_cluster_dates(file1, "Heat Advisory", date_col = "end_date"),
     process_cluster_dates(file2, "Heat Advisory", date_col = "end_date"),
     process_cluster_dates(file3, "Heat Advisory", date_col = "end_date")
   )
-  end_warning <- bind_rows(
+  warn_df <- bind_rows(
     process_cluster_dates(file4, "Heat Warning", date_col = "end_date"),
     process_cluster_dates(file5, "Heat Warning", date_col = "end_date"),
     process_cluster_dates(file6, "Heat Warning", date_col = "end_date")
   )
+  all_df <- bind_rows(adv_df, warn_df)
   
-  # Define a common theme (same for all plots)
-  common_theme <- theme_bw() +
-    theme(
-      panel.border = element_rect(color = "black", fill = NA, size = 0.5)
-    )
+  bins <- seq(0.5, 366.5, by = 1)
+  hist_counts <- all_df %>%
+    group_by(heat, decade, grid) %>%
+    summarize(count = max(table(cut(DOY, breaks = bins))), .groups = "drop")
+  global_y <- max(hist_counts$count, na.rm = TRUE)
   
-  # In these grouped plots, fill and color represent grid resolution.
-  grid_scales <- list(
-    scale_fill_discrete(name = "Resolution (°/day)"),
-    scale_color_discrete(name = "Resolution (°/day)")
-  )
+  all_month_breaks <- as.numeric(format(as.Date(paste0("2021-", sprintf("%02d", 1:12), "-01")),
+                                        "%j"))
+  all_month_labels <- format(as.Date(paste0("2021-", sprintf("%02d", 1:12), "-01")),
+                             "%b %d")
+  month_breaks <- all_month_breaks[all_month_breaks >= 121 & all_month_breaks <= 305]
+  month_labels <- all_month_labels[all_month_breaks >= 121 & all_month_breaks <= 305]
   
-  # Create break values and labels for the DOY axis using a representative non-leap year (2021).
-  month_breaks <- as.numeric(format(as.Date(paste0("2021-", sprintf("%02d", 1:12), "-01")), "%j"))
-  month_labels <- format(as.Date(paste0("2021-", sprintf("%02d", 1:12), "-01")), "%b %d")
-  
-  # --- Start Date Panels ---
-  # Map x = decade (categorical) and y = DOY (continuous). Fill/color by grid.
-  # Use position_dodge() to separate violins within each decade.
-  # Then flip the coordinates so that the decades appear along the vertical.
-  p_start_advisory <- ggplot(start_advisory, aes(x = decade, y = DOY, fill = grid, color = grid)) +
-    geom_violin(position = position_dodge(width = 0.9), trim = FALSE, alpha = 0.5) +
-    scale_y_continuous(breaks = month_breaks, labels = month_labels) +
-    labs(x = "Decade", y = "Start of Cluster") +
-    grid_scales +
-    common_theme +
-    coord_flip()
-  
-  p_start_warning <- ggplot(start_warning, aes(x = decade, y = DOY, fill = grid, color = grid)) +
-    geom_violin(position = position_dodge(width = 0.9), trim = FALSE, alpha = 0.5) +
-    scale_y_continuous(breaks = month_breaks, labels = month_labels) +
-    labs(x = "Decade", y = "Start of Cluster") +
-    grid_scales +
-    common_theme +
-    coord_flip()
-  
-  # --- End Date Panels ---
-  p_end_advisory <- ggplot(end_advisory, aes(x = decade, y = DOY, fill = grid, color = grid)) +
-    geom_violin(position = position_dodge(width = 0.9), trim = FALSE, alpha = 0.5) +
-    scale_y_continuous(breaks = month_breaks, labels = month_labels) +
-    labs(x = "Decade", y = "End of Cluster") +
-    grid_scales +
-    common_theme +
-    coord_flip()
-  
-  p_end_warning <- ggplot(end_warning, aes(x = decade, y = DOY, fill = grid, color = grid)) +
-    geom_violin(position = position_dodge(width = 0.9), trim = FALSE, alpha = 0.5) +
-    scale_y_continuous(breaks = month_breaks, labels = month_labels) +
-    labs(x = "Decade", y = "End of Cluster") +
-    grid_scales +
-    common_theme +
-    coord_flip()
-  
-  # Combine the four panels in a 2 row x 2 column layout and collect the legends.
-  # Then remove individual legends by collecting them into one single legend below the plot.
-  final_plot <- (p_start_advisory | p_start_warning) / (p_end_advisory | p_end_warning) +
-    plot_layout(guides = "collect") &
+  p <- ggplot(all_df, aes(x = DOY, fill = grid)) +
+    geom_histogram(breaks = bins, position = "identity", alpha = 0.5, binwidth = 1, color = NA) +
+    scale_x_continuous(breaks = month_breaks, labels = month_labels, limits = c(121, 305)) +
+    scale_y_continuous(limits = c(0, global_y * 1.1)) +
+    labs(x = "Cluster Termination", y = "Cluster Count") +
+    facet_grid(rows = vars(decade), cols = vars(heat)) +
+    theme_bw() +
     theme(legend.position = "bottom")
   
-  # Save the final plot in PNG and SVG formats:
   png_path <- here("figures", paste0(base_filename, ".png"))
   svg_path <- here("figures", paste0(base_filename, ".svg"))
-  ggsave(filename = png_path, plot = final_plot, width = 14, height = 8, dpi = 300)
-  ggsave(filename = svg_path, plot = final_plot, width = 14, height = 8, device = "svg")
+  ggsave(filename = png_path, plot = p, width = 12, height = 10, dpi = 300)
+  ggsave(filename = svg_path, plot = p, width = 12, height = 10, device = "svg")
   
-  # Optionally, return the processed datasets as a list.
-  return(invisible(list(
-    start_advisory = start_advisory,
-    start_warning = start_warning,
-    end_advisory = end_advisory,
-    end_warning = end_warning
-  )))
+  return(invisible(all_df))
 }
 
+my_histogram_function_start(
+  here::here("data", "output", "05_validation", "summary", "advisory", "cluster", "cluster_0.25_excess_heat_summary.csv"),
+  here::here("data", "output", "05_validation", "summary", "advisory", "cluster", "cluster_0.3075_excess_heat_summary.csv"),
+  here::here("data", "output", "05_validation", "summary", "advisory", "cluster", "cluster_0.39_excess_heat_summary.csv"),
+  here::here("data", "output", "05_validation", "summary", "warning", "cluster", "cluster_0.25_excess_heat_summary.csv"),
+  here::here("data", "output", "05_validation", "summary", "warning", "cluster", "cluster_0.3075_excess_heat_summary.csv"),
+  here::here("data", "output", "05_validation", "summary", "warning", "cluster", "cluster_0.39_excess_heat_summary.csv")
+)
 
-my_overlay_violin_function(here::here("data", "output", "05_validation", "summary","advisory","cluster", "cluster_0.25_excess_heat_summary.csv"),
-                           here::here("data", "output", "05_validation", "summary","advisory","cluster", "cluster_0.3075_excess_heat_summary.csv"),
-                           here::here("data", "output", "05_validation", "summary","advisory","cluster", "cluster_0.39_excess_heat_summary.csv"),
-                           here::here("data", "output", "05_validation", "summary","warning","cluster", "cluster_0.25_excess_heat_summary.csv"),
-                           here::here("data", "output", "05_validation", "summary","warning","cluster", "cluster_0.3075_excess_heat_summary.csv"),
-                           here::here("data", "output", "05_validation", "summary","warning","cluster", "cluster_0.39_excess_heat_summary.csv"))
+my_histogram_function_end(
+  here::here("data", "output", "05_validation", "summary", "advisory", "cluster", "cluster_0.25_excess_heat_summary.csv"),
+  here::here("data", "output", "05_validation", "summary", "advisory", "cluster", "cluster_0.3075_excess_heat_summary.csv"),
+  here::here("data", "output", "05_validation", "summary", "advisory", "cluster", "cluster_0.39_excess_heat_summary.csv"),
+  here::here("data", "output", "05_validation", "summary", "warning", "cluster", "cluster_0.25_excess_heat_summary.csv"),
+  here::here("data", "output", "05_validation", "summary", "warning", "cluster", "cluster_0.3075_excess_heat_summary.csv"),
+  here::here("data", "output", "05_validation", "summary", "warning", "cluster", "cluster_0.39_excess_heat_summary.csv")
+)
