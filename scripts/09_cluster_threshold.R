@@ -397,9 +397,140 @@ atlas.14 <- threshold.compile(
   tx.dir  = here::here("data", "input", "threshold", "tx1yr24ha", "tx1yr24ha.asc"),
   mw.dir  = here::here("data", "input", "threshold", "mw1yr24ha", "mw1yr24ha.asc")
 )
+# 
+# atlas_vector <- as.polygons(atlas.14, dissolve = FALSE)
+# 
+# atlas_sf <- st_as_sf(atlas_vector)
+# colnames(atlas_sf)[which(names(atlas_sf) == "layer")] <- "threshold"
+# 
+# ## Save output ----
+# st_write(atlas_sf, here::here("data", "input", "threshold", "atlas14_shapefile.shp"), delete_layer = TRUE)
 
-atlas_vector <- as.polygons(atlas.14, dissolve = FALSE)
-atlas_sf <- st_as_sf(atlas_vector)
+# subset to study area
+atlas.14.se <- terra::crop(atlas.14,c(-95,-75,24,40))
+
+atlas_vector_se <- as.polygons(atlas.14.se, dissolve = FALSE)
+
+expand_shapefile_nearest_parallel <- function(shp, 
+                                              lat_min, lat_max, lon_min, lon_max, 
+                                              resolution, 
+                                              cols_to_expand = c(), 
+                                              n_workers = 19,
+                                              simplify_tolerance = NULL) {
+  
+  # Verify that the requested attribute columns exist in the shapefile
+  if (!all(cols_to_expand %in% names(shp))) {
+    stop("Some cols_to_expand are not present in the shapefile.")
+  }
+  
+  # Optionally simplify the geometry if a tolerance is provided
+  if (!is.null(simplify_tolerance)) {
+    shp <- st_simplify(shp, dTolerance = simplify_tolerance, preserveTopology = TRUE)
+  }
+  
+  # Increase the future globals max size and set up a parallel plan
+  options(future.globals.maxSize = +Inf)
+  plan(multisession, workers = n_workers)
+  
+  # Create the grid (as polygons) from the provided bounding box and resolution
+  bbox_grid <- st_bbox(c(xmin = lon_min, ymin = lat_min, xmax = lon_max, ymax = lat_max), 
+                       crs = st_crs(shp))
+  expanded_grid <- st_make_grid(
+    st_as_sfc(bbox_grid),
+    cellsize = resolution,
+    what = "polygons"
+  ) %>% st_as_sf()
+  
+  # Calculate centroids for all the grid cells
+  grid_centroids <- st_centroid(expanded_grid)
+  
+  # Determine which grid centroids fall within the original shapefile.
+  # (Using apply ensures it works whether shp has one feature or many.)
+  intersections_matrix <- st_intersects(grid_centroids, shp, sparse = FALSE)
+  within_original <- apply(intersections_matrix, 1, any)
+  
+  grid_within <- expanded_grid[within_original, ]
+  grid_outside <- expanded_grid[!within_original, ]
+  
+  # For grid cells that fall within the shapefile, assign attributes using spatial join
+  grid_within <- st_join(grid_within, shp[, cols_to_expand], join = st_intersects, left = TRUE)
+  
+  # Process grid cells that are outside the original shapefile
+  if (nrow(grid_outside) > 0) {
+    if (nrow(shp) == 1) {
+      # Single-feature shapefile: assign the sole feature's attributes directly
+      for (col in cols_to_expand) {
+        grid_outside[[col]] <- shp[[col]][1]
+      }
+      grid_outside_final <- grid_outside
+    } else {
+      # Multiple features: split grid and use parallel nearest neighbor search
+      grid_chunks <- split(grid_outside, cut(seq_len(nrow(grid_outside)), n_workers * 4, labels = FALSE))
+      
+      handlers(global = TRUE)
+      p <- progressor(steps = length(grid_chunks))
+      
+      # Precompute centroids and attribute table from the shapefile to minimize overhead
+      shp_centroids <- st_centroid(shp)
+      shp_attrs <- st_drop_geometry(shp[, cols_to_expand])
+      shp_points <- cbind(st_coordinates(shp_centroids), shp_attrs)
+      
+      nearest_outside_parallel <- future_lapply(grid_chunks, function(chunk) {
+        chunk_centroids <- st_centroid(chunk)
+        chunk_coords <- st_coordinates(chunk_centroids)
+        
+        # Nearest neighbor search using the RANN package
+        nn_index <- RANN::nn2(data = shp_points[,1:2], query = chunk_coords, k = 1)$nn.idx[,1]
+        nearest_attrs <- shp_attrs[nn_index, ]
+        
+        p()  # Update progress
+        
+        bind_cols(chunk, nearest_attrs)
+      })
+      
+      grid_outside_final <- bind_rows(nearest_outside_parallel)
+    }
+  } else {
+    grid_outside_final <- grid_outside
+  }
+  
+  # Combine the grid cells from inside and outside the original shapefile
+  result <- bind_rows(grid_within, grid_outside_final)
+  
+  # Reset to sequential processing and restore default future globals max size (~500MB)
+  plan(sequential)
+  options(future.globals.maxSize = 500 * 1024^2)
+  
+  return(result)
+}
+
+# Define the new extent
+lat_min <- 24
+lat_max <- 40
+lon_min <- -95
+lon_max <- -75
+resolution <- 0.05
+
+# Expand the shapefile
+expanded_shp <- expand_shapefile_nearest_parallel(
+  shp = atlas_vector_se,
+  lat_min = lat_min,
+  lat_max = lat_max,
+  lon_min = lon_min,
+  lon_max = lon_max,
+  resolution = resolution,
+  cols_to_expand = cols_to_expand,
+  n_workers = 19
+  
+)
+
+# check out results
+expanded_shp
+
+# plot(atlas_vector_se)
+atlas_sf_se <- st_as_sf(atlas_vector_se)
+
+
 colnames(atlas_sf)[which(names(atlas_sf) == "layer")] <- "threshold"
 
 ## Save output ----
