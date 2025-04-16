@@ -82,3 +82,12 @@ output_dirs <- c(here('data', 'output', '03_cluster', '02_cluster', 'warning', '
 for(i in seq_along(input_dirs)) {
   rename_and_copy_files(input_dirs[i], output_dirs[i])
 }
+
+# Precipitation ----
+input_dirs <- c(here('data', 'output', '03_cluster', '02_cluster', '24hr1yr', 'points', 'raw'))
+
+output_dirs <- c(here('data', 'output', '03_cluster', '02_cluster', '24hr1yr', 'points', 'clean'))
+
+for(i in seq_along(input_dirs)) {
+  rename_and_copy_files(input_dirs[i], output_dirs[i])
+}

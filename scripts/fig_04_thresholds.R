@@ -64,7 +64,7 @@ atlas.14 <- threshold.compile(ne.dir = here::here("data", "input", "threshold", 
 # Crop to southeast
 atlas.14.se <- terra::crop(atlas.14, terra::ext(domain))
 
-# WFO shapefiles
+# Heat Index shapefiles
 wfo      <- st_as_sf(read_sf(here::here("data", "input", "threshold", "wfo_usa.shp")))
 wfo.cwa  <- st_as_sf(read_sf(here::here("data", "input", "threshold", "cwa.shp")))
 wfo.state<- st_as_sf(read_sf(here::here("data", "input", "threshold", "state.shp")))
@@ -74,9 +74,14 @@ wfo.domain<-st_as_sf(read_sf(here::here("data", "output","03_cluster", "00_thres
 wfo_vect   <- terra::vect(wfo.domain)
 template   <- atlas.14.se
 wfo_raster <- rasterize(wfo_vect, template, field = "ADVISORY")
-plot(wfo_raster)
+
+# Precipitation shapefiles
+atlas.domain <- st_as_sf(read_sf(here::here("data", "output","03_cluster", "00_threshold", "atlas14_southeast_expansion_dissolved.shp")))
+atlas.domain <- terra::vect(atlas.domain)
+atlas.raster <- rasterize(atlas.domain, template, field = "kpp__01")
+
 # Prepare data frames for ggplot
-atlas_df <- as.data.frame(atlas.14.se, xy = TRUE)
+atlas_df <- as.data.frame(atlas.raster, xy = TRUE)
 names(atlas_df)[3] <- "atlas_value"
 
 wfo_df <- as.data.frame(wfo_raster, xy = TRUE)
@@ -97,8 +102,9 @@ p2 <- ggplot() +
   coord_sf(xlim = xlims, ylim = ylims) +
   theme_bw() +
   theme(axis.title = element_blank(),
-        legend.position = c(0.99, 0.01),
-        legend.justification = c("right", "bottom"))
+        legend.position = "bottom",
+        legend.direction = "horizontal",
+        legend.box = "horizontal")
 
 # Plot 1: Heat Index with shapefile overlays
 p1 <- ggplot() +
@@ -109,8 +115,9 @@ p1 <- ggplot() +
   coord_sf(xlim = xlims, ylim = ylims) +
   theme_bw() +
   theme(axis.title = element_blank(),
-        legend.position = c(0.99, 0.01),
-        legend.justification = c("right", "bottom"))
+        legend.position = "bottom",
+        legend.direction = "horizontal",
+        legend.box = "horizontal")
 
 # Combine the two plots into one figure with panels labeled "a" and "b"
 combined_plot <- p1 + p2 + plot_annotation(tag_levels = 'a')

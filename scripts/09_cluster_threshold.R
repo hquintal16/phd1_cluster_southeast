@@ -347,8 +347,6 @@ expanded_shp <- expand_shapefile_nearest_parallel(
   
 )
 
-# plot(expanded_shp$x,col = expanded_shp$ADVISORY)
-
 ## Save output 
 st_write(expanded_shp, here::here("data", "output","03_cluster", "00_threshold", "wfo_southeast_expansion.shp"), delete_layer = TRUE)
 
@@ -376,17 +374,7 @@ regions <- terra::rast(directory)
 domain <- terra::rast(here::here("data", "output", "01_era5", "daily", "heat_index", "heat_index_daily_maximum_194001.nc"))
 domain <- domain[[1]] / domain[[1]]
 
-# Read in United States counties using tigris
-united_states <- tigris::counties(state = c('AL','AR','CO','CT','DE','DC','FL','GA','AZ',
-                                            'IL','IN','IA','KS','KY','LA','ME','MD','MA',
-                                            'MI','MN','MS','MO','NE','NH','NJ','NM','UT',
-                                            'NY','NC','ND','OH','OK','PA','RI','SC','SD',
-                                            'TN','TX','VT','VA','WV','WI','NV','CA'), 
-                                  cb = TRUE) %>% st_as_sf()
-
-united_states <- stars::st_rasterize(united_states %>% dplyr::select(AFFGEOID, geometry))
-united_states <- terra::rast(united_states)
-terra::res(united_states) <- c(0.008333333, 0.008333333)
+united_states <- us.states.rast
 
 ## 1-year 24-hr ----
 atlas.14 <- threshold.compile(
@@ -397,141 +385,146 @@ atlas.14 <- threshold.compile(
   tx.dir  = here::here("data", "input", "threshold", "tx1yr24ha", "tx1yr24ha.asc"),
   mw.dir  = here::here("data", "input", "threshold", "mw1yr24ha", "mw1yr24ha.asc")
 )
-# 
-# atlas_vector <- as.polygons(atlas.14, dissolve = FALSE)
-# 
-# atlas_sf <- st_as_sf(atlas_vector)
-# colnames(atlas_sf)[which(names(atlas_sf) == "layer")] <- "threshold"
-# 
-# ## Save output ----
-# st_write(atlas_sf, here::here("data", "input", "threshold", "atlas14_shapefile.shp"), delete_layer = TRUE)
 
-# subset to study area
-atlas.14.se <- terra::crop(atlas.14,c(-95,-75,24,40))
-
-atlas_vector_se <- as.polygons(atlas.14.se, dissolve = FALSE)
-
-expand_shapefile_nearest_parallel <- function(shp, 
-                                              lat_min, lat_max, lon_min, lon_max, 
-                                              resolution, 
-                                              cols_to_expand = c(), 
-                                              n_workers = 19,
-                                              simplify_tolerance = NULL) {
+expand_spatraster_nearest_parallel <- function(raster_obj,
+                                               lon_min, lon_max,
+                                               lat_min, lat_max,
+                                               resolution,
+                                               band_name = "koppen_geiger_0p1",
+                                               n_workers = 4,
+                                               simplify_tolerance = NULL) {
   
-  # Verify that the requested attribute columns exist in the shapefile
-  if (!all(cols_to_expand %in% names(shp))) {
-    stop("Some cols_to_expand are not present in the shapefile.")
-  }
+  #### Step 1. Crop the Raster and Force Continuous Numeric Values ####
   
-  # Optionally simplify the geometry if a tolerance is provided
+  # Define the desired extent (xmin, xmax, ymin, ymax)
+  desired_ext <- ext(lon_min, lon_max, lat_min, max = lat_max)
+  
+  # Crop the original raster
+  atlas_cropped <- crop(raster_obj, desired_ext)
+  
+  # Remove any levels (to avoid categorical interpretation) and force numeric conversion:
+  levels(atlas_cropped) <- NULL
+  atlas_cropped <- atlas_cropped * 1.0
+  
+  # Check: cell values should be continuous
+  print("Cropped raster values (continuous):")
+  print(head(values(atlas_cropped, mat = FALSE)))
+  
+  #### Step 2. Rebuild the Raster (to ensure no RAT persists) ####
+  
+  atlas_cropped_num <- rast(atlas_cropped)
+  levels(atlas_cropped_num) <- NULL
+  values(atlas_cropped_num) <- as.numeric(values(atlas_cropped))
+  
+  print("Rebuilt raster values (continuous):")
+  print(head(values(atlas_cropped_num, mat = FALSE)))
+  
+  #### Step 3. Convert the Clean Raster to Polygons ####
+  
+  # Use dissolve = FALSE and values = TRUE so each cell becomes a polygon with its raw value
+  atlas_poly <- as.polygons(atlas_cropped_num, dissolve = FALSE, values = TRUE)
+  names(atlas_poly) <- band_name
+  
+  # Convert the SpatVector to an sf object
+  atlas_poly_sf <- st_as_sf(atlas_poly)
+  
+  # Ensure the attribute is numeric (using as.character to break any factor conversion)
+  atlas_poly_sf[[band_name]] <- as.numeric(as.character(atlas_poly_sf[[band_name]]))
+  
+  # Optionally simplify the geometry to speed up further spatial operations
   if (!is.null(simplify_tolerance)) {
-    shp <- st_simplify(shp, dTolerance = simplify_tolerance, preserveTopology = TRUE)
+    atlas_poly_sf <- st_simplify(atlas_poly_sf, dTolerance = simplify_tolerance, preserveTopology = TRUE)
   }
   
-  # Increase the future globals max size and set up a parallel plan
-  options(future.globals.maxSize = +Inf)
-  plan(multisession, workers = n_workers)
+  print("Polygon attribute values (should be continuous):")
+  print(head(atlas_poly_sf[[band_name]]))
   
-  # Create the grid (as polygons) from the provided bounding box and resolution
-  bbox_grid <- st_bbox(c(xmin = lon_min, ymin = lat_min, xmax = lon_max, ymax = lat_max), 
-                       crs = st_crs(shp))
-  expanded_grid <- st_make_grid(
-    st_as_sfc(bbox_grid),
-    cellsize = resolution,
-    what = "polygons"
-  ) %>% st_as_sf()
+  #### Step 4. Create a Regular Grid over the Target Extent ####
   
-  # Calculate centroids for all the grid cells
-  grid_centroids <- st_centroid(expanded_grid)
+  # Build a grid (sf polygons) that covers the entire desired extent
+  bbox_grid <- st_bbox(c(xmin = lon_min, ymin = lat_min, xmax = lon_max, ymax = lat_max),
+                       crs = st_crs(atlas_poly_sf))
+  grid_sf <- st_make_grid(st_as_sfc(bbox_grid), cellsize = resolution, what = "polygons") %>% st_as_sf()
   
-  # Determine which grid centroids fall within the original shapefile.
-  # (Using apply ensures it works whether shp has one feature or many.)
-  intersections_matrix <- st_intersects(grid_centroids, shp, sparse = FALSE)
-  within_original <- apply(intersections_matrix, 1, any)
+  #### Step 5. Determine Grid Cells that Are "Inside" the Original Polygon and Those That Are Outside ####
   
-  grid_within <- expanded_grid[within_original, ]
-  grid_outside <- expanded_grid[!within_original, ]
+  # Identify grid cell centroids for efficient spatial matching
+  grid_centroids <- st_centroid(grid_sf)
+  inside_idx <- st_intersects(grid_centroids, atlas_poly_sf, sparse = FALSE)[, 1]
   
-  # For grid cells that fall within the shapefile, assign attributes using spatial join
-  grid_within <- st_join(grid_within, shp[, cols_to_expand], join = st_intersects, left = TRUE)
+  grid_inside <- grid_sf[inside_idx, ]
+  grid_outside <- grid_sf[!inside_idx, ]
   
-  # Process grid cells that are outside the original shapefile
+  # For grid cells that intersect the original polygons, join directly the attribute values.
+  grid_inside <- st_join(grid_inside, atlas_poly_sf[, band_name], join = st_intersects, left = TRUE)
+  
+  #### Step 6. For Grid Cells Outside, Assign Values via Nearest Neighbor Search ####
+  
   if (nrow(grid_outside) > 0) {
-    if (nrow(shp) == 1) {
-      # Single-feature shapefile: assign the sole feature's attributes directly
-      for (col in cols_to_expand) {
-        grid_outside[[col]] <- shp[[col]][1]
-      }
-      grid_outside_final <- grid_outside
-    } else {
-      # Multiple features: split grid and use parallel nearest neighbor search
-      grid_chunks <- split(grid_outside, cut(seq_len(nrow(grid_outside)), n_workers * 4, labels = FALSE))
+    # Split the grid for parallel processing (arbitrarily split into n_workers * 4 chunks)
+    n_chunks <- n_workers * 4
+    grid_chunks <- split(grid_outside, cut(seq_len(nrow(grid_outside)), n_chunks, labels = FALSE))
+    
+    # Set up the parallel plan and memory options
+    options(future.globals.maxSize = +Inf)
+    plan(multisession, workers = n_workers)
+    
+    # Precompute centroids and coordinates from the polygonized raster
+    poly_centroids <- st_centroid(atlas_poly_sf)
+    poly_coords <- st_coordinates(poly_centroids)
+    poly_values <- as.data.frame(atlas_poly_sf)[, band_name, drop = FALSE]
+    
+    # Process each chunk in parallel using nearest neighbor search
+    nn_vals_list <- future_lapply(grid_chunks, function(chunk) {
+      chunk_centroids <- st_centroid(chunk)
+      chunk_coords <- st_coordinates(chunk_centroids)
       
-      handlers(global = TRUE)
-      p <- progressor(steps = length(grid_chunks))
+      # Find nearest polygon centroid for each chunk cell
+      nn_index <- RANN::nn2(data = poly_coords, query = chunk_coords, k = 1)$nn.idx[, 1]
+      nearest_attrs <- poly_values[nn_index, , drop = FALSE]
       
-      # Precompute centroids and attribute table from the shapefile to minimize overhead
-      shp_centroids <- st_centroid(shp)
-      shp_attrs <- st_drop_geometry(shp[, cols_to_expand])
-      shp_points <- cbind(st_coordinates(shp_centroids), shp_attrs)
-      
-      nearest_outside_parallel <- future_lapply(grid_chunks, function(chunk) {
-        chunk_centroids <- st_centroid(chunk)
-        chunk_coords <- st_coordinates(chunk_centroids)
-        
-        # Nearest neighbor search using the RANN package
-        nn_index <- RANN::nn2(data = shp_points[,1:2], query = chunk_coords, k = 1)$nn.idx[,1]
-        nearest_attrs <- shp_attrs[nn_index, ]
-        
-        p()  # Update progress
-        
-        bind_cols(chunk, nearest_attrs)
-      })
-      
-      grid_outside_final <- bind_rows(nearest_outside_parallel)
-    }
+      cbind(chunk, nearest_attrs)
+    })
+    
+    grid_outside_final <- do.call(rbind, nn_vals_list)
+    
+    # Reset parallel plan and options
+    plan(sequential)
+    options(future.globals.maxSize = 500 * 1024^2)
   } else {
     grid_outside_final <- grid_outside
   }
   
-  # Combine the grid cells from inside and outside the original shapefile
-  result <- bind_rows(grid_within, grid_outside_final)
+  #### Step 7. Combine the Grids and Finalize the Output ####
   
-  # Reset to sequential processing and restore default future globals max size (~500MB)
-  plan(sequential)
-  options(future.globals.maxSize = 500 * 1024^2)
+  expanded_sf <- bind_rows(grid_inside, grid_outside_final)
+  expanded_sf[[band_name]] <- as.numeric(as.character(expanded_sf[[band_name]]))
   
-  return(result)
+  return(expanded_sf)
 }
 
-# Define the new extent
-lat_min <- 24
-lat_max <- 40
-lon_min <- -95
-lon_max <- -75
-resolution <- 0.05
 
-# Expand the shapefile
-expanded_shp <- expand_shapefile_nearest_parallel(
-  shp = atlas_vector_se,
-  lat_min = lat_min,
-  lat_max = lat_max,
-  lon_min = lon_min,
-  lon_max = lon_max,
-  resolution = resolution,
-  cols_to_expand = cols_to_expand,
-  n_workers = 19
-  
+# Example usage:
+# Suppose atlas.14 is your SpatRaster. To subset and expand over c(-95, -75, 24, 40)
+# with a 0.1 resolution grid, you would call:
+expanded_sf <- expand_spatraster_nearest_parallel(
+  raster_obj = atlas.14,
+  lon_min = -95, lon_max = -75,
+  lat_min = 24, lat_max = 40,
+  resolution = 0.05,
+  band_name = "koppen_geiger_0p1",
+  n_workers = 19,
+  simplify_tolerance = NULL
 )
 
-# check out results
-expanded_shp
+ggplot(expanded_sf) +
+  geom_sf(aes(fill = koppen_geiger_0p1), color = NA) +
+  scale_fill_viridis_c(option = "viridis") +
+  labs(fill = "mm") +
+  theme_minimal()
 
-# plot(atlas_vector_se)
-atlas_sf_se <- st_as_sf(atlas_vector_se)
+head(unique(atlas.14$ne1yr24ha))
+head(unique(expanded_sf$koppen_geiger_0p1))
 
-
-colnames(atlas_sf)[which(names(atlas_sf) == "layer")] <- "threshold"
-
-## Save output ----
-st_write(atlas_sf, here::here("data", "input", "threshold", "atlas14_shapefile.shp"), delete_layer = TRUE)
+# st_write(expanded_sf, here::here("data", "input", "threshold", "atlas14_shapefile.shp"), delete_layer = TRUE)
+st_write(expanded_sf, here::here("data", "output","03_cluster", "00_threshold", "atlas14_southeast_expansion_dissolved.shp"), delete_layer = TRUE)

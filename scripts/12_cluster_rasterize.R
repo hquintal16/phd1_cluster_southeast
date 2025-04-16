@@ -186,95 +186,95 @@ process_clusters(
   output_dir = here::here("data", "output", "03_cluster", "02_cluster","warning", "points", "0.39", "heat_index","raw")
 )
 
-# # Precipitation ----
-# process_clusters_precip <- function(precip_data, reference_raster, output_dir) {
-#   # Ensure output directory exists
-#   if (!dir.exists(output_dir)) {
-#     dir.create(output_dir, recursive = TRUE)
-#   }
-#   
-#   # Extract unique clusters from precip_data
-#   unique_clusters <- unique(precip_data$cluster)
-#   
-#   # Set up progress handler with progressr
-#   progressr::handlers(global = TRUE)
-#   progressr::with_progress({
-#     p <- progressr::progressor(along = unique_clusters)
-#     
-#     # Process each cluster sequentially
-#     for (cluster_id in unique_clusters) {
-#       gc()  # Clean memory before each iteration
-#       
-#       tryCatch({
-#         # Filter data for the current cluster
-#         precip_cluster <- precip_data %>% dplyr::filter(cluster == cluster_id)
-#         if (nrow(precip_cluster) == 0) next
-#         
-#         # Convert the datetime column into a standardized string.
-#         # If no time is provided, append " 00:00:00" to each date string.
-#         precip_cluster$datetime <- as.character(precip_cluster$datetime)
-#         precip_cluster$datetime <- ifelse(grepl(" ", precip_cluster$datetime),
-#                                           precip_cluster$datetime,
-#                                           paste0(precip_cluster$datetime, " 00:00:00"))
-#         # Convert to POSIXct
-#         dt_all <- as.POSIXct(precip_cluster$datetime, format = "%Y-%m-%d %H:%M:%S", tz = "UTC")
-#         
-#         # Extract unique, sorted datetimes for this cluster
-#         unique_datetimes <- sort(unique(dt_all))
-#         if (length(unique_datetimes) == 0) next
-#         
-#         # Create an empty raster with the same dimensions, extent, and CRS as the reference,
-#         # with one layer per unique datetime.
-#         temp_cluster <- terra::rast(nrows = terra::nrow(reference_raster),
-#                                     ncols = terra::ncol(reference_raster),
-#                                     ext   = terra::ext(reference_raster),
-#                                     crs   = terra::crs(reference_raster),
-#                                     nlyr  = length(unique_datetimes))
-#         temp_cluster <- terra::setValues(temp_cluster, NA)
-#         terra::time(temp_cluster) <- as.Date(unique_datetimes)
-#         names(temp_cluster) <- format(unique_datetimes, "%Y-%m-%d %H:%M:%S")
-#         
-#         # For each datetime, assign the observation values to grid cells where events occurred.
-#         for (i in seq_along(unique_datetimes)) {
-#           this_dt <- unique_datetimes[i]
-#           # Filter the cluster data for the current datetime
-#           date_subset <- precip_cluster[as.POSIXct(precip_cluster$datetime, format = "%Y-%m-%d %H:%M:%S", tz = "UTC") == this_dt, ]
-#           if (nrow(date_subset) > 0) {
-#             # Compute cell indices using the coordinates (assuming 'long' and 'lat' match reference_raster CRS)
-#             cell_indices <- terra::cellFromXY(temp_cluster[[i]], cbind(date_subset$long, date_subset$lat))
-#             vals <- terra::values(temp_cluster[[i]])
-#             # Replace NAs with the observation values at the computed cell indices.
-#             # (If multiple points fall in the same cell, the last one will override.)
-#             vals[cell_indices] <- date_subset$observation
-#             temp_cluster[[i]] <- terra::setValues(temp_cluster[[i]], vals)
-#           }
-#         }
-#         
-#         # Save the resulting raster as a NetCDF file
-#         output_path <- file.path(output_dir, paste0(as.Date(unique_datetimes[1]), "_cluster_", cluster_id, ".nc"))
-#         terra::writeCDF(temp_cluster, output_path, overwrite = TRUE)
-#         
-#         gc()  # Clean memory after processing each cluster
-#       }, error = function(e) {
-#         message(sprintf("Error processing cluster %s: %s", cluster_id, e$message))
-#       })
-#       
-#       p()  # Update progress bar after processing each cluster
-#     }
-#   })
-# }
-# 
-# ## 0.25 deg / hour ----
-# options(pillar.sigfig = 15)
-# heat <- as_tibble(read.csv(here::here("data", "output", "03_cluster", "02_cluster", "precipitation_stm1_clustered_extremes.csv")))
-# heat <- heat %>% dplyr::filter(cluster > 0)
-# 
-# cube <- create.st.cube(target.raster = var, space.time.metric = 1)
-# cube <- cube[[1]]
-# values(cube) <- NA
-# 
-# process_clusters_precip(
-#   precip_data = heat, 
-#   reference_raster = cube, 
-#   output_dir = here::here("data", "output", "03_cluster", "02_cluster", "points", "stm1", "precipitation")
-# )
+# Precipitation ----
+process_clusters_precip <- function(precip_data, reference_raster, output_dir) {
+  # Ensure output directory exists
+  if (!dir.exists(output_dir)) {
+    dir.create(output_dir, recursive = TRUE)
+  }
+
+  # Extract unique clusters from precip_data
+  unique_clusters <- unique(precip_data$cluster)
+
+  # Set up progress handler with progressr
+  progressr::handlers(global = TRUE)
+  progressr::with_progress({
+    p <- progressr::progressor(along = unique_clusters)
+
+    # Process each cluster sequentially
+    for (cluster_id in unique_clusters) {
+      gc()  # Clean memory before each iteration
+
+      tryCatch({
+        # Filter data for the current cluster
+        precip_cluster <- precip_data %>% dplyr::filter(cluster == cluster_id)
+        if (nrow(precip_cluster) == 0) next
+
+        # Convert the datetime column into a standardized string.
+        # If no time is provided, append " 00:00:00" to each date string.
+        precip_cluster$datetime <- as.character(precip_cluster$datetime)
+        precip_cluster$datetime <- ifelse(grepl(" ", precip_cluster$datetime),
+                                          precip_cluster$datetime,
+                                          paste0(precip_cluster$datetime, " 00:00:00"))
+        # Convert to POSIXct
+        dt_all <- as.POSIXct(precip_cluster$datetime, format = "%Y-%m-%d %H:%M:%S", tz = "UTC")
+
+        # Extract unique, sorted datetimes for this cluster
+        unique_datetimes <- sort(unique(dt_all))
+        if (length(unique_datetimes) == 0) next
+
+        # Create an empty raster with the same dimensions, extent, and CRS as the reference,
+        # with one layer per unique datetime.
+        temp_cluster <- terra::rast(nrows = terra::nrow(reference_raster),
+                                    ncols = terra::ncol(reference_raster),
+                                    ext   = terra::ext(reference_raster),
+                                    crs   = terra::crs(reference_raster),
+                                    nlyr  = length(unique_datetimes))
+        temp_cluster <- terra::setValues(temp_cluster, NA)
+        terra::time(temp_cluster) <- as.Date(unique_datetimes)
+        names(temp_cluster) <- format(unique_datetimes, "%Y-%m-%d %H:%M:%S")
+
+        # For each datetime, assign the observation values to grid cells where events occurred.
+        for (i in seq_along(unique_datetimes)) {
+          this_dt <- unique_datetimes[i]
+          # Filter the cluster data for the current datetime
+          date_subset <- precip_cluster[as.POSIXct(precip_cluster$datetime, format = "%Y-%m-%d %H:%M:%S", tz = "UTC") == this_dt, ]
+          if (nrow(date_subset) > 0) {
+            # Compute cell indices using the coordinates (assuming 'long' and 'lat' match reference_raster CRS)
+            cell_indices <- terra::cellFromXY(temp_cluster[[i]], cbind(date_subset$long, date_subset$lat))
+            vals <- terra::values(temp_cluster[[i]])
+            # Replace NAs with the observation values at the computed cell indices.
+            # (If multiple points fall in the same cell, the last one will override.)
+            vals[cell_indices] <- date_subset$observation
+            temp_cluster[[i]] <- terra::setValues(temp_cluster[[i]], vals)
+          }
+        }
+
+        # Save the resulting raster as a NetCDF file
+        output_path <- file.path(output_dir, paste0(as.Date(unique_datetimes[1]), "_cluster_", cluster_id, ".nc"))
+        terra::writeCDF(temp_cluster, output_path, overwrite = TRUE)
+
+        gc()  # Clean memory after processing each cluster
+      }, error = function(e) {
+        message(sprintf("Error processing cluster %s: %s", cluster_id, e$message))
+      })
+
+      p()  # Update progress bar after processing each cluster
+    }
+  })
+}
+
+## 0.25 deg / hour ----
+options(pillar.sigfig = 15)
+heat <- as_tibble(read.csv(here::here("data", "output", "03_cluster", "02_cluster","24hr1yr", "0.25_24hr1yr_clustered_extremes.csv")))
+heat <- heat %>% dplyr::filter(cluster > 0)
+
+cube <- create.st.cube(target.raster = var, space.time.metric = 1)
+cube <- cube[[1]]
+values(cube) <- NA
+
+process_clusters_precip(
+  precip_data = heat,
+  reference_raster = cube,
+  output_dir = here::here("data", "output", "03_cluster", "02_cluster","24hr1yr", "points","raw")
+)

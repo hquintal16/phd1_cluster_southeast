@@ -250,7 +250,7 @@ make_9panel_figure_binned <- function(noaa_dir, cluster_dirs, recall_dirs, year_
   
   # Column titles (not rotated).
   col1_title <- get_text_plot("0.25°/day", size = 6, angle = 0)
-  col2_title <- get_text_plot("0.3075°/day", size = 6, angle = 0)
+  col2_title <- get_text_plot("0.31°/day", size = 6, angle = 0)
   col3_title <- get_text_plot("0.39°/day", size = 6, angle = 0)
   top_row <- wrap_plots(list(plot_spacer(), col1_title, col2_title, col3_title), ncol = 4, widths = c(0.2, 1, 1, 1))
   
