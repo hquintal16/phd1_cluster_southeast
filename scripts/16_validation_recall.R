@@ -162,7 +162,10 @@ process_validation_day <- function(year, cluster_dir, noaa_dir, output_dir, haza
   gc()
 }
 
-## Heat Index Advisory ----
+# Heat Index ----
+# Excess Heat ----
+
+## Heat Advisory ----
 
 ### 0.25 deg ----
 years_to_process <- 2000:2023
@@ -209,7 +212,7 @@ lapply(years_to_process,
        output_directory, 
        hazard)
 
-## Heat Index Warning ----
+## Heat Warning ----
 
 ### 0.25 deg ----
 years_to_process <- 2000:2023
@@ -256,130 +259,110 @@ lapply(years_to_process,
        output_directory, 
        hazard)
 
-# ### Flash Flood ----
-# 
-# years_to_process <- 1996:2023
-# cluster_directory <- here('data','output','03_cluster','02_cluster','points','stm1','precipitation','clean')
-# noaa_directory <- here('data','output','04_noaa','southeast','summary','flash_flood')
-# hazard <- "Flash_Flood"
-# output_directory <- here('data','output','05_validation','recall', 'day','stm1','flash_flood')
-# koppen_raster_path <- here("data", "input", "regional_aggregation", "koppen_geiger", "1991_2020", "koppen_geiger_0p1.tif")
-# 
-# lapply(years_to_process, 
-#        process_validation_day, 
-#        cluster_directory, 
-#        noaa_directory, 
-#        output_directory, 
-#        hazard)
-# 
-# ### Flood ----
-# 
-# years_to_process <- 1996:2023
-# cluster_directory <- here('data','output','03_cluster','02_cluster','points','stm1','precipitation','clean')
-# noaa_directory <- here('data','output','04_noaa','southeast','summary','flood')
-# hazard <- "Flood"
-# output_directory <- here('data','output','05_validation','recall', 'day','stm1','flood')
-# koppen_raster_path <- here("data", "input", "regional_aggregation", "koppen_geiger", "1991_2020", "koppen_geiger_0p1.tif")
-# 
-# lapply(years_to_process, 
-#        process_validation_day, 
-#        cluster_directory, 
-#        noaa_directory, 
-#        output_directory, 
-#        hazard)
-# 
-# ### Heat ----
-# 
-# years_to_process <- 1996:2023
-# cluster_directory <- here('data','output','03_cluster','02_cluster','points','0.25','heat_index','clean')
-# noaa_directory <- here('data','output','04_noaa','southeast','summary','heat')
-# hazard <- "Heat"
-# output_directory <- here('data','output','05_validation','recall', 'day','0.25','heat')
-# koppen_raster_path <- here("data", "input", "regional_aggregation", "koppen_geiger", "1991_2020", "koppen_geiger_0p1.tif")
-# 
-# lapply(years_to_process, 
-#        process_validation_day, 
-#        cluster_directory, 
-#        noaa_directory, 
-#        output_directory, 
-#        hazard)
-# 
-# ### Heavy Rain ----
-# 
-# years_to_process <- 1996:2023
-# cluster_directory <- here('data','output','03_cluster','02_cluster','points','stm1','precipitation','clean')
-# noaa_directory <- here('data','output','04_noaa','southeast','summary','heavy_rain')
-# hazard <- "Heavy_Rain"
-# output_directory <- here('data','output','05_validation','recall', 'day','stm1','heavy_rain')
-# koppen_raster_path <- here("data", "input", "regional_aggregation", "koppen_geiger", "1991_2020", "koppen_geiger_0p1.tif")
-# 
-# lapply(years_to_process, 
-#        process_validation_day, 
-#        cluster_directory, 
-#        noaa_directory, 
-#        output_directory, 
-#        hazard)
-# 
-# ### Hurricane ----
-# 
-# years_to_process <- 1996:2023
-# cluster_directory <- here('data','output','03_cluster','02_cluster','points','stm1','precipitation','clean')
-# noaa_directory <- here('data','output','04_noaa','southeast','summary','hurricane')
-# hazard <- "Hurricane"
-# output_directory <- here('data','output','05_validation','recall', 'day','stm1','hurricane')
-# koppen_raster_path <- here("data", "input", "regional_aggregation", "koppen_geiger", "1991_2020", "koppen_geiger_0p1.tif")
-# 
-# lapply(years_to_process, 
-#        process_validation_day, 
-#        cluster_directory, 
-#        noaa_directory, 
-#        output_directory, 
-#        hazard)
-# 
-# ### Tropical Depression ----
-# 
-# years_to_process <- 1996:2023
-# cluster_directory <- here('data','output','03_cluster','02_cluster','points','stm1','precipitation','clean')
-# noaa_directory <- here('data','output','04_noaa','southeast','summary','tropical_depression')
-# hazard <- "Tropical_Depression"
-# output_directory <- here('data','output','05_validation','recall', 'day','stm1','tropical_depression')
-# koppen_raster_path <- here("data", "input", "regional_aggregation", "koppen_geiger", "1991_2020", "koppen_geiger_0p1.tif")
-# 
-# lapply(years_to_process, 
-#        process_validation_day, 
-#        cluster_directory, 
-#        noaa_directory, 
-#        output_directory, 
-#        hazard)
-# 
-# ### Tropical Storm ----
-# 
-# years_to_process <- 1996:2023
-# cluster_directory <- here('data','output','03_cluster','02_cluster','points','stm1','precipitation','clean')
-# noaa_directory <- here('data','output','04_noaa','southeast','summary','tropical_storm')
-# hazard <- "Tropical_Storm"
-# output_directory <- here('data','output','05_validation','recall', 'day','stm1','tropical_storm')
-# koppen_raster_path <- here("data", "input", "regional_aggregation", "koppen_geiger", "1991_2020", "koppen_geiger_0p1.tif")
-# 
-# lapply(years_to_process, 
-#        process_validation_day, 
-#        cluster_directory, 
-#        noaa_directory, 
-#        output_directory, 
-#        hazard)
-# 
-# ### Typhoon ----
-# 
-# years_to_process <- 1996:2023
-# cluster_directory <- here('data','output','03_cluster','02_cluster','points','stm1','precipitation','clean')
-# noaa_directory <- here('data','output','04_noaa','southeast','summary','typhoon')
-# hazard <- "Typhoon"
-# output_directory <- here('data','output','05_validation','recall', 'day','stm1','typhoon')
-# koppen_raster_path <- here("data", "input", "regional_aggregation", "koppen_geiger", "1991_2020", "koppen_geiger_0p1.tif")
-# 
-# lapply(years_to_process, 
-#        process_validation_day, 
-#        cluster_directory, 
-#        noaa_directory, 
-#        output_directory, 
-#        hazard)
+## Precipitation ----
+# 0.25 deg 
+
+### Flash Flood ----
+years_to_process <- 1996:2023
+cluster_directory <- here('data','output','03_cluster','02_cluster','24hr1yr','points','clean')
+noaa_directory <- here('data','output','04_noaa','southeast','summary','flash_flood')
+hazard <- "Flash_Flood"
+output_directory <- here('data','output','05_validation','recall','24hr1yr','flash_flood')
+koppen_raster_path <- here("data", "input", "regional_aggregation", "koppen_geiger", "1991_2020", "koppen_geiger_0p1.tif")
+
+lapply(years_to_process, 
+       process_validation_day, 
+       cluster_directory, 
+       noaa_directory, 
+       output_directory, 
+       hazard)
+
+### Flood ----
+years_to_process <- 1996:2023
+cluster_directory <- here('data','output','03_cluster','02_cluster','24hr1yr','points','clean')
+noaa_directory <- here('data','output','04_noaa','southeast','summary','flood')
+hazard <- "Flood"
+output_directory <- here('data','output','05_validation','recall','24hr1yr','flood')
+koppen_raster_path <- here("data", "input", "regional_aggregation", "koppen_geiger", "1991_2020", "koppen_geiger_0p1.tif")
+
+lapply(years_to_process, 
+       process_validation_day, 
+       cluster_directory, 
+       noaa_directory, 
+       output_directory, 
+       hazard)
+
+### Heavy Rain ----
+years_to_process <- 1996:2023
+cluster_directory <- here('data','output','03_cluster','02_cluster','24hr1yr','points','clean')
+noaa_directory <- here('data','output','04_noaa','southeast','summary','heavy_rain')
+hazard <- "Heavy_Rain"
+output_directory <- here('data','output','05_validation','recall','24hr1yr','heavy_rain')
+koppen_raster_path <- here("data", "input", "regional_aggregation", "koppen_geiger", "1991_2020", "koppen_geiger_0p1.tif")
+
+lapply(years_to_process, 
+       process_validation_day, 
+       cluster_directory, 
+       noaa_directory, 
+       output_directory, 
+       hazard)
+
+### Hurricane ----
+years_to_process <- 1996:2023
+cluster_directory <- here('data','output','03_cluster','02_cluster','24hr1yr','points','clean')
+noaa_directory <- here('data','output','04_noaa','southeast','summary','hurricane')
+hazard <- "Hurricane"
+output_directory <- here('data','output','05_validation','recall','24hr1yr','hurricane')
+koppen_raster_path <- here("data", "input", "regional_aggregation", "koppen_geiger", "1991_2020", "koppen_geiger_0p1.tif")
+
+lapply(years_to_process, 
+       process_validation_day, 
+       cluster_directory, 
+       noaa_directory, 
+       output_directory, 
+       hazard)
+
+### Tropical Depression ----
+years_to_process <- 1996:2023
+cluster_directory <- here('data','output','03_cluster','02_cluster','24hr1yr','points','clean')
+noaa_directory <- here('data','output','04_noaa','southeast','summary','tropical_depression')
+hazard <- "Tropical_Depression"
+output_directory <- here('data','output','05_validation','recall','24hr1yr','tropical_depression')
+koppen_raster_path <- here("data", "input", "regional_aggregation", "koppen_geiger", "1991_2020", "koppen_geiger_0p1.tif")
+
+lapply(years_to_process, 
+       process_validation_day, 
+       cluster_directory, 
+       noaa_directory, 
+       output_directory, 
+       hazard)
+
+### Tropical Storm ----
+years_to_process <- 1996:2023
+cluster_directory <- here('data','output','03_cluster','02_cluster','24hr1yr','points','clean')
+noaa_directory <- here('data','output','04_noaa','southeast','summary','tropical_storm')
+hazard <- "Tropical_Storm"
+output_directory <- here('data','output','05_validation','recall','24hr1yr','tropical_storm')
+koppen_raster_path <- here("data", "input", "regional_aggregation", "koppen_geiger", "1991_2020", "koppen_geiger_0p1.tif")
+
+lapply(years_to_process, 
+       process_validation_day, 
+       cluster_directory, 
+       noaa_directory, 
+       output_directory, 
+       hazard)
+
+### Typhoon ----
+years_to_process <- 1996:2023
+cluster_directory <- here('data','output','03_cluster','02_cluster','24hr1yr','points','clean')
+noaa_directory <- here('data','output','04_noaa','southeast','summary','typhoon')
+hazard <- "Typhoon"
+output_directory <- here('data','output','05_validation','recall','24hr1yr','typhoon')
+koppen_raster_path <- here("data", "input", "regional_aggregation", "koppen_geiger", "1991_2020", "koppen_geiger_0p1.tif")
+
+lapply(years_to_process, 
+       process_validation_day, 
+       cluster_directory, 
+       noaa_directory, 
+       output_directory, 
+       hazard)

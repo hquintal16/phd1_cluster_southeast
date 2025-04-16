@@ -92,6 +92,14 @@ create_lookup_table(
   output_csv_path = here('data','output','03_cluster','02_cluster','warning','points','0.39','heat_index','lookup_table.csv')
 )
 
+## Precipitation ----
+
+### 0.25 deg / hour ----
+create_lookup_table(
+  input_directory = here('data','output','03_cluster','02_cluster','24hr1yr','points','raw'),
+  output_csv_path = here('data','output','03_cluster','02_cluster','24hr1yr','points','lookup_table.csv')
+)
+
 # 2. Cluster IDF ----
 
 # Load a reference raster to set the CRS
@@ -488,6 +496,17 @@ summary_df <- create_cluster_summary(
   cluster_folder = here('data','output','03_cluster','02_cluster','warning','points','0.39','heat_index','county'),
   us_states_rast = us.states.rast,
   output_csv_path = here('data','output','03_cluster','02_cluster','warning','points','0.39','heat_index','cluster_idf.csv')
+)
+
+## Precipitation ----
+
+### 0.25 deg / hour ----
+summary_df <- create_cluster_summary_hourly(
+  lookup_file_path = here('data','output','03_cluster','02_cluster','24hr1yr','points','lookup_table.csv'),
+  cluster_file_path = here('data','output','03_cluster','02_cluster','24hr1yr','0.25_24hr1yr_clustered_extremes.csv'),
+  cluster_folder = here('data','output','03_cluster','02_cluster','24hr1yr','points','county'),
+  us_states_rast = us.states.rast,
+  output_csv_path = here('data','output','03_cluster','02_cluster','24hr1yr','cluster_idf.csv')
 )
 
 # 3. Cluster Impacts ----
