@@ -732,6 +732,113 @@ row.names(recall) <- c('2000-2023','2010-2023','2019-2023')
 # save
 write.csv(recall,here('data','output','05_validation','recall','warning','warning_recall.csv'))
 
+# Precipitation ----
+recall <- data.frame(flash_flood = rep(NA,3),
+                     flood = rep(NA,3),
+                     heavy_rain = rep(NA,3),
+                     hurricane = rep(NA,3),
+                     tropical_depression = rep(NA,3),
+                     tropical_storm = rep(NA,3),
+                     typhoon = rep(NA,3))
+
+## Flash Flood ----
+input_folder <- here("data", "output", "05_validation", "recall","24hr1yr", "flash_flood")
+year_range <- 2000:2023
+recall$flash_flood[1] <- aggregate_validation_csv_overall(input_folder, year_range)[,3]
+
+input_folder <- here("data", "output", "05_validation", "recall","24hr1yr", "flash_flood")
+year_range <- 2010:2023
+recall$flash_flood[2] <- aggregate_validation_csv_overall(input_folder, year_range)[,3]
+
+input_folder <- here("data", "output", "05_validation", "recall","24hr1yr", "flash_flood")
+year_range <- 2019:2023
+recall$flash_flood[3] <- aggregate_validation_csv_overall(input_folder, year_range)[,3]
+
+## Flood ----
+input_folder <- here("data", "output", "05_validation", "recall","24hr1yr", "flood")
+year_range <- 2000:2023
+recall$flood[1] <- aggregate_validation_csv_overall(input_folder, year_range)[,3]
+
+input_folder <- here("data", "output", "05_validation", "recall","24hr1yr", "flood")
+year_range <- 2010:2023
+recall$flood[2] <- aggregate_validation_csv_overall(input_folder, year_range)[,3]
+
+input_folder <- here("data", "output", "05_validation", "recall","24hr1yr", "flood")
+year_range <- 2019:2023
+recall$flood[3] <- aggregate_validation_csv_overall(input_folder, year_range)[,3]
+
+## heavy_rain ----
+input_folder <- here("data", "output", "05_validation", "recall","24hr1yr", "heavy_rain")
+year_range <- 2000:2023
+recall$heavy_rain[1] <- aggregate_validation_csv_overall(input_folder, year_range)[,3]
+
+input_folder <- here("data", "output", "05_validation", "recall","24hr1yr", "heavy_rain")
+year_range <- 2010:2023
+recall$heavy_rain[2] <- aggregate_validation_csv_overall(input_folder, year_range)[,3]
+
+input_folder <- here("data", "output", "05_validation", "recall","24hr1yr", "heavy_rain")
+year_range <- 2019:2023
+recall$heavy_rain[3] <- aggregate_validation_csv_overall(input_folder, year_range)[,3]
+
+## hurricane ----
+input_folder <- here("data", "output", "05_validation", "recall","24hr1yr", "hurricane")
+year_range <- 2000:2023
+recall$hurricane[1] <- aggregate_validation_csv_overall(input_folder, year_range)[,3]
+
+input_folder <- here("data", "output", "05_validation", "recall","24hr1yr", "hurricane")
+year_range <- 2010:2023
+recall$hurricane[2] <- aggregate_validation_csv_overall(input_folder, year_range)[,3]
+
+input_folder <- here("data", "output", "05_validation", "recall","24hr1yr", "hurricane")
+year_range <- 2019:2023
+recall$hurricane[3] <- aggregate_validation_csv_overall(input_folder, year_range)[,3]
+
+row.names(recall) <- c('2000-2023','2010-2023','2019-2023')
+
+## tropical_depression ----
+input_folder <- here("data", "output", "05_validation", "recall","24hr1yr", "tropical_depression")
+year_range <- 2000:2023
+recall$tropical_depression[1] <- aggregate_validation_csv_overall(input_folder, year_range)[,3]
+
+input_folder <- here("data", "output", "05_validation", "recall","24hr1yr", "tropical_depression")
+year_range <- 2010:2023
+recall$tropical_depression[2] <- aggregate_validation_csv_overall(input_folder, year_range)[,3]
+
+input_folder <- here("data", "output", "05_validation", "recall","24hr1yr", "tropical_depression")
+year_range <- 2019:2023
+recall$tropical_depression[3] <- aggregate_validation_csv_overall(input_folder, year_range)[,3]
+
+## tropical_storm ----
+input_folder <- here("data", "output", "05_validation", "recall","24hr1yr", "tropical_storm")
+year_range <- 2000:2023
+recall$tropical_storm[1] <- aggregate_validation_csv_overall(input_folder, year_range)[,3]
+
+input_folder <- here("data", "output", "05_validation", "recall","24hr1yr", "tropical_storm")
+year_range <- 2010:2023
+recall$tropical_storm[2] <- aggregate_validation_csv_overall(input_folder, year_range)[,3]
+
+input_folder <- here("data", "output", "05_validation", "recall","24hr1yr", "tropical_storm")
+year_range <- 2019:2023
+recall$tropical_storm[3] <- aggregate_validation_csv_overall(input_folder, year_range)[,3]
+
+## typhoon ----
+input_folder <- here("data", "output", "05_validation", "recall","24hr1yr", "typhoon")
+year_range <- 2000:2023
+recall$typhoon[1] <- aggregate_validation_csv_overall(input_folder, year_range)[,3]
+
+input_folder <- here("data", "output", "05_validation", "recall","24hr1yr", "typhoon")
+year_range <- 2010:2023
+recall$typhoon[2] <- aggregate_validation_csv_overall(input_folder, year_range)[,3]
+
+input_folder <- here("data", "output", "05_validation", "recall","24hr1yr", "typhoon")
+year_range <- 2019:2023
+recall$typhoon[3] <- aggregate_validation_csv_overall(input_folder, year_range)[,3]
+
+row.names(recall) <- c('2000-2023','2010-2023','2019-2023')
+
+# save
+write.csv(recall,here('data','output','05_validation','recall','24hr1yr','24hr1yr_recall.csv'))
+
 # 3. Key Figure ----
 
 plot_single_recall_panel <- function(recall_raster, 
