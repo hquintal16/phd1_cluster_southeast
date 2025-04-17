@@ -402,7 +402,7 @@ filestem     <- "heat_index_"
 outdir_space <- "V:/…/heat_index/month/"
 if (!dir.exists(outdir_space)) dir.create(outdir_space, recursive = TRUE)
 
-startYear    <- 1941; startMonth <- 1
+startYear    <- 1940; startMonth <- 1
 endYear      <- 2023; endMonth   <- 12
 
 N_spatial       <- 15; lambda_spatial   <- 4

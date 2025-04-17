@@ -259,7 +259,104 @@ lapply(years_to_process,
        output_directory, 
        hazard)
 
-## Precipitation ----
+# Heat ----
+
+## Heat Advisory ----
+
+### 0.25 deg ----
+years_to_process <- 1996:2023
+cluster_directory <- here('data','output','03_cluster','02_cluster','advisory','points','0.25','heat_index','clean')
+noaa_directory <- here('data','output','04_noaa','southeast','summary','heat')
+hazard <- "heat"
+output_directory <- here('data','output','05_validation','recall','advisory', 'day','0.25','heat')
+koppen_raster_path <- here("data", "input", "regional_aggregation", "koppen_geiger", "1991_2020", "koppen_geiger_0p1.tif")
+
+lapply(years_to_process, 
+       process_validation_day, 
+       cluster_directory, 
+       noaa_directory, 
+       output_directory, 
+       hazard)
+
+### 0.3075 deg ----
+years_to_process <- 1996:2023
+cluster_directory <- here('data','output','03_cluster','02_cluster','advisory','points','0.3075','heat_index','clean')
+noaa_directory <- here('data','output','04_noaa','southeast','summary','heat')
+hazard <- "heat"
+output_directory <- here('data','output','05_validation','recall','advisory', 'day','0.3075','heat')
+koppen_raster_path <- here("data", "input", "regional_aggregation", "koppen_geiger", "1991_2020", "koppen_geiger_0p1.tif")
+
+lapply(years_to_process, 
+       process_validation_day, 
+       cluster_directory, 
+       noaa_directory, 
+       output_directory, 
+       hazard)
+
+### 0.39 deg ----
+years_to_process <- 1996:2023
+cluster_directory <- here('data','output','03_cluster','02_cluster','advisory','points','0.39','heat_index','clean')
+noaa_directory <- here('data','output','04_noaa','southeast','summary','heat')
+hazard <- "heat"
+output_directory <- here('data','output','05_validation','recall','advisory', 'day','0.39','heat')
+koppen_raster_path <- here("data", "input", "regional_aggregation", "koppen_geiger", "1991_2020", "koppen_geiger_0p1.tif")
+
+lapply(years_to_process, 
+       process_validation_day, 
+       cluster_directory, 
+       noaa_directory, 
+       output_directory, 
+       hazard)
+
+## Heat Warning ----
+
+### 0.25 deg ----
+years_to_process <- 1996:2023
+cluster_directory <- here('data','output','03_cluster','02_cluster','warning','points','0.25','heat_index','clean')
+noaa_directory <- here('data','output','04_noaa','southeast','summary','heat')
+hazard <- "heat"
+output_directory <- here('data','output','05_validation','recall','warning', 'day','0.25','heat')
+koppen_raster_path <- here("data", "input", "regional_aggregation", "koppen_geiger", "1991_2020", "koppen_geiger_0p1.tif")
+
+lapply(years_to_process, 
+       process_validation_day, 
+       cluster_directory, 
+       noaa_directory, 
+       output_directory, 
+       hazard)
+
+### 0.3075 deg ----
+years_to_process <- 1996:2023
+cluster_directory <- here('data','output','03_cluster','02_cluster','warning','points','0.3075','heat_index','clean')
+noaa_directory <- here('data','output','04_noaa','southeast','summary','heat')
+hazard <- "heat"
+output_directory <- here('data','output','05_validation','recall','warning', 'day','0.3075','heat')
+koppen_raster_path <- here("data", "input", "regional_aggregation", "koppen_geiger", "1991_2020", "koppen_geiger_0p1.tif")
+
+lapply(years_to_process, 
+       process_validation_day, 
+       cluster_directory, 
+       noaa_directory, 
+       output_directory, 
+       hazard)
+
+### 0.39 deg ----
+years_to_process <- 1996:2023
+cluster_directory <- here('data','output','03_cluster','02_cluster','warning','points','0.39','heat_index','clean')
+noaa_directory <- here('data','output','04_noaa','southeast','summary','heat')
+hazard <- "heat"
+output_directory <- here('data','output','05_validation','recall','warning', 'day','0.39','heat')
+koppen_raster_path <- here("data", "input", "regional_aggregation", "koppen_geiger", "1991_2020", "koppen_geiger_0p1.tif")
+
+lapply(years_to_process, 
+       process_validation_day, 
+       cluster_directory, 
+       noaa_directory, 
+       output_directory, 
+       hazard)
+
+
+# Precipitation ----
 # 0.25 deg 
 
 ### Flash Flood ----
