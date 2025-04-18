@@ -422,7 +422,7 @@ create_cluster_summary_hourly <- function(
       era5_mean        = era5_mean,
       era5_median      = era5_median,
       era5_max         = era5_max,
-      era5_min         = era5_min,
+      # era5_min         = era5_min,
       stringsAsFactors = FALSE
     )
     

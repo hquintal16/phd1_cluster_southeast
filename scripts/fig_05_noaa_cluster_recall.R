@@ -426,225 +426,299 @@ output_directory <- here("figures")
 figure <- make_9panel_figure_binned(noaa_directory, cluster_dirs, recall_dirs, year_range, output_directory)
 
 # Save the plot as a PNG + SVG file
-png_path <- here("figures","05_recall_excess_heat_advisory_day_binned_2019_2023.png")
-svg_path <- here("figures","05_recall_excess_heat_advisory_day_binned_2019_2023.svg")
+png_path <- here("figures","05_recall_heat_advisory_day_binned_2019_2023.png")
+svg_path <- here("figures","05_recall_heat_advisory_day_binned_2019_2023.svg")
 ggsave(filename = png_path, plot = figure, width = 8, height = 7, dpi = 300)
 ggsave(filename = svg_path, plot = figure, width = 8, height = 7, device = "svg")
 
 ### 2010-2023 ----
 year_range <- 2010:2023
-noaa_directory <- here("data", "output", "04_noaa", "southeast", "summary", "excess_heat")
+noaa_directory <- here("data", "output", "04_noaa", "southeast", "summary", "heat")
 cluster_dirs <- list(
   stm1 = here("data", "output", "03_cluster", "02_cluster","advisory", "points", "0.25", "heat_index", "summary"),
   record = here("data", "output", "03_cluster", "02_cluster","advisory", "points", "0.3075", "heat_index", "summary"),
   stm4 = here("data", "output", "03_cluster", "02_cluster","advisory", "points", "0.39", "heat_index", "summary")
 )
 recall_dirs <- list(
-  stm1 = here("data", "output", "05_validation", "recall","advisory", "raster", "2010_2023_day_0.25_excess_heat.nc"),
-  record = here("data", "output", "05_validation", "recall","advisory", "raster", "2010_2023_day_0.3075_excess_heat.nc"),
-  stm4 = here("data", "output", "05_validation", "recall","advisory", "raster", "2010_2023_day_0.39_excess_heat.nc")
+  stm1 = here("data", "output", "05_validation", "recall","advisory", "raster", "2010_2023_day_0.25_heat.nc"),
+  record = here("data", "output", "05_validation", "recall","advisory", "raster", "2010_2023_day_0.3075_heat.nc"),
+  stm4 = here("data", "output", "05_validation", "recall","advisory", "raster", "2010_2023_day_0.39_heat.nc")
 )
 output_directory <- here("figures")
 figure <- make_9panel_figure_binned(noaa_directory, cluster_dirs, recall_dirs, year_range, output_directory)
 
 # Save the plot as a PNG + SVG file
-png_path <- here("figures","05_recall_excess_heat_advisory_day_binned_2010_2023.png")
-svg_path <- here("figures","05_recall_excess_heat_advisory_day_binned_2010_2023.svg")
+png_path <- here("figures","05_recall_heat_advisory_day_binned_2010_2023.png")
+svg_path <- here("figures","05_recall_heat_advisory_day_binned_2010_2023.svg")
 ggsave(filename = png_path, plot = figure, width = 8, height = 7, dpi = 300)
 ggsave(filename = svg_path, plot = figure, width = 8, height = 7, device = "svg")
 
 ### 2000-2023 ----
 year_range <- 2000:2023
-noaa_directory <- here("data", "output", "04_noaa", "southeast", "summary", "excess_heat")
+noaa_directory <- here("data", "output", "04_noaa", "southeast", "summary", "heat")
 cluster_dirs <- list(
   stm1 = here("data", "output", "03_cluster", "02_cluster","advisory", "points", "0.25", "heat_index", "summary"),
   record = here("data", "output", "03_cluster", "02_cluster","advisory", "points", "0.3075", "heat_index", "summary"),
   stm4 = here("data", "output", "03_cluster", "02_cluster","advisory", "points", "0.39", "heat_index", "summary")
 )
 recall_dirs <- list(
-  stm1 = here("data", "output", "05_validation", "recall","advisory", "raster", "2000_2023_day_0.25_excess_heat.nc"),
-  record = here("data", "output", "05_validation", "recall","advisory", "raster", "2000_2023_day_0.3075_excess_heat.nc"),
-  stm4 = here("data", "output", "05_validation", "recall","advisory", "raster", "2000_2023_day_0.39_excess_heat.nc")
+  stm1 = here("data", "output", "05_validation", "recall","advisory", "raster", "2000_2023_day_0.25_heat.nc"),
+  record = here("data", "output", "05_validation", "recall","advisory", "raster", "2000_2023_day_0.3075_heat.nc"),
+  stm4 = here("data", "output", "05_validation", "recall","advisory", "raster", "2000_2023_day_0.39_heat.nc")
 )
 output_directory <- here("figures")
 figure <- make_9panel_figure_binned(noaa_directory, cluster_dirs, recall_dirs, year_range, output_directory)
 
 # Save the plot as a PNG + SVG file
-png_path <- here("figures","05_recall_excess_heat_advisory_day_binned_2000_2023.png")
-svg_path <- here("figures","05_recall_excess_heat_advisory_day_binned_2000_2023.svg")
+png_path <- here("figures","05_recall_heat_advisory_day_binned_2000_2023.png")
+svg_path <- here("figures","05_recall_heat_advisory_day_binned_2000_2023.svg")
 ggsave(filename = png_path, plot = figure, width = 8, height = 7, dpi = 300)
 ggsave(filename = svg_path, plot = figure, width = 8, height = 7, device = "svg")
 
 ## Heat Warning ----
 ### 2019-2023 ----
 year_range <- 2019:2023
-noaa_directory <- here("data", "output", "04_noaa", "southeast", "summary", "excess_heat")
+noaa_directory <- here("data", "output", "04_noaa", "southeast", "summary", "heat")
 cluster_dirs <- list(
   stm1 = here("data", "output", "03_cluster", "02_cluster","warning", "points", "0.25", "heat_index", "summary"),
   record = here("data", "output", "03_cluster", "02_cluster","warning", "points", "0.3075", "heat_index", "summary"),
   stm4 = here("data", "output", "03_cluster", "02_cluster","warning", "points", "0.39", "heat_index", "summary")
 )
 recall_dirs <- list(
-  stm1 = here("data", "output", "05_validation", "recall","warning", "raster", "2019_2023_day_0.25_excess_heat.nc"),
-  record = here("data", "output", "05_validation", "recall","warning", "raster", "2019_2023_day_0.3075_excess_heat.nc"),
-  stm4 = here("data", "output", "05_validation", "recall","warning", "raster", "2019_2023_day_0.39_excess_heat.nc")
+  stm1 = here("data", "output", "05_validation", "recall","warning", "raster", "2019_2023_day_0.25_heat.nc"),
+  record = here("data", "output", "05_validation", "recall","warning", "raster", "2019_2023_day_0.3075_heat.nc"),
+  stm4 = here("data", "output", "05_validation", "recall","warning", "raster", "2019_2023_day_0.39_heat.nc")
 )
 output_directory <- here("figures")
 figure <- make_9panel_figure_binned(noaa_directory, cluster_dirs, recall_dirs, year_range, output_directory)
 
 # Save the plot as a PNG + SVG file
-png_path <- here("figures","05_recall_excess_heat_warning_day_binned_2019_2023.png")
-svg_path <- here("figures","05_recall_excess_heat_warning_day_binned_2019_2023.svg")
+png_path <- here("figures","05_recall_heat_warning_day_binned_2019_2023.png")
+svg_path <- here("figures","05_recall_heat_warning_day_binned_2019_2023.svg")
 ggsave(filename = png_path, plot = figure, width = 8, height = 7, dpi = 300)
 ggsave(filename = svg_path, plot = figure, width = 8, height = 7, device = "svg")
 
 ### 2010-2023 ----
 year_range <- 2010:2023
-noaa_directory <- here("data", "output", "04_noaa", "southeast", "summary", "excess_heat")
+noaa_directory <- here("data", "output", "04_noaa", "southeast", "summary", "heat")
 cluster_dirs <- list(
   stm1 = here("data", "output", "03_cluster", "02_cluster","warning", "points", "0.25", "heat_index", "summary"),
   record = here("data", "output", "03_cluster", "02_cluster","warning", "points", "0.3075", "heat_index", "summary"),
   stm4 = here("data", "output", "03_cluster", "02_cluster","warning", "points", "0.39", "heat_index", "summary")
 )
 recall_dirs <- list(
-  stm1 = here("data", "output", "05_validation", "recall","warning", "raster", "2010_2023_day_0.25_excess_heat.nc"),
-  record = here("data", "output", "05_validation", "recall","warning", "raster", "2010_2023_day_0.3075_excess_heat.nc"),
-  stm4 = here("data", "output", "05_validation", "recall","warning", "raster", "2010_2023_day_0.39_excess_heat.nc")
+  stm1 = here("data", "output", "05_validation", "recall","warning", "raster", "2010_2023_day_0.25_heat.nc"),
+  record = here("data", "output", "05_validation", "recall","warning", "raster", "2010_2023_day_0.3075_heat.nc"),
+  stm4 = here("data", "output", "05_validation", "recall","warning", "raster", "2010_2023_day_0.39_heat.nc")
 )
 output_directory <- here("figures")
 figure <- make_9panel_figure_binned(noaa_directory, cluster_dirs, recall_dirs, year_range, output_directory)
 
 # Save the plot as a PNG + SVG file
-png_path <- here("figures","05_recall_excess_heat_warning_day_binned_2010_2023.png")
-svg_path <- here("figures","05_recall_excess_heat_warning_day_binned_2010_2023.svg")
+png_path <- here("figures","05_recall_heat_warning_day_binned_2010_2023.png")
+svg_path <- here("figures","05_recall_heat_warning_day_binned_2010_2023.svg")
 ggsave(filename = png_path, plot = figure, width = 8, height = 7, dpi = 300)
 ggsave(filename = svg_path, plot = figure, width = 8, height = 7, device = "svg")
 
 ### 2000-2023 ----
 year_range <- 2000:2023
-noaa_directory <- here("data", "output", "04_noaa", "southeast", "summary", "excess_heat")
+noaa_directory <- here("data", "output", "04_noaa", "southeast", "summary", "heat")
 cluster_dirs <- list(
   stm1 = here("data", "output", "03_cluster", "02_cluster","warning", "points", "0.25", "heat_index", "summary"),
   record = here("data", "output", "03_cluster", "02_cluster","warning", "points", "0.3075", "heat_index", "summary"),
   stm4 = here("data", "output", "03_cluster", "02_cluster","warning", "points", "0.39", "heat_index", "summary")
 )
 recall_dirs <- list(
-  stm1 = here("data", "output", "05_validation", "recall","warning", "raster", "2000_2023_day_0.25_excess_heat.nc"),
-  record = here("data", "output", "05_validation", "recall","warning", "raster", "2000_2023_day_0.3075_excess_heat.nc"),
-  stm4 = here("data", "output", "05_validation", "recall","warning", "raster", "2000_2023_day_0.39_excess_heat.nc")
+  stm1 = here("data", "output", "05_validation", "recall","warning", "raster", "2000_2023_day_0.25_heat.nc"),
+  record = here("data", "output", "05_validation", "recall","warning", "raster", "2000_2023_day_0.3075_heat.nc"),
+  stm4 = here("data", "output", "05_validation", "recall","warning", "raster", "2000_2023_day_0.39_heat.nc")
 )
 output_directory <- here("figures")
 figure <- make_9panel_figure_binned(noaa_directory, cluster_dirs, recall_dirs, year_range, output_directory)
 
 # Save the plot as a PNG + SVG file
-png_path <- here("figures","05_recall_excess_heat_warning_day_binned_2000_2023.png")
-svg_path <- here("figures","05_recall_excess_heat_warning_day_binned_2000_2023.svg")
+png_path <- here("figures","05_recall_heat_warning_day_binned_2000_2023.png")
+svg_path <- here("figures","05_recall_heat_warning_day_binned_2000_2023.svg")
 ggsave(filename = png_path, plot = figure, width = 8, height = 7, dpi = 300)
 ggsave(filename = svg_path, plot = figure, width = 8, height = 7, device = "svg")
 
-
-# HCQ LEFTOFF TRYING TO FIX THIS ----
-make_3panel_figure <- function(noaa_dir, cluster_dir, recall_file, year_range, output_dir) {
+make_3panel_left <- function(noaa_dir, cluster_dirs, recall_dirs, year_range, output_dir) {
   # assume terra, sf, maps, ggplot2, patchwork, dplyr, here, scales are loaded
   
-  # 1) Reference for extent
-  region.crs <- rast(here("data","output","01_era5","daily","heat_index",
-                          "heat_index_daily_maximum_194001.nc"))
-  # 2) Koppen‑Geiger mask
-  kg   <- rast(here("data","input","regional_aggregation","koppen_geiger",
-                    "1991_2020","koppen_geiger_0p1.tif"))
-  reso <- kg / kg
-  # 3) State mask
-  us_sf   <- st_as_sf(maps::map("state", plot = FALSE, fill = TRUE))
-  us_vect <- vect(us_sf)
-  us_rast <- rasterize(us_vect, reso, field="ID") |> crop(ext(region.crs))
+  message("DEBUG: noaa_dir: ",         noaa_dir)
+  message("DEBUG: cluster_dirs[[1]]: ", cluster_dirs[[1]])
+  message("DEBUG: recall_dirs[[1]]: ",  recall_dirs[[1]])
+  message("DEBUG: year_range: ",        paste(year_range, collapse = ", "))
+  message("DEBUG: output_dir: ",        output_dir)
   
-  # helper: stack & sum by exact prefix + years
-  process_sum_mask <- function(dir, prefix, yrs) {
-    yr_pat <- paste(yrs, collapse="|")
-    pat    <- paste0("^", prefix, ".*(", yr_pat, ").*\\.nc$")
-    f      <- list.files(dir, pattern=pat, full.names=TRUE)
-    if(length(f)==0) return(NULL)
-    r_sum <- sum(rast(f))
-    mask(r_sum, us_rast, maskvalue=NA)
+  # ── Build base mask
+  region.crs <- rast(
+    here("data","output","01_era5","daily","heat_index",
+         "heat_index_daily_maximum_194001.nc")
+  )
+  kg   <- rast(
+    here("data","input","regional_aggregation","koppen_geiger",
+         "1991_2020","koppen_geiger_0p1.tif")
+  )
+  reso <- kg / kg
+  us_sf   <- st_as_sf(maps::map("state", plot = FALSE, fill = TRUE))
+  us_v    <- vect(us_sf)
+  us_rast <- rasterize(us_v, reso, field="ID") |> crop(ext(region.crs))
+  
+  # ── Robust summing helper
+  process_sum_mask <- function(dir_path,
+                               year_range,
+                               prefix = NULL,
+                               required_substring = NULL) {
+    # 1) list all .nc
+    all_files <- list.files(dir_path, pattern = "\\.nc$", full.names = TRUE)
+    message("  listed ", length(all_files), ".nc files in ", dir_path)
+    
+    # 2) optional prefix filter
+    if (!is.null(prefix)) {
+      keep_pref <- grepl(prefix, basename(all_files))
+      message("  keeping ", sum(keep_pref), " files with prefix '", prefix, "'")
+      all_files <- all_files[keep_pref]
+    }
+    # 3) optional substring filter
+    if (!is.null(required_substring)) {
+      keep_sub <- grepl(required_substring, basename(all_files))
+      message("  keeping ", sum(keep_sub),
+              " files containing '", required_substring, "'")
+      all_files <- all_files[keep_sub]
+    }
+    # 4) extract years and filter
+    yrs_extracted <- as.numeric(str_extract(basename(all_files), "\\d{4}"))
+    keep_yr       <- !is.na(yrs_extracted) & yrs_extracted %in% year_range
+    message("  keeping ", sum(keep_yr),
+            " files matching years ", paste(year_range, collapse = ", "))
+    files <- all_files[keep_yr]
+    
+    if (length(files) == 0) {
+      warning("No .nc files left after filtering in ", dir_path)
+      return(NULL)
+    }
+    message("  reading & stacking ", length(files), " files")
+    r_stack <- rast(files)
+    message("  summing ", nlyr(r_stack), " layers…")
+    r_sum   <- sum(r_stack)
+    message("  global sum: ", global(r_sum, "sum", na.rm = TRUE)[1])
+    
+    mask(r_sum, us_rast, maskvalue = NA)
   }
   
-  # NOAA
-  noaa_r <- process_sum_mask(noaa_dir, "NOAA_", year_range)
-  if(is.null(noaa_r)) stop("NOAA raster missing!")
-  # Cluster
-  clust_r <- process_sum_mask(cluster_dir,
-                              "County_precipitation_Daily_Extent_", year_range)
-  if(is.null(clust_r)) stop("Cluster raster missing!")
-  # Recall
-  rec_r <- mask(rast(recall_file), us_rast, maskvalue=NA)
+  # ── NOAA
+  message("Processing NOAA…")
+  noaa_r <- process_sum_mask(
+    dir_path           = noaa_dir,
+    year_range         = year_range,
+    prefix             = "NOAA_",
+    required_substring = NULL
+  )
+  if (is.null(noaa_r)) stop("NOAA raster missing!")
   
-  # get maxima
-  nmax <- global(noaa_r, fun="max", na.rm=TRUE)[1]
-  cmax <- global(clust_r,fun="max", na.rm=TRUE)[1]
+  # ── Cluster (0.25°/day only)
+  message("Processing Clusters…")
+  clust_r <- process_sum_mask(
+    dir_path           = cluster_dirs[[1]],
+    year_range         = year_range,
+    prefix             = "County_precipitation_Daily_Extent_",
+    required_substring = NULL
+  )
+  if (is.null(clust_r)) stop("Cluster raster missing!")
   
-  # bins & palettes
+  # ── Recall (single file)
+  message("Processing Recall…")
+  rec_r <- mask(rast(recall_dirs[[1]]), us_rast, maskvalue = NA)
+  
+  # ── Binning
+  nmax       <- global(noaa_r,  "max", na.rm = TRUE)[1]
+  cmax       <- global(clust_r, "max", na.rm = TRUE)[1]
   common_max <- max(nmax, cmax)
-  nc_brks <- c(0, seq(1, common_max, length.out=5))
-  nc_pal  <- c("grey40", colorRampPalette(c("yellow","red"))(4))
-  rec_brks <- seq(0,1,by=0.2)
-  rec_pal  <- colorRampPalette(c("orange","purple"))(length(rec_brks)-1)
+  nc_brks    <- c(0, seq(1, common_max, length.out = 5))
+  nc_pal     <- c("grey70", colorRampPalette(c("yellow","red"))(4))
+  rec_brks   <- seq(0, 1, by = 0.2)
+  rec_pal    <- colorRampPalette(c("orange","purple"))(length(rec_brks)-1)
   
-  # plot helper
-  plot_binned <- function(r, breaks, pal, zero_special=FALSE) {
-    df   <- as.data.frame(r, xy=TRUE)
+  # ── Text panels
+  get_text_plot <- function(txt, size = 6, angle = 0) {
+    ggplot() +
+      annotate("text", x = 0.5, y = 0.5,
+               label = txt, size = size, angle = angle,
+               hjust = 0.5, vjust = 0.5) +
+      theme_void()
+  }
+  col1_label <- get_text_plot("0.25°/day",      size = 6)
+  row1_label <- get_text_plot("Clusters",       size = 6, angle = 90)
+  row2_label <- get_text_plot("NOAA Episodes",  size = 6, angle = 90)
+  row3_label <- get_text_plot("Recall",         size = 6, angle = 90)
+  
+  # ── Plot helper
+  plot_binned <- function(r, breaks, pal, zero_special = FALSE) {
+    df   <- as.data.frame(r, xy = TRUE)
     vcol <- names(df)[3]
-    df$bin <- if(zero_special) {
-      cut(df[[vcol]], breaks=breaks, include.lowest=TRUE, right=FALSE,
-          labels=as.character(breaks[-length(breaks)]))
+    df$bin <- if (zero_special) {
+      cut(df[[vcol]], breaks = breaks,
+          include.lowest = TRUE, right = FALSE,
+          labels = as.character(breaks[-length(breaks)]))
     } else {
-      cut(df[[vcol]], breaks=breaks, include.lowest=TRUE, right=FALSE)
+      cut(df[[vcol]], breaks = breaks,
+          include.lowest = TRUE, right = FALSE)
     }
     ggplot() +
-      geom_sf(data=us_sf, fill="grey70", color=NA) +
-      geom_tile(data=df, aes(x=x, y=y, fill=bin)) +
-      geom_sf(data=us_sf, fill=NA, color="black", size=0.3) +
-      coord_sf(xlim=c(-95, -75), ylim=c(24,40), expand=FALSE) +
-      scale_x_continuous(breaks=seq(-95, -75, by=5)) +
-      scale_y_continuous(breaks=seq(24, 40, by=4)) +
-      scale_fill_manual(name="", values=pal, na.value="white") +
+      geom_sf(data = us_sf, fill = "grey70", color = NA) +
+      geom_tile(data = df,    aes(x = x, y = y, fill = bin)) +
+      geom_sf(data = us_sf,   fill = NA,   color = "black", size = 0.3) +
+      coord_sf(xlim = c(-95, -75), ylim = c(24, 40), expand = FALSE) +
+      scale_x_continuous(breaks = seq(-95, -75, by = 5)) +
+      scale_y_continuous(breaks = seq(24, 40, by = 4)) +
+      scale_fill_manual(name = "", values = pal, na.value = "white") +
       theme_minimal() +
-      theme(panel.grid=element_blank(),
-            axis.title=element_blank(),
-            legend.position=c(0.2, 0.15),
-            legend.key.size=unit(0.3, "lines"),
-            legend.text=element_text(size=7))
+      theme(panel.grid = element_blank(),
+            axis.title = element_blank(),
+            legend.position = c(0.2, 0.15),
+            legend.key.size = unit(0.3, "lines"),
+            legend.text = element_text(size = 7))
   }
   
-  # build panels
-  p_cluster <- plot_binned(clust_r, nc_brks, nc_pal, zero_special=TRUE)
-  p_noaa    <- plot_binned(noaa_r,  nc_brks, nc_pal, zero_special=TRUE)
-  p_recall  <- plot_binned(rec_r,    rec_brks, rec_pal, zero_special=FALSE)
+  # ── Build panels
+  p1 <- plot_binned(clust_r, nc_brks, nc_pal, zero_special = TRUE)
+  p2 <- plot_binned(noaa_r,  nc_brks, nc_pal, zero_special = TRUE)
+  p3 <- plot_binned(rec_r,    rec_brks, rec_pal, zero_special = FALSE)
   
-  # stack vertically, no tags
+  # ── Assemble
   library(patchwork)
-  figure <- p_cluster / p_noaa / p_recall +
-    plot_layout(ncol=1)
+  top_row     <- wrap_plots(list(plot_spacer(), col1_label),
+                            ncol = 2, widths = c(0.2, 1))
+  cluster_row <- wrap_plots(list(row1_label, p1),
+                            ncol = 2, widths = c(0.2, 1))
+  noaa_row    <- wrap_plots(list(row2_label, p2),
+                            ncol = 2, widths = c(0.2, 1))
+  recall_row  <- wrap_plots(list(row3_label, p3),
+                            ncol = 2, widths = c(0.2, 1))
   
-  return(figure)
+  final_fig <- top_row / cluster_row / noaa_row / recall_row +
+    plot_layout(heights = c(0.2, 1, 1, 1))
+  return(final_fig)
 }
 
 
 ## Precipitation ----
+
 ### Flash Flood ----
 #### 2019-2023 ----
 year_range <- 2019:2023
 noaa_directory <- here("data", "output", "04_noaa", "southeast", "summary", "flash_flood")
-cluster_dirs <-  here("data", "output", "03_cluster", "02_cluster","24hr1yr", "points", "summary")
-recall_dirs <-  here("data", "output", "05_validation", "recall","24hr1yr", "raster", "2019_2023_recall_24hr1yr_flash_flood.nc")
+cluster_dirs <-  list(here("data", "output", "03_cluster", "02_cluster","24hr1yr", "points", "summary"))
+recall_dirs <-  list(here("data", "output", "05_validation", "recall","24hr1yr", "raster", "2019_2023_recall_24hr1yr_flash_flood.nc"))
 output_directory <- here("figures")
-figure <- make_3panel_figure(noaa_directory, cluster_dirs, recall_dirs, year_range, output_directory)
+figure <- make_3panel_left(noaa_directory, cluster_dirs, recall_dirs, year_range, output_directory)
 
 # Save the plot as a PNG + SVG file
 png_path <- here("figures","05_recall_flash_flood_24hr1yr_day_binned_2019_2023.png")
 svg_path <- here("figures","05_recall_flash_flood_24hr1yr_day_binned_2019_2023.svg")
-ggsave(filename = png_path, plot = figure, width = 8, height = 7, dpi = 300)
-ggsave(filename = svg_path, plot = figure, width = 8, height = 7, device = "svg")
+ggsave(filename = png_path, plot = figure, width = 4, height = 7, dpi = 300)
+ggsave(filename = svg_path, plot = figure, width = 4, height = 7, device = "svg")
 
 #### 2010-2023 ----
 year_range <- 2010:2023
@@ -652,13 +726,13 @@ noaa_directory <- here("data", "output", "04_noaa", "southeast", "summary", "fla
 cluster_dirs <-  here("data", "output", "03_cluster", "02_cluster","24hr1yr", "points", "summary")
 recall_dirs <-  here("data", "output", "05_validation", "recall","24hr1yr", "raster", "2010_2023_recall_24hr1yr_flash_flood.nc")
 output_directory <- here("figures")
-figure <- make_3panel_figure(noaa_directory, cluster_dirs, recall_dirs, year_range, output_directory)
+figure <- make_3panel_left(noaa_directory, cluster_dirs, recall_dirs, year_range, output_directory)
 
 # Save the plot as a PNG + SVG file
 png_path <- here("figures","05_recall_flash_flood_24hr1yr_day_binned_2010_2023.png")
 svg_path <- here("figures","05_recall_flash_flood_24hr1yr_day_binned_2010_2023.svg")
-ggsave(filename = png_path, plot = figure, width = 8, height = 7, dpi = 300)
-ggsave(filename = svg_path, plot = figure, width = 8, height = 7, device = "svg")
+ggsave(filename = png_path, plot = figure, width = 4, height = 7, dpi = 300)
+ggsave(filename = svg_path, plot = figure, width = 4, height = 7, device = "svg")
 
 #### 2000-2023 ----
 year_range <- 2000:2023
@@ -666,13 +740,27 @@ noaa_directory <- here("data", "output", "04_noaa", "southeast", "summary", "fla
 cluster_dirs <-  here("data", "output", "03_cluster", "02_cluster","24hr1yr", "points", "summary")
 recall_dirs <-  here("data", "output", "05_validation", "recall","24hr1yr", "raster", "2000_2023_recall_24hr1yr_flash_flood.nc")
 output_directory <- here("figures")
-figure <- make_3panel_figure(noaa_directory, cluster_dirs, recall_dirs, year_range, output_directory)
+figure <- make_3panel_left(noaa_directory, cluster_dirs, recall_dirs, year_range, output_directory)
 
 # Save the plot as a PNG + SVG file
 png_path <- here("figures","05_recall_flash_flood_24hr1yr_day_binned_2000_2023.png")
 svg_path <- here("figures","05_recall_flash_flood_24hr1yr_day_binned_2000_2023.svg")
-ggsave(filename = png_path, plot = figure, width = 8, height = 7, dpi = 300)
-ggsave(filename = svg_path, plot = figure, width = 8, height = 7, device = "svg")
+ggsave(filename = png_path, plot = figure, width = 4, height = 7, dpi = 300)
+ggsave(filename = svg_path, plot = figure, width = 4, height = 7, device = "svg")
+
+#### 1996-2023 ----
+year_range <- 1996:2023
+noaa_directory <- here("data", "output", "04_noaa", "southeast", "summary", "flash_flood")
+cluster_dirs <-  here("data", "output", "03_cluster", "02_cluster","24hr1yr", "points", "summary")
+recall_dirs <-  here("data", "output", "05_validation", "recall","24hr1yr", "raster", "1996_2023_recall_24hr1yr_flash_flood.nc")
+output_directory <- here("figures")
+figure <- make_3panel_left(noaa_directory, cluster_dirs, recall_dirs, year_range, output_directory)
+
+# Save the plot as a PNG + SVG file
+png_path <- here("figures","05_recall_flash_flood_24hr1yr_day_binned_1996_2023.png")
+svg_path <- here("figures","05_recall_flash_flood_24hr1yr_day_binned_1996_2023.svg")
+ggsave(filename = png_path, plot = figure, width = 4, height = 7, dpi = 300)
+ggsave(filename = svg_path, plot = figure, width = 4, height = 7, device = "svg")
 
 ### Flood ----
 #### 2019-2023 ----
@@ -681,13 +769,13 @@ noaa_directory <- here("data", "output", "04_noaa", "southeast", "summary", "flo
 cluster_dirs <-  here("data", "output", "03_cluster", "02_cluster","24hr1yr", "points", "summary")
 recall_dirs <-  here("data", "output", "05_validation", "recall","24hr1yr", "raster", "2019_2023_recall_24hr1yr_flood.nc")
 output_directory <- here("figures")
-figure <- make_3panel_figure(noaa_directory, cluster_dirs, recall_dirs, year_range, output_directory)
+figure <- make_3panel_left(noaa_directory, cluster_dirs, recall_dirs, year_range, output_directory)
 
 # Save the plot as a PNG + SVG file
 png_path <- here("figures","05_recall_flood_24hr1yr_day_binned_2019_2023.png")
 svg_path <- here("figures","05_recall_flood_24hr1yr_day_binned_2019_2023.svg")
-ggsave(filename = png_path, plot = figure, width = 8, height = 7, dpi = 300)
-ggsave(filename = svg_path, plot = figure, width = 8, height = 7, device = "svg")
+ggsave(filename = png_path, plot = figure, width = 4, height = 7, dpi = 300)
+ggsave(filename = svg_path, plot = figure, width = 4, height = 7, device = "svg")
 
 #### 2010-2023 ----
 year_range <- 2010:2023
@@ -695,13 +783,13 @@ noaa_directory <- here("data", "output", "04_noaa", "southeast", "summary", "flo
 cluster_dirs <-  here("data", "output", "03_cluster", "02_cluster","24hr1yr", "points", "summary")
 recall_dirs <-  here("data", "output", "05_validation", "recall","24hr1yr", "raster", "2010_2023_recall_24hr1yr_flood.nc")
 output_directory <- here("figures")
-figure <- make_3panel_figure(noaa_directory, cluster_dirs, recall_dirs, year_range, output_directory)
+figure <- make_3panel_left(noaa_directory, cluster_dirs, recall_dirs, year_range, output_directory)
 
 # Save the plot as a PNG + SVG file
 png_path <- here("figures","05_recall_flood_24hr1yr_day_binned_2010_2023.png")
 svg_path <- here("figures","05_recall_flood_24hr1yr_day_binned_2010_2023.svg")
-ggsave(filename = png_path, plot = figure, width = 8, height = 7, dpi = 300)
-ggsave(filename = svg_path, plot = figure, width = 8, height = 7, device = "svg")
+ggsave(filename = png_path, plot = figure, width = 4, height = 7, dpi = 300)
+ggsave(filename = svg_path, plot = figure, width = 4, height = 7, device = "svg")
 
 #### 2000-2023 ----
 year_range <- 2000:2023
@@ -709,14 +797,312 @@ noaa_directory <- here("data", "output", "04_noaa", "southeast", "summary", "flo
 cluster_dirs <-  here("data", "output", "03_cluster", "02_cluster","24hr1yr", "points", "summary")
 recall_dirs <-  here("data", "output", "05_validation", "recall","24hr1yr", "raster", "2000_2023_recall_24hr1yr_flood.nc")
 output_directory <- here("figures")
-figure <- make_3panel_figure(noaa_directory, cluster_dirs, recall_dirs, year_range, output_directory)
+figure <- make_3panel_left(noaa_directory, cluster_dirs, recall_dirs, year_range, output_directory)
 
 # Save the plot as a PNG + SVG file
 png_path <- here("figures","05_recall_flood_24hr1yr_day_binned_2000_2023.png")
 svg_path <- here("figures","05_recall_flood_24hr1yr_day_binned_2000_2023.svg")
-ggsave(filename = png_path, plot = figure, width = 8, height = 7, dpi = 300)
-ggsave(filename = svg_path, plot = figure, width = 8, height = 7, device = "svg")
+ggsave(filename = png_path, plot = figure, width = 4, height = 7, dpi = 300)
+ggsave(filename = svg_path, plot = figure, width = 4, height = 7, device = "svg")
 
+#### 1996-2023 ----
+year_range <- 1996:2023
+noaa_directory <- here("data", "output", "04_noaa", "southeast", "summary", "flood")
+cluster_dirs <-  here("data", "output", "03_cluster", "02_cluster","24hr1yr", "points", "summary")
+recall_dirs <-  here("data", "output", "05_validation", "recall","24hr1yr", "raster", "1996_2023_recall_24hr1yr_flood.nc")
+output_directory <- here("figures")
+figure <- make_3panel_left(noaa_directory, cluster_dirs, recall_dirs, year_range, output_directory)
+
+# Save the plot as a PNG + SVG file
+png_path <- here("figures","05_recall_flood_24hr1yr_day_binned_1996_2023.png")
+svg_path <- here("figures","05_recall_flood_24hr1yr_day_binned_1996_2023.svg")
+ggsave(filename = png_path, plot = figure, width = 4, height = 7, dpi = 300)
+ggsave(filename = svg_path, plot = figure, width = 4, height = 7, device = "svg")
+
+### Heavy Rain ----
+#### 2019-2023 ----
+year_range <- 2019:2023
+noaa_directory <- here("data", "output", "04_noaa", "southeast", "summary", "heavy_rain")
+cluster_dirs <-  here("data", "output", "03_cluster", "02_cluster","24hr1yr", "points", "summary")
+recall_dirs <-  here("data", "output", "05_validation", "recall","24hr1yr", "raster", "2019_2023_recall_24hr1yr_heavy_rain.nc")
+output_directory <- here("figures")
+figure <- make_3panel_left(noaa_directory, cluster_dirs, recall_dirs, year_range, output_directory)
+
+# Save the plot as a PNG + SVG file
+png_path <- here("figures","05_recall_heavy_rain_24hr1yr_day_binned_2019_2023.png")
+svg_path <- here("figures","05_recall_heavy_rain_24hr1yr_day_binned_2019_2023.svg")
+ggsave(filename = png_path, plot = figure, width = 4, height = 7, dpi = 300)
+ggsave(filename = svg_path, plot = figure, width = 4, height = 7, device = "svg")
+
+#### 2010-2023 ----
+year_range <- 2010:2023
+noaa_directory <- here("data", "output", "04_noaa", "southeast", "summary", "heavy_rain")
+cluster_dirs <-  here("data", "output", "03_cluster", "02_cluster","24hr1yr", "points", "summary")
+recall_dirs <-  here("data", "output", "05_validation", "recall","24hr1yr", "raster", "2010_2023_recall_24hr1yr_heavy_rain.nc")
+output_directory <- here("figures")
+figure <- make_3panel_left(noaa_directory, cluster_dirs, recall_dirs, year_range, output_directory)
+
+# Save the plot as a PNG + SVG file
+png_path <- here("figures","05_recall_heavy_rain_24hr1yr_day_binned_2010_2023.png")
+svg_path <- here("figures","05_recall_heavy_rain_24hr1yr_day_binned_2010_2023.svg")
+ggsave(filename = png_path, plot = figure, width = 4, height = 7, dpi = 300)
+ggsave(filename = svg_path, plot = figure, width = 4, height = 7, device = "svg")
+
+#### 2000-2023 ----
+year_range <- 2000:2023
+noaa_directory <- here("data", "output", "04_noaa", "southeast", "summary", "heavy_rain")
+cluster_dirs <-  here("data", "output", "03_cluster", "02_cluster","24hr1yr", "points", "summary")
+recall_dirs <-  here("data", "output", "05_validation", "recall","24hr1yr", "raster", "2000_2023_recall_24hr1yr_heavy_rain.nc")
+output_directory <- here("figures")
+figure <- make_3panel_left(noaa_directory, cluster_dirs, recall_dirs, year_range, output_directory)
+
+# Save the plot as a PNG + SVG file
+png_path <- here("figures","05_recall_heavy_rain_24hr1yr_day_binned_2000_2023.png")
+svg_path <- here("figures","05_recall_heavy_rain_24hr1yr_day_binned_2000_2023.svg")
+ggsave(filename = png_path, plot = figure, width = 4, height = 7, dpi = 300)
+ggsave(filename = svg_path, plot = figure, width = 4, height = 7, device = "svg")
+
+#### 1996-2023 ----
+year_range <- 1996:2023
+noaa_directory <- here("data", "output", "04_noaa", "southeast", "summary", "heavy_rain")
+cluster_dirs <-  here("data", "output", "03_cluster", "02_cluster","24hr1yr", "points", "summary")
+recall_dirs <-  here("data", "output", "05_validation", "recall","24hr1yr", "raster", "1996_2023_recall_24hr1yr_heavy_rain.nc")
+output_directory <- here("figures")
+figure <- make_3panel_left(noaa_directory, cluster_dirs, recall_dirs, year_range, output_directory)
+
+# Save the plot as a PNG + SVG file
+png_path <- here("figures","05_recall_heavy_rain_24hr1yr_day_binned_1996_2023.png")
+svg_path <- here("figures","05_recall_heavy_rain_24hr1yr_day_binned_1996_2023.svg")
+ggsave(filename = png_path, plot = figure, width = 4, height = 7, dpi = 300)
+ggsave(filename = svg_path, plot = figure, width = 4, height = 7, device = "svg")
+
+### Hurricane ----
+#### 2019-2023 ----
+year_range <- 2019:2023
+noaa_directory <- here("data", "output", "04_noaa", "southeast", "summary", "hurricane")
+cluster_dirs <-  here("data", "output", "03_cluster", "02_cluster","24hr1yr", "points", "summary")
+recall_dirs <-  here("data", "output", "05_validation", "recall","24hr1yr", "raster", "2019_2023_recall_24hr1yr_hurricane.nc")
+output_directory <- here("figures")
+figure <- make_3panel_left(noaa_directory, cluster_dirs, recall_dirs, year_range, output_directory)
+
+# Save the plot as a PNG + SVG file
+png_path <- here("figures","05_recall_hurricane_24hr1yr_day_binned_2019_2023.png")
+svg_path <- here("figures","05_recall_hurricane_24hr1yr_day_binned_2019_2023.svg")
+ggsave(filename = png_path, plot = figure, width = 4, height = 7, dpi = 300)
+ggsave(filename = svg_path, plot = figure, width = 4, height = 7, device = "svg")
+
+#### 2010-2023 ----
+year_range <- 2010:2023
+noaa_directory <- here("data", "output", "04_noaa", "southeast", "summary", "hurricane")
+cluster_dirs <-  here("data", "output", "03_cluster", "02_cluster","24hr1yr", "points", "summary")
+recall_dirs <-  here("data", "output", "05_validation", "recall","24hr1yr", "raster", "2010_2023_recall_24hr1yr_hurricane.nc")
+output_directory <- here("figures")
+figure <- make_3panel_left(noaa_directory, cluster_dirs, recall_dirs, year_range, output_directory)
+
+# Save the plot as a PNG + SVG file
+png_path <- here("figures","05_recall_hurricane_24hr1yr_day_binned_2010_2023.png")
+svg_path <- here("figures","05_recall_hurricane_24hr1yr_day_binned_2010_2023.svg")
+ggsave(filename = png_path, plot = figure, width = 4, height = 7, dpi = 300)
+ggsave(filename = svg_path, plot = figure, width = 4, height = 7, device = "svg")
+
+#### 2000-2023 ----
+year_range <- 2000:2023
+noaa_directory <- here("data", "output", "04_noaa", "southeast", "summary", "hurricane")
+cluster_dirs <-  here("data", "output", "03_cluster", "02_cluster","24hr1yr", "points", "summary")
+recall_dirs <-  here("data", "output", "05_validation", "recall","24hr1yr", "raster", "2000_2023_recall_24hr1yr_hurricane.nc")
+output_directory <- here("figures")
+figure <- make_3panel_left(noaa_directory, cluster_dirs, recall_dirs, year_range, output_directory)
+
+# Save the plot as a PNG + SVG file
+png_path <- here("figures","05_recall_hurricane_24hr1yr_day_binned_2000_2023.png")
+svg_path <- here("figures","05_recall_hurricane_24hr1yr_day_binned_2000_2023.svg")
+ggsave(filename = png_path, plot = figure, width = 4, height = 7, dpi = 300)
+ggsave(filename = svg_path, plot = figure, width = 4, height = 7, device = "svg")
+
+#### 1996-2023 ----
+year_range <- 1996:2023
+noaa_directory <- here("data", "output", "04_noaa", "southeast", "summary", "hurricane")
+cluster_dirs <-  here("data", "output", "03_cluster", "02_cluster","24hr1yr", "points", "summary")
+recall_dirs <-  here("data", "output", "05_validation", "recall","24hr1yr", "raster", "1996_2023_recall_24hr1yr_hurricane.nc")
+output_directory <- here("figures")
+figure <- make_3panel_left(noaa_directory, cluster_dirs, recall_dirs, year_range, output_directory)
+
+# Save the plot as a PNG + SVG file
+png_path <- here("figures","05_recall_hurricane_24hr1yr_day_binned_1996_2023.png")
+svg_path <- here("figures","05_recall_hurricane_24hr1yr_day_binned_1996_2023.svg")
+ggsave(filename = png_path, plot = figure, width = 4, height = 7, dpi = 300)
+ggsave(filename = svg_path, plot = figure, width = 4, height = 7, device = "svg")
+
+### Tropical Depression ----
+#### 2019-2023 ----
+year_range <- 2019:2023
+noaa_directory <- here("data", "output", "04_noaa", "southeast", "summary", "tropical_depression")
+cluster_dirs <-  here("data", "output", "03_cluster", "02_cluster","24hr1yr", "points", "summary")
+recall_dirs <-  here("data", "output", "05_validation", "recall","24hr1yr", "raster", "2019_2023_recall_24hr1yr_tropical_depression.nc")
+output_directory <- here("figures")
+figure <- make_3panel_left(noaa_directory, cluster_dirs, recall_dirs, year_range, output_directory)
+
+# Save the plot as a PNG + SVG file
+png_path <- here("figures","05_recall_tropical_depression_24hr1yr_day_binned_2019_2023.png")
+svg_path <- here("figures","05_recall_tropical_depression_24hr1yr_day_binned_2019_2023.svg")
+ggsave(filename = png_path, plot = figure, width = 4, height = 7, dpi = 300)
+ggsave(filename = svg_path, plot = figure, width = 4, height = 7, device = "svg")
+
+#### 2010-2023 ----
+year_range <- 2010:2023
+noaa_directory <- here("data", "output", "04_noaa", "southeast", "summary", "tropical_depression")
+cluster_dirs <-  here("data", "output", "03_cluster", "02_cluster","24hr1yr", "points", "summary")
+recall_dirs <-  here("data", "output", "05_validation", "recall","24hr1yr", "raster", "2010_2023_recall_24hr1yr_tropical_depression.nc")
+output_directory <- here("figures")
+figure <- make_3panel_left(noaa_directory, cluster_dirs, recall_dirs, year_range, output_directory)
+
+# Save the plot as a PNG + SVG file
+png_path <- here("figures","05_recall_tropical_depression_24hr1yr_day_binned_2010_2023.png")
+svg_path <- here("figures","05_recall_tropical_depression_24hr1yr_day_binned_2010_2023.svg")
+ggsave(filename = png_path, plot = figure, width = 4, height = 7, dpi = 300)
+ggsave(filename = svg_path, plot = figure, width = 4, height = 7, device = "svg")
+
+#### 2000-2023 ----
+year_range <- 2000:2023
+noaa_directory <- here("data", "output", "04_noaa", "southeast", "summary", "tropical_depression")
+cluster_dirs <-  here("data", "output", "03_cluster", "02_cluster","24hr1yr", "points", "summary")
+recall_dirs <-  here("data", "output", "05_validation", "recall","24hr1yr", "raster", "2000_2023_recall_24hr1yr_tropical_depression.nc")
+output_directory <- here("figures")
+figure <- make_3panel_left(noaa_directory, cluster_dirs, recall_dirs, year_range, output_directory)
+
+# Save the plot as a PNG + SVG file
+png_path <- here("figures","05_recall_tropical_depression_24hr1yr_day_binned_2000_2023.png")
+svg_path <- here("figures","05_recall_tropical_depression_24hr1yr_day_binned_2000_2023.svg")
+ggsave(filename = png_path, plot = figure, width = 4, height = 7, dpi = 300)
+ggsave(filename = svg_path, plot = figure, width = 4, height = 7, device = "svg")
+
+#### 1996-2023 ----
+year_range <- 1996:2023
+noaa_directory <- here("data", "output", "04_noaa", "southeast", "summary", "tropical_depression")
+cluster_dirs <-  here("data", "output", "03_cluster", "02_cluster","24hr1yr", "points", "summary")
+recall_dirs <-  here("data", "output", "05_validation", "recall","24hr1yr", "raster", "1996_2023_recall_24hr1yr_tropical_depression.nc")
+output_directory <- here("figures")
+figure <- make_3panel_left(noaa_directory, cluster_dirs, recall_dirs, year_range, output_directory)
+
+# Save the plot as a PNG + SVG file
+png_path <- here("figures","05_recall_tropical_depression_24hr1yr_day_binned_1996_2023.png")
+svg_path <- here("figures","05_recall_tropical_depression_24hr1yr_day_binned_1996_2023.svg")
+ggsave(filename = png_path, plot = figure, width = 4, height = 7, dpi = 300)
+ggsave(filename = svg_path, plot = figure, width = 4, height = 7, device = "svg")
+
+### Tropical Storm ----
+#### 2019-2023 ----
+year_range <- 2019:2023
+noaa_directory <- here("data", "output", "04_noaa", "southeast", "summary", "tropical_storm")
+cluster_dirs <-  here("data", "output", "03_cluster", "02_cluster","24hr1yr", "points", "summary")
+recall_dirs <-  here("data", "output", "05_validation", "recall","24hr1yr", "raster", "2019_2023_recall_24hr1yr_tropical_storm.nc")
+output_directory <- here("figures")
+figure <- make_3panel_left(noaa_directory, cluster_dirs, recall_dirs, year_range, output_directory)
+
+# Save the plot as a PNG + SVG file
+png_path <- here("figures","05_recall_tropical_storm_24hr1yr_day_binned_2019_2023.png")
+svg_path <- here("figures","05_recall_tropical_storm_24hr1yr_day_binned_2019_2023.svg")
+ggsave(filename = png_path, plot = figure, width = 4, height = 7, dpi = 300)
+ggsave(filename = svg_path, plot = figure, width = 4, height = 7, device = "svg")
+
+#### 2010-2023 ----
+year_range <- 2010:2023
+noaa_directory <- here("data", "output", "04_noaa", "southeast", "summary", "tropical_storm")
+cluster_dirs <-  here("data", "output", "03_cluster", "02_cluster","24hr1yr", "points", "summary")
+recall_dirs <-  here("data", "output", "05_validation", "recall","24hr1yr", "raster", "2010_2023_recall_24hr1yr_tropical_storm.nc")
+output_directory <- here("figures")
+figure <- make_3panel_left(noaa_directory, cluster_dirs, recall_dirs, year_range, output_directory)
+
+# Save the plot as a PNG + SVG file
+png_path <- here("figures","05_recall_tropical_storm_24hr1yr_day_binned_2010_2023.png")
+svg_path <- here("figures","05_recall_tropical_storm_24hr1yr_day_binned_2010_2023.svg")
+ggsave(filename = png_path, plot = figure, width = 4, height = 7, dpi = 300)
+ggsave(filename = svg_path, plot = figure, width = 4, height = 7, device = "svg")
+
+#### 2000-2023 ----
+year_range <- 2000:2023
+noaa_directory <- here("data", "output", "04_noaa", "southeast", "summary", "tropical_storm")
+cluster_dirs <-  here("data", "output", "03_cluster", "02_cluster","24hr1yr", "points", "summary")
+recall_dirs <-  here("data", "output", "05_validation", "recall","24hr1yr", "raster", "2000_2023_recall_24hr1yr_tropical_storm.nc")
+output_directory <- here("figures")
+figure <- make_3panel_left(noaa_directory, cluster_dirs, recall_dirs, year_range, output_directory)
+
+# Save the plot as a PNG + SVG file
+png_path <- here("figures","05_recall_tropical_storm_24hr1yr_day_binned_2000_2023.png")
+svg_path <- here("figures","05_recall_tropical_storm_24hr1yr_day_binned_2000_2023.svg")
+ggsave(filename = png_path, plot = figure, width = 4, height = 7, dpi = 300)
+ggsave(filename = svg_path, plot = figure, width = 4, height = 7, device = "svg")
+
+#### 1996-2023 ----
+year_range <- 1996:2023
+noaa_directory <- here("data", "output", "04_noaa", "southeast", "summary", "tropical_storm")
+cluster_dirs <-  here("data", "output", "03_cluster", "02_cluster","24hr1yr", "points", "summary")
+recall_dirs <-  here("data", "output", "05_validation", "recall","24hr1yr", "raster", "1996_2023_recall_24hr1yr_tropical_storm.nc")
+output_directory <- here("figures")
+figure <- make_3panel_left(noaa_directory, cluster_dirs, recall_dirs, year_range, output_directory)
+
+# Save the plot as a PNG + SVG file
+png_path <- here("figures","05_recall_tropical_storm_24hr1yr_day_binned_1996_2023.png")
+svg_path <- here("figures","05_recall_tropical_storm_24hr1yr_day_binned_1996_2023.svg")
+ggsave(filename = png_path, plot = figure, width = 4, height = 7, dpi = 300)
+ggsave(filename = svg_path, plot = figure, width = 4, height = 7, device = "svg")
+
+### Typhoon ----
+#### 2019-2023 ----
+year_range <- 2019:2023
+noaa_directory <- here("data", "output", "04_noaa", "southeast", "summary", "typhoon")
+cluster_dirs <-  here("data", "output", "03_cluster", "02_cluster","24hr1yr", "points", "summary")
+recall_dirs <-  here("data", "output", "05_validation", "recall","24hr1yr", "raster", "2019_2023_recall_24hr1yr_typhoon.nc")
+output_directory <- here("figures")
+figure <- make_3panel_left(noaa_directory, cluster_dirs, recall_dirs, year_range, output_directory)
+
+# Save the plot as a PNG + SVG file
+png_path <- here("figures","05_recall_typhoon_24hr1yr_day_binned_2019_2023.png")
+svg_path <- here("figures","05_recall_typhoon_24hr1yr_day_binned_2019_2023.svg")
+ggsave(filename = png_path, plot = figure, width = 4, height = 7, dpi = 300)
+ggsave(filename = svg_path, plot = figure, width = 4, height = 7, device = "svg")
+
+#### 2010-2023 ----
+year_range <- 2010:2023
+noaa_directory <- here("data", "output", "04_noaa", "southeast", "summary", "typhoon")
+cluster_dirs <-  here("data", "output", "03_cluster", "02_cluster","24hr1yr", "points", "summary")
+recall_dirs <-  here("data", "output", "05_validation", "recall","24hr1yr", "raster", "2010_2023_recall_24hr1yr_typhoon.nc")
+output_directory <- here("figures")
+figure <- make_3panel_left(noaa_directory, cluster_dirs, recall_dirs, year_range, output_directory)
+
+# Save the plot as a PNG + SVG file
+png_path <- here("figures","05_recall_typhoon_24hr1yr_day_binned_2010_2023.png")
+svg_path <- here("figures","05_recall_typhoon_24hr1yr_day_binned_2010_2023.svg")
+ggsave(filename = png_path, plot = figure, width = 4, height = 7, dpi = 300)
+ggsave(filename = svg_path, plot = figure, width = 4, height = 7, device = "svg")
+
+#### 2000-2023 ----
+year_range <- 2000:2023
+noaa_directory <- here("data", "output", "04_noaa", "southeast", "summary", "typhoon")
+cluster_dirs <-  here("data", "output", "03_cluster", "02_cluster","24hr1yr", "points", "summary")
+recall_dirs <-  here("data", "output", "05_validation", "recall","24hr1yr", "raster", "2000_2023_recall_24hr1yr_typhoon.nc")
+output_directory <- here("figures")
+figure <- make_3panel_left(noaa_directory, cluster_dirs, recall_dirs, year_range, output_directory)
+
+# Save the plot as a PNG + SVG file
+png_path <- here("figures","05_recall_typhoon_24hr1yr_day_binned_2000_2023.png")
+svg_path <- here("figures","05_recall_typhoon_24hr1yr_day_binned_2000_2023.svg")
+ggsave(filename = png_path, plot = figure, width = 4, height = 7, dpi = 300)
+ggsave(filename = svg_path, plot = figure, width = 4, height = 7, device = "svg")
+
+#### 1996-2023 ----
+year_range <- 1996:2023
+noaa_directory <- here("data", "output", "04_noaa", "southeast", "summary", "typhoon")
+cluster_dirs <-  here("data", "output", "03_cluster", "02_cluster","24hr1yr", "points", "summary")
+recall_dirs <-  here("data", "output", "05_validation", "recall","24hr1yr", "raster", "1996_2023_recall_24hr1yr_typhoon.nc")
+output_directory <- here("figures")
+figure <- make_3panel_left(noaa_directory, cluster_dirs, recall_dirs, year_range, output_directory)
+
+# Save the plot as a PNG + SVG file
+png_path <- here("figures","05_recall_typhoon_24hr1yr_day_binned_1996_2023.png")
+svg_path <- here("figures","05_recall_typhoon_24hr1yr_day_binned_1996_2023.svg")
+ggsave(filename = png_path, plot = figure, width = 4, height = 7, dpi = 300)
+ggsave(filename = svg_path, plot = figure, width = 4, height = 7, device = "svg")
 
 # 2. Aggregate recall ----
 aggregate_validation_csv_overall <- function(input_folder, year_range) {
@@ -772,12 +1158,14 @@ aggregate_validation_csv_overall <- function(input_folder, year_range) {
   return(aggregated)
 }
 
-# Heat Index Advisory ----
+# Heat Index ----
+# Excess Heat ----
+## Heat Advisory ----
 recall <- data.frame(res_0.25 = rep(NA,3),
                      res_0.3075 = rep(NA,3),
                      res_0.39 = rep(NA,3))
 
-## 0.25 deg / day ----
+### 0.25 deg / day ----
 input_folder <- here("data", "output", "05_validation", "recall","advisory", "day", "0.25", "excess_heat")
 year_range <- 2000:2023
 recall$res_0.25[1] <- aggregate_validation_csv_overall(input_folder, year_range)[,3]
@@ -790,7 +1178,7 @@ input_folder <- here("data", "output", "05_validation", "recall","advisory", "da
 year_range <- 2019:2023
 recall$res_0.25[3] <- aggregate_validation_csv_overall(input_folder, year_range)[,3]
 
-## 0.3075 deg / day----
+### 0.3075 deg / day----
 input_folder <- here("data", "output", "05_validation", "recall","advisory", "day", "0.3075", "excess_heat")
 year_range <- 2000:2023
 recall$res_0.3075[1] <- aggregate_validation_csv_overall(input_folder, year_range)[,3]
@@ -803,7 +1191,7 @@ input_folder <- here("data", "output", "05_validation", "recall","advisory", "da
 year_range <- 2019:2023
 recall$res_0.3075[3] <- aggregate_validation_csv_overall(input_folder, year_range)[,3]
 
-## 0.39 deg / day ----
+### 0.39 deg / day ----
 input_folder <- here("data", "output", "05_validation", "recall","advisory", "day", "0.39", "excess_heat")
 year_range <- 2000:2023
 recall$res_0.39[1] <- aggregate_validation_csv_overall(input_folder, year_range)[,3]
@@ -819,14 +1207,14 @@ recall$res_0.39[3] <- aggregate_validation_csv_overall(input_folder, year_range)
 row.names(recall) <- c('2000-2023','2010-2023','2019-2023')
 
 # save
-write.csv(recall,here('data','output','05_validation','recall','advisory','advisory_recall.csv'))
+write.csv(recall,here('data','output','05_validation','recall','advisory','advisory_recall_excess_heat.csv'))
 
-# Heat Index Warning ----
+## Heat Warning ----
 recall <- data.frame(res_0.25 = rep(NA,3),
                      res_0.3075 = rep(NA,3),
                      res_0.39 = rep(NA,3))
 
-## 0.25 deg / day ----
+### 0.25 deg / day ----
 input_folder <- here("data", "output", "05_validation", "recall","warning", "day", "0.25", "excess_heat")
 year_range <- 2000:2023
 recall$res_0.25[1] <- aggregate_validation_csv_overall(input_folder, year_range)[,3]
@@ -839,7 +1227,7 @@ input_folder <- here("data", "output", "05_validation", "recall","warning", "day
 year_range <- 2019:2023
 recall$res_0.25[3] <- aggregate_validation_csv_overall(input_folder, year_range)[,3]
 
-## 0.3075 deg / day----
+### 0.3075 deg / day----
 input_folder <- here("data", "output", "05_validation", "recall","warning", "day", "0.3075", "excess_heat")
 year_range <- 2000:2023
 recall$res_0.3075[1] <- aggregate_validation_csv_overall(input_folder, year_range)[,3]
@@ -852,7 +1240,7 @@ input_folder <- here("data", "output", "05_validation", "recall","warning", "day
 year_range <- 2019:2023
 recall$res_0.3075[3] <- aggregate_validation_csv_overall(input_folder, year_range)[,3]
 
-## 0.39 deg / day ----
+### 0.39 deg / day ----
 input_folder <- here("data", "output", "05_validation", "recall","warning", "day", "0.39", "excess_heat")
 year_range <- 2000:2023
 recall$res_0.39[1] <- aggregate_validation_csv_overall(input_folder, year_range)[,3]
@@ -868,7 +1256,107 @@ recall$res_0.39[3] <- aggregate_validation_csv_overall(input_folder, year_range)
 row.names(recall) <- c('2000-2023','2010-2023','2019-2023')
 
 # save
-write.csv(recall,here('data','output','05_validation','recall','warning','warning_recall.csv'))
+write.csv(recall,here('data','output','05_validation','recall','warning','warning_recall_excess_heat.csv'))
+
+# Heat ----
+## Heat Advisory ----
+recall <- data.frame(res_0.25 = rep(NA,3),
+                     res_0.3075 = rep(NA,3),
+                     res_0.39 = rep(NA,3))
+
+### 0.25 deg / day ----
+input_folder <- here("data", "output", "05_validation", "recall","advisory", "day", "0.25", "heat")
+year_range <- 2000:2023
+recall$res_0.25[1] <- aggregate_validation_csv_overall(input_folder, year_range)[,3]
+
+input_folder <- here("data", "output", "05_validation", "recall","advisory", "day", "0.25", "heat")
+year_range <- 2010:2023
+recall$res_0.25[2] <- aggregate_validation_csv_overall(input_folder, year_range)[,3]
+
+input_folder <- here("data", "output", "05_validation", "recall","advisory", "day", "0.25", "heat")
+year_range <- 2019:2023
+recall$res_0.25[3] <- aggregate_validation_csv_overall(input_folder, year_range)[,3]
+
+### 0.3075 deg / day----
+input_folder <- here("data", "output", "05_validation", "recall","advisory", "day", "0.3075", "heat")
+year_range <- 2000:2023
+recall$res_0.3075[1] <- aggregate_validation_csv_overall(input_folder, year_range)[,3]
+
+input_folder <- here("data", "output", "05_validation", "recall","advisory", "day", "0.3075", "heat")
+year_range <- 2010:2023
+recall$res_0.3075[2] <- aggregate_validation_csv_overall(input_folder, year_range)[,3]
+
+input_folder <- here("data", "output", "05_validation", "recall","advisory", "day", "0.3075", "heat")
+year_range <- 2019:2023
+recall$res_0.3075[3] <- aggregate_validation_csv_overall(input_folder, year_range)[,3]
+
+### 0.39 deg / day ----
+input_folder <- here("data", "output", "05_validation", "recall","advisory", "day", "0.39", "heat")
+year_range <- 2000:2023
+recall$res_0.39[1] <- aggregate_validation_csv_overall(input_folder, year_range)[,3]
+
+input_folder <- here("data", "output", "05_validation", "recall","advisory", "day", "0.39", "heat")
+year_range <- 2010:2023
+recall$res_0.39[2] <- aggregate_validation_csv_overall(input_folder, year_range)[,3]
+
+input_folder <- here("data", "output", "05_validation", "recall","advisory", "day", "0.39", "heat")
+year_range <- 2019:2023
+recall$res_0.39[3] <- aggregate_validation_csv_overall(input_folder, year_range)[,3]
+
+row.names(recall) <- c('2000-2023','2010-2023','2019-2023')
+
+# save
+write.csv(recall,here('data','output','05_validation','recall','advisory','advisory_recall_heat.csv'))
+
+## Heat Warning ----
+recall <- data.frame(res_0.25 = rep(NA,3),
+                     res_0.3075 = rep(NA,3),
+                     res_0.39 = rep(NA,3))
+
+### 0.25 deg / day ----
+input_folder <- here("data", "output", "05_validation", "recall","warning", "day", "0.25", "heat")
+year_range <- 2000:2023
+recall$res_0.25[1] <- aggregate_validation_csv_overall(input_folder, year_range)[,3]
+
+input_folder <- here("data", "output", "05_validation", "recall","warning", "day", "0.25", "heat")
+year_range <- 2010:2023
+recall$res_0.25[2] <- aggregate_validation_csv_overall(input_folder, year_range)[,3]
+
+input_folder <- here("data", "output", "05_validation", "recall","warning", "day", "0.25", "heat")
+year_range <- 2019:2023
+recall$res_0.25[3] <- aggregate_validation_csv_overall(input_folder, year_range)[,3]
+
+### 0.3075 deg / day----
+input_folder <- here("data", "output", "05_validation", "recall","warning", "day", "0.3075", "heat")
+year_range <- 2000:2023
+recall$res_0.3075[1] <- aggregate_validation_csv_overall(input_folder, year_range)[,3]
+
+input_folder <- here("data", "output", "05_validation", "recall","warning", "day", "0.3075", "heat")
+year_range <- 2010:2023
+recall$res_0.3075[2] <- aggregate_validation_csv_overall(input_folder, year_range)[,3]
+
+input_folder <- here("data", "output", "05_validation", "recall","warning", "day", "0.3075", "heat")
+year_range <- 2019:2023
+recall$res_0.3075[3] <- aggregate_validation_csv_overall(input_folder, year_range)[,3]
+
+### 0.39 deg / day ----
+input_folder <- here("data", "output", "05_validation", "recall","warning", "day", "0.39", "heat")
+year_range <- 2000:2023
+recall$res_0.39[1] <- aggregate_validation_csv_overall(input_folder, year_range)[,3]
+
+input_folder <- here("data", "output", "05_validation", "recall","warning", "day", "0.39", "heat")
+year_range <- 2010:2023
+recall$res_0.39[2] <- aggregate_validation_csv_overall(input_folder, year_range)[,3]
+
+input_folder <- here("data", "output", "05_validation", "recall","warning", "day", "0.39", "heat")
+year_range <- 2019:2023
+recall$res_0.39[3] <- aggregate_validation_csv_overall(input_folder, year_range)[,3]
+
+row.names(recall) <- c('2000-2023','2010-2023','2019-2023')
+
+# save
+write.csv(recall,here('data','output','05_validation','recall','warning','warning_recall_heat.csv'))
+
 
 # Precipitation ----
 recall <- data.frame(flash_flood = rep(NA,3),

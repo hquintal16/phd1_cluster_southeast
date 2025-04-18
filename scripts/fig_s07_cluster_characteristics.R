@@ -502,3 +502,114 @@ my_fourpanel_histogram_all_years_total(
   here::here("data", "output", "05_validation", "summary", "warning", "cluster", "cluster_0.3075_excess_heat_summary.csv"),
   here::here("data", "output", "05_validation", "summary", "warning", "cluster", "cluster_0.39_excess_heat_summary.csv")
 )
+
+# 2025-04-18 updates ----
+
+# ——— Helper to turn one NetCDF cluster‑file into a small stats tibble ———
+process_nc_file <- function(nc_path) {
+  # infer grid spacing (°) from the filename, e.g. “_0.25_”
+  grid_size <- str_extract(basename(nc_path), "(?<=_)[0-9.]+(?=_)") %>% as.numeric()
+  km_per_deg <- 111.32
+  
+  # read the NetCDF as a SpatRaster with a daily time dimension
+  r <- rast(nc_path)
+  times <- time(r)
+  if (is.null(times)) stop("No time dimension in ", nc_path)
+  
+  # pull out all non‑zero cluster IDs across space×time
+  df <- as.data.frame(r, xy = TRUE) %>%
+    pivot_longer(-c(x,y), names_to = "time", values_to = "cluster") %>%
+    mutate(
+      date = as.Date(time),
+      lon  = x,
+      lat  = y
+    ) %>%
+    filter(cluster != 0)
+  
+  # per‑cluster duration and total spatial count
+  stats <- df %>%
+    group_by(cluster) %>%
+    summarize(
+      # +1 so a single‑day event has duration = 1
+      duration     = as.numeric(diff(range(date))) + 1,
+      total_count  = n_distinct(paste0(lon, "_", lat)),
+      .groups      = "drop"
+    ) %>%
+    mutate(
+      total_extent = total_count * (grid_size * km_per_deg)^2,
+      grid         = factor(grid_size)
+    ) %>%
+    select(cluster, grid, duration, total_extent)
+  
+  return(stats)
+}
+
+# ——— Main plotting function ———
+plot_cluster_duration_extent <- function(heat_dirs, precip_dir, base_filename = "2x2_duration_extent") {
+  # (1) gather all .nc in each group
+  heat_files   <- unlist(lapply(heat_dirs,   list.files, pattern = "\\.nc$", full.names = TRUE))
+  precip_files <- list.files(precip_dir, pattern = "\\.nc$", full.names = TRUE)
+  
+  # (2) process
+  heat_df   <- bind_rows(lapply(heat_files,   process_nc_file))
+  precip_df <- bind_rows(lapply(precip_files, process_nc_file))
+  
+  # (3) compute per‑panel x‑limits
+  dur_lim_heat   <- range(heat_df$duration,   na.rm = TRUE)
+  dur_lim_precip <- range(precip_df$duration, na.rm = TRUE)
+  ext_lim_heat   <- range(heat_df$total_extent[heat_df$total_extent>0],   na.rm=TRUE)
+  ext_lim_precip <- range(precip_df$total_extent[precip_df$total_extent>0], na.rm=TRUE)
+  
+  # common styling
+  common_theme <- theme_bw() +
+    theme(legend.position = "bottom",
+          panel.border    = element_rect(color="black", fill=NA))
+  res_scale <- scale_fill_discrete(name = "Grid (°)")
+  
+  # (4) top row: duration
+  p1_heat <- ggplot(heat_df, aes(duration, fill = grid)) +
+    geom_histogram(bins = 30, position = "identity", alpha = 0.4, color = NA) +
+    scale_x_continuous(limits = dur_lim_heat) +
+    labs(x = "Duration (days)", y = "Count", title = "Heat clusters") +
+    common_theme + res_scale
+  
+  p1_precip <- ggplot(precip_df, aes(duration, fill = grid)) +
+    geom_histogram(bins = 30, position = "identity", alpha = 0.4, color = NA) +
+    scale_x_continuous(limits = dur_lim_precip) +
+    labs(x = "Duration (days)", y = NULL, title = "Precip. clusters") +
+    common_theme + res_scale
+  
+  # (5) bottom row: total_extent (log scale)
+  p2_heat <- ggplot(heat_df, aes(total_extent, fill = grid)) +
+    geom_histogram(bins = 30, position = "identity", alpha = 0.4, color = NA) +
+    scale_x_log10(limits = ext_lim_heat) +
+    labs(x = "Total extent (km²)", y = "Count") +
+    common_theme + res_scale
+  
+  p2_precip <- ggplot(precip_df, aes(total_extent, fill = grid)) +
+    geom_histogram(bins = 30, position = "identity", alpha = 0.4, color = NA) +
+    scale_x_log10(limits = ext_lim_precip) +
+    labs(x = "Total extent (km²)", y = NULL) +
+    common_theme + res_scale
+  
+  # (6) patchwork 2×2 layout
+  combined <- (p1_heat   | p1_precip) /
+    (p2_heat   | p2_precip) +
+    plot_layout(guides = "collect") &
+    theme(legend.position = "bottom")
+  
+  # save
+  ggsave(paste0(base_filename, ".png"), combined, width = 12, height = 8, dpi = 300)
+  ggsave(paste0(base_filename, ".svg"), combined, width = 12, height = 8, device = "svg")
+  
+  invisible(list(heat = heat_df, precip = precip_df))
+}
+
+# ——— Example call ———
+plot_cluster_duration_extent(
+  heat_dirs   = c(here::here("data", "output", "05_validation", "summary", "advisory", "cluster", "cluster_0.25_excess_heat_summary.csv"),
+                  here::here("data", "output", "05_validation", "summary", "advisory", "cluster", "cluster_0.3075_excess_heat_summary.csv"),
+                  here::here("data", "output", "05_validation", "summary", "advisory", "cluster", "cluster_0.39_excess_heat_summary.csv")),
+  precip_dir  = "data/precipitation/clusters",
+  base_filename = "dur_ext_2x2"
+)

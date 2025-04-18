@@ -39,114 +39,119 @@ prepare_stm <- function(file_path, var_name) {
   return(stm)
 }
 
-# Define file paths (adjust as necessary)
+# Define file paths
 heat_file <- here("data", "output", "02_covariance", "03_space_time_metric", 
                   "heat_index", "month", "heat_index_space_time_metric_optimal.txt")
 precip_file <- here("data", "output", "02_covariance", "03_space_time_metric", 
                     "precipitation", "month", "precipitation_space_time_metric_optimal.txt")
 
 # Prepare the datasets
-stm_heat <- prepare_stm(heat_file, "HeatIndex")
+stm_heat   <- prepare_stm(heat_file, "HeatIndex")
 stm_precip <- prepare_stm(precip_file, "Precipitation")
-
-# Combine the datasets for plotting
-raw_data <- bind_rows(stm_heat, stm_precip)
+raw_data   <- bind_rows(stm_heat, stm_precip)
 
 # Define colors with alpha adjustment (60% opacity)
-colors <- c("HeatIndex" = alpha("red", 0.6), "Precipitation" = alpha("blue", 0.6))
+colors <- c("HeatIndex" = alpha("red",   0.6),
+            "Precipitation" = alpha("blue", 0.6))
 
-# For the Precipitation plots, force a common y-axis range:
+# Precipitation y‐limits (for reference in bottom row)
 precip_data <- filter(raw_data, variable == "Precipitation")
 common_ylim <- range(precip_data$stm2, na.rm = TRUE)
 
-# Create individual plots
-
-# (a) HeatIndex Raw: Scatter plot of raw data (points)
-p_hi_raw <- ggplot(filter(raw_data, variable == "HeatIndex"), aes(x = date, y = stm2)) +
+# (a) HeatIndex Raw: Scatter plot of raw data
+p_hi_raw <- ggplot(filter(raw_data, variable == "HeatIndex"),
+                   aes(x = date, y = stm2)) +
   geom_point(color = colors["HeatIndex"]) +
   geom_hline(yintercept = 1, linetype = "dashed") +
-  labs(y = "Heat Index Space Time Metric", x = "Date") +
-  theme_bw()
+  labs(y = "Heat Index Space Time Metric") +
+  coord_cartesian(ylim = c(0, 6)) +
+  theme_bw() +
+  theme(
+    axis.title.x  = element_blank(),
+    axis.text.x   = element_blank(),
+    axis.ticks.x  = element_blank()
+  )
 
-# (b) HeatIndex Month: Boxplot aggregated by month
-p_hi_month <- ggplot(filter(raw_data, variable == "HeatIndex"), aes(x = month, y = stm2)) +
+# (b) HeatIndex Month: Boxplot by month
+p_hi_month <- ggplot(filter(raw_data, variable == "HeatIndex"),
+                     aes(x = month, y = stm2)) +
   geom_boxplot(fill = colors["HeatIndex"]) +
   geom_hline(yintercept = 1, linetype = "dashed") +
-  labs(y = "Heat Index Space Time Metric", x = "Month") +
-  theme_bw()
+  labs(x = "Month") +
+  coord_cartesian(ylim = c(0, 6)) +
+  theme_bw() +
+  theme(
+    axis.title.x  = element_blank(),
+    axis.text.x   = element_blank(),
+    axis.ticks.x  = element_blank(),
+    axis.title.y  = element_blank(),
+    axis.text.y   = element_blank(),
+    axis.ticks.y  = element_blank()
+  ) +
+  scale_y_continuous(guide = "none")
 
-# (c) HeatIndex Season: Boxplot aggregated by season with legend inside
-p_hi_season <- ggplot(filter(raw_data, variable == "HeatIndex"), aes(x = season, y = stm2)) +
+# (c) HeatIndex Season: Boxplot by season
+p_hi_season <- ggplot(filter(raw_data, variable == "HeatIndex"),
+                      aes(x = season, y = stm2)) +
   geom_boxplot(fill = colors["HeatIndex"]) +
   geom_hline(yintercept = 1, linetype = "dashed") +
-  labs(y = "Heat Index Space Time Metric", x = "Season") +
-  theme_bw()
+  labs(x = "Season") +
+  coord_cartesian(ylim = c(0, 6)) +
+  theme_bw() +
+  theme(
+    axis.title.x  = element_blank(),
+    axis.text.x   = element_blank(),
+    axis.ticks.x  = element_blank(),
+    axis.title.y  = element_blank(),
+    axis.text.y   = element_blank(),
+    axis.ticks.y  = element_blank()
+  ) +
+  scale_y_continuous(guide = "none")
 
-# (d) Precipitation Raw: Scatter plot (points), with common y-axis limits
-p_pr_raw <- ggplot(filter(raw_data, variable == "Precipitation"), aes(x = date, y = stm2)) +
+# (d) Precipitation Raw: Scatter plot, with its own y‐limits
+p_pr_raw <- ggplot(filter(raw_data, variable == "Precipitation"),
+                   aes(x = date, y = stm2)) +
   geom_point(color = colors["Precipitation"]) +
   geom_hline(yintercept = 1, linetype = "dashed") +
   labs(y = "Precipitation Space Time Metric", x = "Date") +
   coord_cartesian(ylim = common_ylim) +
   theme_bw()
 
-# (e) Precipitation Month: Boxplot aggregated by month, with common y-axis limits
-p_pr_month <- ggplot(filter(raw_data, variable == "Precipitation"), aes(x = month, y = stm2)) +
+# (e) Precipitation Month: Boxplot by month
+p_pr_month <- ggplot(filter(raw_data, variable == "Precipitation"),
+                     aes(x = month, y = stm2)) +
   geom_boxplot(fill = colors["Precipitation"]) +
   geom_hline(yintercept = 1, linetype = "dashed") +
-  labs(y = "Precipitation Space Time Metric", x = "Month") +
+  labs(x = "Month") +
   coord_cartesian(ylim = common_ylim) +
-  theme_bw()
+  theme_bw() +
+  theme(
+    axis.title.y  = element_blank(),
+    axis.text.y   = element_blank(),
+    axis.ticks.y  = element_blank()
+  ) +
+  scale_y_continuous(guide = "none")
 
-# (f) Precipitation Season: Boxplot aggregated by season, with common y-axis limits
-p_pr_season <- ggplot(filter(raw_data, variable == "Precipitation"), aes(x = season, y = stm2)) +
+# (f) Precipitation Season: Boxplot by season
+p_pr_season <- ggplot(filter(raw_data, variable == "Precipitation"),
+                      aes(x = season, y = stm2)) +
   geom_boxplot(fill = colors["Precipitation"]) +
   geom_hline(yintercept = 1, linetype = "dashed") +
-  labs(y = "Precipitation Space Time Metric", x = "Season") +
+  labs(x = "Season") +
   coord_cartesian(ylim = common_ylim) +
-  theme_bw()
-
-# Remove redundant axes elements:
-# For the top row (HeatIndex panels), remove x-axis elements.
-p_hi_raw <- p_hi_raw + theme(axis.title.x = element_blank(),
-                             axis.text.x = element_blank(),
-                             axis.ticks.x = element_blank())
-p_hi_month <- p_hi_month + theme(axis.title.x = element_blank(),
-                                 axis.text.x = element_blank(),
-                                 axis.ticks.x = element_blank())
-p_hi_season <- p_hi_season + theme(axis.title.x = element_blank(),
-                                   axis.text.x = element_blank(),
-                                   axis.ticks.x = element_blank())
-
-# For non-left panels, remove y-axis elements by using both theme() and scale_y_continuous.
-p_hi_month <- p_hi_month +
-  theme(axis.title.y = element_blank(),
-        axis.text.y = element_blank(),
-        axis.ticks.y = element_blank()) +
-  scale_y_continuous(guide = "none")
-p_hi_season <- p_hi_season +
-  theme(axis.title.y = element_blank(),
-        axis.text.y = element_blank(),
-        axis.ticks.y = element_blank()) +
-  scale_y_continuous(guide = "none")
-p_pr_month <- p_pr_month +
-  theme(axis.title.y = element_blank(),
-        axis.text.y = element_blank(),
-        axis.ticks.y = element_blank()) +
-  scale_y_continuous(guide = "none")
-p_pr_season <- p_pr_season +
-  theme(axis.title.y = element_blank(),
-        axis.text.y = element_blank(),
-        axis.ticks.y = element_blank()) +
+  theme_bw() +
+  theme(
+    axis.title.y  = element_blank(),
+    axis.text.y   = element_blank(),
+    axis.ticks.y  = element_blank()
+  ) +
   scale_y_continuous(guide = "none")
 
-# Combine the panels using patchwork
-# Layout:
-# Top row (HeatIndex): p_hi_raw | p_hi_month | p_hi_season
-# Bottom row (Precipitation): p_pr_raw | p_pr_month | p_pr_season
+# Combine with patchwork
 combined_plot <- (p_hi_raw + p_hi_month + p_hi_season) /
   (p_pr_raw + p_pr_month + p_pr_season) +
   plot_annotation(tag_levels = "a")
+
 
 # Define file paths using here
 png_path <- here("figures","03_space_time_metric.png")
@@ -154,8 +159,6 @@ svg_path <- here("figures","03_space_time_metric.svg")
 
 # Save the plot as a PNG file
 ggsave(filename = png_path, plot = combined_plot, width = 9, height = 6, dpi = 300)
-
-# Save the plot as an SVG file
 ggsave(filename = svg_path, plot = combined_plot, width = 9, height = 6, device = "svg")
 
 # Hyp testing ----
