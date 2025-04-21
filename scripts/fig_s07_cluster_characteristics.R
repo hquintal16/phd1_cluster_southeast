@@ -610,6 +610,433 @@ plot_cluster_duration_extent(
   heat_dirs   = c(here::here("data", "output", "05_validation", "summary", "advisory", "cluster", "cluster_0.25_excess_heat_summary.csv"),
                   here::here("data", "output", "05_validation", "summary", "advisory", "cluster", "cluster_0.3075_excess_heat_summary.csv"),
                   here::here("data", "output", "05_validation", "summary", "advisory", "cluster", "cluster_0.39_excess_heat_summary.csv")),
-  precip_dir  = "data/precipitation/clusters",
+  precip_dir  = here::here("data", "output", "05_validation", "summary", "advisory", "cluster", "cluster_0.25_excess_heat_summary.csv"),
   base_filename = "dur_ext_2x2"
 )
+
+# 2025-04-21 updates ----
+
+# 1. Read + preprocess CSV, filter to NC/SC clusters, expand counties, compute areas
+process_cluster_csv <- function(file_path) {
+  # 1) Read all as character
+  df <- readr::read_csv(file_path, col_types = readr::cols(.default = "c"))
+  
+  # 2) Always‐present numeric coercions
+  df <- df %>%
+    mutate(
+      cluster_id   = as.integer(cluster_id),
+      exposed_area = as.double(exposed_area),
+      era5_mean    = as.double(era5_mean),
+      era5_median  = as.double(era5_median),
+      era5_max     = as.double(era5_max)
+    )
+  
+  # 3) Check which duration column exists and coerce it
+  has_h <- "duration_hours" %in% names(df)
+  has_d <- "duration"       %in% names(df)
+  if (!has_h && !has_d) {
+    stop("CSV must have either `duration_hours` or `duration`.")
+  }
+  if (has_h) df <- df %>% mutate(duration_hours = as.double(duration_hours))
+  if (has_d) df <- df %>% mutate(duration       = as.double(duration))
+  
+  # 4) Rename the start‐date column
+  if ("start_datetime" %in% names(df)) {
+    df <- rename(df, raw_start = start_datetime)
+  } else if ("start_date" %in% names(df)) {
+    df <- rename(df, raw_start = start_date)
+  } else {
+    stop("No `start_datetime` or `start_date` in ", file_path)
+  }
+  
+  # 5) Robustly parse raw_start → start_date
+  df <- df %>%
+    mutate(
+      parsed_iso_ts = ymd_hms(raw_start, quiet = TRUE, tz = "UTC"),
+      parsed_iso    = ymd     (raw_start, quiet = TRUE, tz = "UTC"),
+      parsed_us_ts  = mdy_hms(raw_start, quiet = TRUE, tz = "UTC"),
+      parsed_us     = mdy     (raw_start, quiet = TRUE, tz = "UTC"),
+      start_date    = coalesce(parsed_iso_ts,
+                               parsed_iso,
+                               parsed_us_ts,
+                               parsed_us)
+    ) %>%
+    select(-parsed_iso_ts, -parsed_iso,
+           -parsed_us_ts,  -parsed_us)
+  
+  if (any(is.na(df$start_date))) {
+    bad <- unique(df$raw_start[is.na(df$start_date)])
+    stop("Failed to parse these raw_start values:\n",
+         paste0("  • ", bad, collapse = "\n"))
+  }
+  
+  # 6) Now compute duration_days in separate steps
+  if (has_d && !has_h) {
+    # only `duration` present
+    df <- df %>% mutate(duration_days = duration)
+  } else if (has_h && !has_d) {
+    # only `duration_hours` present
+    df <- df %>% mutate(duration_days = duration_hours / 24)
+  } else {
+    # both present: prefer `duration` if not NA, otherwise convert hours
+    df <- df %>% mutate(
+      duration_days = if_else(
+        !is.na(duration),
+        duration,
+        duration_hours / 24
+      )
+    )
+  }
+  if (any(is.na(df$duration_days))) {
+    stop("Some rows lack a valid duration; check your `duration`/`duration_hours` columns.")
+  }
+  
+  # 7) Split out exposed_counties
+  df <- df %>%
+    mutate(exposed_counties_list = str_split(exposed_counties, ";")) %>%
+    select(-raw_start)
+  
+  # 8) Filter to any NC/SC clusters
+  df <- df %>%
+    filter(
+      purrr::map_lgl(
+        exposed_counties_list,
+        ~ any(str_detect(.x,
+                         regex("north carolina,|south carolina,", ignore_case = TRUE)))
+      )
+    )
+  
+  # 9) Explode to one row per county
+  df_long <- df %>%
+    unnest(exposed_counties_list) %>%
+    rename(exposed_county = exposed_counties_list) %>%
+    mutate(
+      state  = str_to_title(str_extract(exposed_county, "^[^,]+")),
+      county = str_to_title(str_trim(str_extract(exposed_county, "(?<=,).*")))
+    ) %>%
+    filter(state %in% c("North Carolina", "South Carolina"))
+  
+  # 10) Load NC/SC counties + compute area
+  counties_sf <- counties(state = c("NC","SC"), cb = TRUE, class = "sf") %>%
+    transmute(
+      state = case_when(
+        STATEFP=="37" ~ "North Carolina",
+        STATEFP=="45" ~ "South Carolina"
+      ),
+      county = NAME,
+      geometry
+    ) %>%
+    mutate(county_area_km2 = as.numeric(st_area(geometry)) / 1e6)
+  
+  # 11) Join area back, summarize per‐cluster
+  areas <- st_set_geometry(counties_sf, NULL) %>%
+    select(state, county, county_area_km2)
+  
+  df_long <- df_long %>%
+    left_join(areas, by = c("state","county"))
+  
+  cluster_area <- df_long %>%
+    group_by(cluster_id, start_date, duration_days) %>%
+    summarize(
+      total_county_area = sum(county_area_km2, na.rm = TRUE),
+      .groups = "drop"
+    )
+  
+  # 12) Return for plotting
+  list(
+    df           = df,
+    df_long      = df_long,
+    counties_sf  = counties_sf,
+    cluster_area = cluster_area
+  )
+}
+# 1) Daily cluster count → points + loess
+plot_cluster_count <- function(df) {
+  df %>%
+    count(start_date) %>%
+    ggplot(aes(x = start_date, y = n)) +
+    geom_point(size = 1.5) +
+    geom_smooth(method = "loess", se = TRUE) +
+    labs(
+      title = "Heatwave daily count over time across the Carolinas",
+      x     = "Date",
+      y     = "Number of heatwaves"
+    ) +
+    theme_bw()
+}
+
+# Daily cluster durations → raw points + loess
+plot_cluster_duration <- function(df) {
+  ggplot(df, aes(x = start_date, y = duration_days + 1)) +
+    geom_point(size = 1.5) +
+    geom_smooth(method = "loess", se = TRUE) +
+    labs(
+      title = "Heatwave duration over time across the Carolinas",
+      x     = "Date",
+      y     = "Duration (days)"
+    ) +
+    theme_bw()
+}
+
+# Daily cluster exposed areas → raw points + loess
+plot_cluster_area <- function(cluster_area) {
+  ggplot(cluster_area, aes(x = start_date, y = total_county_area)) +
+    geom_point(size = 1.5) +
+    geom_smooth(method = "loess", se = TRUE) +
+    labs(
+      title = "Heatwave exposed area over time across the Carolinas",
+      x     = "Date",
+      y     = "Area (km²)"
+    ) +
+    theme_bw()
+}
+
+
+# 4. Plot choropleth of county‑level exposure counts
+plot_county_map <- function(df_long, counties_sf) {
+  county_counts <- df_long %>%
+    count(state, county, name = "cluster_count")
+  
+  counties_sf %>%
+    left_join(county_counts, by = c("state","county")) %>%
+    replace_na(list(cluster_count = 0)) %>%
+    ggplot() +
+    geom_sf(aes(fill = cluster_count), color = "white") +
+    scale_fill_viridis_c(option = "viridis", name = "Heatwaves") +
+    labs(title = "Number of Heatwaves by county across the Carolinas") +
+    theme_bw() +
+    theme(
+      legend.position     = c(0.99, 0.01),
+      legend.justification = c("right", "bottom"),
+      legend.background   = element_rect(fill = alpha("white", 0.7), color = NA)
+    )
+}
+
+# ——— Example usage ———
+res <- process_cluster_csv(here::here("data", "output", "03_cluster", "02_cluster", "advisory","points","0.39","heat_index", "cluster_idf.csv"))
+p1  <- plot_cluster_count(res$df)
+p2  <- plot_cluster_duration(res$df)
+p3  <- plot_cluster_area(res$cluster_area)
+p4  <- plot_county_map(res$df_long, res$counties_sf)
+print(p1); print(p2); print(p3); print(p4)
+
+png_path <- here("figures", paste0("Carolina_heatwaves_daily_count", ".png"))
+svg_path <- here("figures", paste0("Carolina_heatwaves_daily_count", ".svg"))
+ggsave(filename = png_path, plot = p1, width = 7, height = 6, dpi = 300)
+ggsave(filename = svg_path, plot = p1, width = 7, height = 6, device = "svg")
+
+png_path <- here("figures", paste0("Carolina_heatwaves_duration", ".png"))
+svg_path <- here("figures", paste0("Carolina_heatwaves_duration", ".svg"))
+ggsave(filename = png_path, plot = p2, width = 7, height = 6, dpi = 300)
+ggsave(filename = svg_path, plot = p2, width = 7, height = 6, device = "svg")
+
+png_path <- here("figures", paste0("Carolina_heatwaves_area", ".png"))
+svg_path <- here("figures", paste0("Carolina_heatwaves_area", ".svg"))
+ggsave(filename = png_path, plot = p3, width = 7, height = 6, dpi = 300)
+ggsave(filename = svg_path, plot = p3, width = 7, height = 6, device = "svg")
+
+png_path <- here("figures", paste0("Carolina_heatwaves_spatial_count", ".png"))
+svg_path <- here("figures", paste0("Carolina_heatwaves_spatial_count", ".svg"))
+ggsave(filename = png_path, plot = p4, width = 7, height = 6, dpi = 300)
+ggsave(filename = svg_path, plot = p4, width = 7, height = 6, device = "svg")
+
+# All counties ----
+process_cluster_csv <- function(file_path,
+                                states = c("North Carolina", "South Carolina")) {
+  # ——————————————————————————————
+  # 0) Build a lookup of state.abbr ↔ state.name
+  state_map <- tibble::tibble(
+    abbr = state.abb,
+    name = state.name
+  )
+  
+  # 1) Interpret the `states` parameter: allow c("NC","SC") or c("North Carolina",…)
+  param <- states
+  abbrs      <- character(length(param))
+  full_names <- character(length(param))
+  
+  for (i in seq_along(param)) {
+    s <- param[i]
+    if (toupper(s) %in% state_map$abbr) {
+      abbrs[i]      <- toupper(s)
+      full_names[i] <- state_map$name[state_map$abbr == abbrs[i]]
+    } else if (s %in% state_map$name) {
+      full_names[i] <- s
+      abbrs[i]      <- state_map$abbr[state_map$name == s]
+    } else {
+      stop("`states` must be valid US state names or abbreviations. Problem: ", s)
+    }
+  }
+  
+  # ——————————————————————————————
+  # 2) Read all columns as character, coerce known numerics
+  df <- readr::read_csv(file_path, col_types = readr::cols(.default = "c")) %>%
+    mutate(
+      cluster_id     = as.integer(cluster_id),
+      exposed_area   = as.double(exposed_area),
+      era5_mean      = as.double(era5_mean),
+      era5_median    = as.double(era5_median),
+      era5_max       = as.double(era5_max)
+    )
+  
+  # 3) Detect & coerce duration column
+  has_h <- "duration_hours" %in% names(df)
+  has_d <- "duration"       %in% names(df)
+  if (!has_h && !has_d) {
+    stop("CSV must have either `duration_hours` or `duration`.")
+  }
+  if (has_h) df <- df %>% mutate(duration_hours = as.double(duration_hours))
+  if (has_d) df <- df %>% mutate(duration       = as.double(duration))
+  
+  # 4) Rename the start‐date column to `raw_start`
+  if ("start_datetime" %in% names(df)) {
+    df <- rename(df, raw_start = start_datetime)
+  } else if ("start_date" %in% names(df)) {
+    df <- rename(df, raw_start = start_date)
+  } else {
+    stop("No `start_datetime` or `start_date` column found in ", file_path)
+  }
+  
+  # 5) Robustly parse `raw_start` into `start_date`
+  df <- df %>%
+    mutate(
+      iso_ts = ymd_hms(raw_start, quiet = TRUE, tz = "UTC"),
+      iso    = ymd     (raw_start, quiet = TRUE, tz = "UTC"),
+      us_ts  = mdy_hms(raw_start, quiet = TRUE, tz = "UTC"),
+      us     = mdy     (raw_start, quiet = TRUE, tz = "UTC"),
+      start_date = coalesce(iso_ts, iso, us_ts, us)
+    ) %>%
+    select(-iso_ts, -iso, -us_ts, -us)
+  
+  if (any(is.na(df$start_date))) {
+    bad <- unique(df$raw_start[is.na(df$start_date)])
+    stop("Failed to parse these raw_start values:\n",
+         paste0("  • ", bad, collapse = "\n"))
+  }
+  
+  # 6) Compute `duration_days` in separate branches
+  if (has_d && !has_h) {
+    df <- df %>% mutate(duration_days = duration)
+  } else if (has_h && !has_d) {
+    df <- df %>% mutate(duration_days = duration_hours / 24)
+  } else {
+    df <- df %>% mutate(
+      duration_days = if_else(!is.na(duration),
+                              duration,
+                              duration_hours / 24)
+    )
+  }
+  if (any(is.na(df$duration_days))) {
+    stop("Some rows have no valid duration. Check `duration`/`duration_hours`.")
+  }
+  
+  # 7) Split out counties and drop raw_start
+  df <- df %>%
+    mutate(exposed_counties_list = str_split(exposed_counties, ";")) %>%
+    select(-raw_start)
+  
+  # 8) Filter to any clusters hitting *any* of the specified states
+  df <- df %>%
+    filter(
+      purrr::map_lgl(
+        exposed_counties_list,
+        ~ any(str_detect(.x,
+                         regex(paste0(full_names, collapse = "|"),
+                               ignore_case = TRUE)))
+      )
+    )
+  
+  # 9) Explode to one row per county, extract state + county names
+  df_long <- df %>%
+    unnest(exposed_counties_list) %>%
+    rename(exposed_county = exposed_counties_list) %>%
+    mutate(
+      state  = str_to_title(str_extract(exposed_county, "^[^,]+")),
+      county = str_to_title(str_trim(str_extract(exposed_county, "(?<=,).*")))
+    ) %>%
+    filter(state %in% full_names)
+  
+  # 10) Load only the counties for those states, compute each area (km²)
+  counties_sf <- counties(state = abbrs, cb = TRUE, class = "sf") %>%
+    transmute(
+      state = case_when(
+        STATEFP %in% abbrs ~ state_map$name[match(STATEFP, state_map$abbr)]
+      ),
+      county = NAME,
+      geometry
+    ) %>%
+    mutate(county_area_km2 = as.numeric(st_area(geometry)) / 1e6)
+  
+  # 11) Join areas back to df_long, then summarize per‐cluster
+  areas <- st_set_geometry(counties_sf, NULL) %>%
+    select(state, county, county_area_km2)
+  
+  df_long <- left_join(df_long, areas, by = c("state","county"))
+  
+  cluster_area <- df_long %>%
+    group_by(cluster_id, start_date, duration_days) %>%
+    summarize(
+      total_county_area = sum(county_area_km2, na.rm = TRUE),
+      .groups = "drop"
+    )
+  
+  # 12) Return everything for downstream plotting
+  list(
+    df           = df,
+    df_long      = df_long,
+    counties_sf  = counties_sf,
+    cluster_area = cluster_area
+  )
+}
+
+
+plot_county_map_all <- function(df_long) {
+  # 1) Build a lookup from FIPS → full state name + county name
+  fips_lookup <- tigris::fips_codes %>%
+    mutate(
+      # strip trailing " County" from the fips_codes county column
+      county_name = str_remove(county, " County$")
+    ) %>%
+    select(
+      STATEFP   = state_code,
+      state     = state_name,
+      county    = county_name
+    ) %>%
+    distinct()
+  
+  # 2) Load every county in the U.S. (cb = cartographic boundary)
+  counties_all <- tigris::counties(cb = TRUE, class = "sf") %>%
+    left_join(fips_lookup, by = "STATEFP") %>%
+    # keep only the two columns we need plus geometry
+    transmute(state, county = NAME, geometry)
+  
+  # 3) Count clusters per county in your df_long
+  county_counts <- df_long %>%
+    count(state, county, name = "cluster_count")
+  
+  # 4) Join and keep only counties that actually appear in county_counts
+  plot_sf <- inner_join(counties_all, county_counts,
+                        by = c("state","county"))
+  
+  # 5) Plot
+  ggplot(plot_sf) +
+    geom_sf(aes(fill = cluster_count), color = "white", size = 0.1) +
+    scale_fill_viridis_c(option = "viridis", name = "Heatwaves") +
+    labs(title = "Heatwaves by County (all reported)") +
+    theme_bw() +
+    theme(
+      legend.position      = c(0.99, 0.01),
+      legend.justification = c("right", "bottom"),
+      legend.background    = element_rect(fill = alpha("white", 0.7), color = NA)
+    )
+}
+southeast_states <- c("AL","FL","GA","KY","LA","MS","NC","SC","TN","VA","TX",
+                      "OK","AR","MO","KS","IL","OH","IN","WV","MD","DE","NJ",
+                      "PA")
+res <- process_cluster_csv(here::here("data", "output", "03_cluster", "02_cluster", "advisory","points","0.39","heat_index", "cluster_idf.csv"), states = southeast_states)
+p_all <- plot_county_map_all(res$df_long)
+
+png_path <- here("figures", paste0("Southeast_heatwaves_spatial_count", ".png"))
+svg_path <- here("figures", paste0("Southeast_heatwaves_spatial_count", ".svg"))
+ggsave(filename = png_path, plot = p_all, width = 7, height = 6, dpi = 300)
+ggsave(filename = svg_path, plot = p_all, width = 7, height = 6, device = "svg")

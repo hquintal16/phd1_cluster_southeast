@@ -290,14 +290,33 @@ create_cluster_summary_hourly <- function(
     stop("The column 'datetime' was not found in the cluster data CSV.")
   }
   
-  # Try the primary format
-  converted_dates <- as.POSIXct(cluster_data$datetime, format = "%m/%d/%Y %H:%M:%S", tz = "UTC")
+  # # Try the primary format
+  # converted_dates <- as.POSIXct(cluster_data$datetime, format = "%m/%d/%Y %H:%M:%S", tz = "UTC")
+  # 
+  # # If the conversion yields a vector of length 0 or all NAs, try an alternative format.
+  # if (length(converted_dates) == 0 || all(is.na(converted_dates))) {
+  #   warning("Primary date conversion returned no valid dates. Trying alternative format...")
+  #   converted_dates <- as.POSIXct(cluster_data$datetime, format = "%Y-%m-%d %H:%M:%S", tz = "UTC")
+  # }
   
-  # If the conversion yields a vector of length 0 or all NAs, try an alternative format.
-  if (length(converted_dates) == 0 || all(is.na(converted_dates))) {
-    warning("Primary date conversion returned no valid dates. Trying alternative format...")
-    converted_dates <- as.POSIXct(cluster_data$datetime, format = "%Y-%m-%d %H:%M:%S", tz = "UTC")
+  # 1) Try ISO‐style first
+  converted_dates <- as.POSIXct(cluster_data$datetime,
+                                format = "%Y-%m-%d %H:%M:%S", tz = "UTC")
+  
+  # 2) If that still gives all NA, fall back to the other
+  if (all(is.na(converted_dates))) {
+    warning("ISO format failed. Trying U.S. format…")
+    converted_dates <- as.POSIXct(cluster_data$datetime,
+                                  format = "%m/%d/%Y %H:%M:%S", tz = "UTC")
   }
+  
+  # 3) If *still* all NA, error out
+  if (all(is.na(converted_dates))) {
+    stop("Date conversion failed for all entries. Please check your datetime strings.")
+  }
+  
+  cluster_data$datetime <- converted_dates
+  
   
   # If still no valid dates, stop with an error.
   if (length(converted_dates) == 0 || all(is.na(converted_dates))) {
@@ -499,6 +518,21 @@ summary_df <- create_cluster_summary(
 )
 
 ## Precipitation ----
+
+# cluster_data <- read.csv(
+#   here::here('data','output','03_cluster','02_cluster','24hr1yr','0.25_24hr1yr_clustered_extremes.csv'),
+#   stringsAsFactors = FALSE
+# )
+# 
+# # 1) Confirm the column really is character:
+# str(cluster_data$datetime)
+# 
+# # 2) See a few examples of what you’re trying to parse:
+# head(cluster_data$datetime, 10)
+# 
+# # 3) Check for any unexpected whitespace or hidden characters:
+# dput(head(cluster_data$datetime, 10))
+# 
 
 ### 0.25 deg / hour ----
 summary_df <- create_cluster_summary_hourly(
