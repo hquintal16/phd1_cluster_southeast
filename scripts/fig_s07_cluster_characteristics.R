@@ -615,7 +615,7 @@ plot_cluster_duration_extent <- function(heat_dirs,
   p_duration_heat <- ggplot(heat_df, aes(duration, fill = grid)) +
     geom_histogram(bins = 30, position = "identity", alpha = 0.4, color = NA) +
     scale_x_continuous(limits = dur_lim_heat) +
-    labs(x = "Duration (days)", y = "Count") +
+    labs(x = "Duration (days)", y = "Count of Events") +
     base_theme + res_scale +
     theme(legend.position = c(.99, .99), legend.justification = c("right", "top"))
   
@@ -623,7 +623,7 @@ plot_cluster_duration_extent <- function(heat_dirs,
   p_duration_precip <- ggplot(precip_df, aes(duration, fill = grid)) +
     geom_histogram(bins = 30, position = "identity", alpha = 0.4, color = NA) +
     scale_x_continuous(limits = dur_lim_precip) +
-    labs(x = "Duration (days)", y = "Count") +
+    labs(x = "Duration (days)", y = "Count of Events") +
     base_theme +
     theme(legend.position = "none")
   
@@ -631,7 +631,7 @@ plot_cluster_duration_extent <- function(heat_dirs,
   p_extent_heat <- ggplot(heat_df, aes(total_extent, fill = grid)) +
     geom_histogram(bins = 30, position = "identity", alpha = 0.4, color = NA) +
     scale_x_log10(limits = ext_lim) +
-    labs(x = "Total extent (km²)", y = "Count") +
+    labs(x = "Total extent (km²)", y = "Count of Events") +
     base_theme +
     theme(legend.position = "none")
   
@@ -639,7 +639,7 @@ plot_cluster_duration_extent <- function(heat_dirs,
   p_extent_precip <- ggplot(precip_df, aes(total_extent, fill = grid)) +
     geom_histogram(bins = 30, position = "identity", alpha = 0.4, color = NA) +
     scale_x_log10(limits = ext_lim) +
-    labs(x = "Total extent (km²)", y = "Count") +
+    labs(x = "Total extent (km²)", y = "Count of Events") +
     base_theme +
     theme(legend.position = "none")
   
@@ -647,8 +647,8 @@ plot_cluster_duration_extent <- function(heat_dirs,
   combined <- (p_duration_heat / p_duration_precip) | (p_extent_heat / p_extent_precip)
   
   # Save outputs
-  ggsave(paste0(base_filename, ".png"), combined, width = 12, height = 8, dpi = 300)
-  ggsave(paste0(base_filename, ".svg"), combined, width = 12, height = 8, device = "svg")
+  ggsave(paste0(base_filename, ".png"), combined, width = 8, height = 6, dpi = 300)
+  ggsave(paste0(base_filename, ".svg"), combined, width = 8, height = 6, device = "svg")
   
   invisible(list(heat = heat_df, precip = precip_df))
 }
