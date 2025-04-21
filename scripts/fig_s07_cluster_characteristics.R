@@ -504,21 +504,21 @@ my_fourpanel_histogram_all_years_total(
 )
 
 # 2025-04-18 updates ----
+# 2x2 plot ----
 
-# ——— Helper to turn one NetCDF cluster‑file into a small stats tibble ———
+# ——— Helper for NetCDF files ———
+# Infers grid size from two directories up
 process_nc_file <- function(nc_path) {
-  # infer grid spacing (°) from the filename, e.g. “_0.25_”
-  grid_size <- str_extract(basename(nc_path), "(?<=_)[0-9.]+(?=_)") %>% as.numeric()
+  grid_str  <- basename(dirname(dirname(nc_path)))
+  grid_size <- as.numeric(grid_str)
   km_per_deg <- 111.32
   
-  # read the NetCDF as a SpatRaster with a daily time dimension
   r <- rast(nc_path)
   times <- time(r)
   if (is.null(times)) stop("No time dimension in ", nc_path)
   
-  # pull out all non‑zero cluster IDs across space×time
   df <- as.data.frame(r, xy = TRUE) %>%
-    pivot_longer(-c(x,y), names_to = "time", values_to = "cluster") %>%
+    pivot_longer(-c(x, y), names_to = "time", values_to = "cluster") %>%
     mutate(
       date = as.Date(time),
       lon  = x,
@@ -526,11 +526,9 @@ process_nc_file <- function(nc_path) {
     ) %>%
     filter(cluster != 0)
   
-  # per‑cluster duration and total spatial count
   stats <- df %>%
     group_by(cluster) %>%
     summarize(
-      # +1 so a single‑day event has duration = 1
       duration     = as.numeric(diff(range(date))) + 1,
       total_count  = n_distinct(paste0(lon, "_", lat)),
       .groups      = "drop"
@@ -544,61 +542,111 @@ process_nc_file <- function(nc_path) {
   return(stats)
 }
 
+# ——— Dispatcher for CSV and NetCDF ———
+# Filters on exposed_counties, handles duration_hours or duration
+process_cluster_file <- function(path) {
+  ext <- tolower(tools::file_ext(path))
+  grid_str  <- basename(dirname(dirname(path)))
+  grid_size <- as.numeric(grid_str)
+  grid_fct  <- factor(grid_size)
+  
+  if (ext == "nc") {
+    return(process_nc_file(path))
+  }
+  
+  if (ext %in% c("csv", "txt")) {
+    df <- readr::read_csv(path, show_col_types = FALSE) %>%
+      rename_with(tolower)
+    
+    # Ensure required columns
+    required <- c("cluster_id","exposed_counties","exposed_area")
+    if (!all(required %in% names(df))) {
+      stop("CSV must contain columns: ", paste(required, collapse=", "), ": ", path)
+    }
+    if (!any(c("duration","duration_hours") %in% names(df))) {
+      stop("CSV must contain 'duration' or 'duration_hours': ", path)
+    }
+    
+    # Filter to only rows with exposed_counties
+    df <- df %>% filter(!is.na(exposed_counties))
+    
+    stats <- df %>%
+      rename(cluster = cluster_id) %>%
+      mutate(
+        duration = if ("duration_hours" %in% names(df)) duration_hours/24 else duration,
+        total_extent = exposed_area,
+        grid         = grid_fct
+      ) %>%
+      select(cluster, grid, duration, total_extent)
+    
+    return(stats)
+  }
+  
+  stop("Unsupported file type: ", path)
+}
+
 # ——— Main plotting function ———
-plot_cluster_duration_extent <- function(heat_dirs, precip_dir, base_filename = "2x2_duration_extent") {
-  # (1) gather all .nc in each group
-  heat_files   <- unlist(lapply(heat_dirs,   list.files, pattern = "\\.nc$", full.names = TRUE))
-  precip_files <- list.files(precip_dir, pattern = "\\.nc$", full.names = TRUE)
+# Columns: duration (left col), extent (right col)
+# Rows: heat (top), precip (bottom)
+plot_cluster_duration_extent <- function(heat_dirs,
+                                         precip_dir,
+                                         base_filename = "2x2_duration_extent") {
+  precip_dirs <- as.character(precip_dir)
   
-  # (2) process
-  heat_df   <- bind_rows(lapply(heat_files,   process_nc_file))
-  precip_df <- bind_rows(lapply(precip_files, process_nc_file))
+  # Process and adjust
+  heat_df   <- purrr::map_df(heat_dirs,   process_cluster_file) %>% mutate(duration = duration + 1)
+  precip_df <- purrr::map_df(precip_dirs, process_cluster_file) %>% mutate(duration = duration + 1)
   
-  # (3) compute per‑panel x‑limits
+  # Compute axis limits (only extent shared)
   dur_lim_heat   <- range(heat_df$duration,   na.rm = TRUE)
   dur_lim_precip <- range(precip_df$duration, na.rm = TRUE)
-  ext_lim_heat   <- range(heat_df$total_extent[heat_df$total_extent>0],   na.rm=TRUE)
-  ext_lim_precip <- range(precip_df$total_extent[precip_df$total_extent>0], na.rm=TRUE)
+  ext_lim        <- range(c(heat_df$total_extent, precip_df$total_extent), na.rm = TRUE)
   
-  # common styling
-  common_theme <- theme_bw() +
-    theme(legend.position = "bottom",
-          panel.border    = element_rect(color="black", fill=NA))
-  res_scale <- scale_fill_discrete(name = "Grid (°)")
+  # Prepare legend labels from grid levels
+  grid_levels <- levels(heat_df$grid)
+  grid_labels <- sprintf("%.2f", as.numeric(grid_levels))
+  res_scale <- scale_fill_discrete(name = NULL, labels = grid_labels)
   
-  # (4) top row: duration
-  p1_heat <- ggplot(heat_df, aes(duration, fill = grid)) +
+  # Base theme
+  base_theme <- theme_bw() +
+    theme(panel.border = element_rect(color = "black", fill = NA))
+  
+  # Heat duration (top-left) with legend top-right
+  p_duration_heat <- ggplot(heat_df, aes(duration, fill = grid)) +
     geom_histogram(bins = 30, position = "identity", alpha = 0.4, color = NA) +
     scale_x_continuous(limits = dur_lim_heat) +
-    labs(x = "Duration (days)", y = "Count", title = "Heat clusters") +
-    common_theme + res_scale
+    labs(x = "Duration (days)", y = "Count") +
+    base_theme + res_scale +
+    theme(legend.position = c(.99, .99), legend.justification = c("right", "top"))
   
-  p1_precip <- ggplot(precip_df, aes(duration, fill = grid)) +
+  # Precip duration (bottom-left), no legend
+  p_duration_precip <- ggplot(precip_df, aes(duration, fill = grid)) +
     geom_histogram(bins = 30, position = "identity", alpha = 0.4, color = NA) +
     scale_x_continuous(limits = dur_lim_precip) +
-    labs(x = "Duration (days)", y = NULL, title = "Precip. clusters") +
-    common_theme + res_scale
+    labs(x = "Duration (days)", y = "Count") +
+    base_theme +
+    theme(legend.position = "none")
   
-  # (5) bottom row: total_extent (log scale)
-  p2_heat <- ggplot(heat_df, aes(total_extent, fill = grid)) +
+  # Heat extent (top-right), no legend
+  p_extent_heat <- ggplot(heat_df, aes(total_extent, fill = grid)) +
     geom_histogram(bins = 30, position = "identity", alpha = 0.4, color = NA) +
-    scale_x_log10(limits = ext_lim_heat) +
+    scale_x_log10(limits = ext_lim) +
     labs(x = "Total extent (km²)", y = "Count") +
-    common_theme + res_scale
+    base_theme +
+    theme(legend.position = "none")
   
-  p2_precip <- ggplot(precip_df, aes(total_extent, fill = grid)) +
+  # Precip extent (bottom-right), no legend
+  p_extent_precip <- ggplot(precip_df, aes(total_extent, fill = grid)) +
     geom_histogram(bins = 30, position = "identity", alpha = 0.4, color = NA) +
-    scale_x_log10(limits = ext_lim_precip) +
-    labs(x = "Total extent (km²)", y = NULL) +
-    common_theme + res_scale
+    scale_x_log10(limits = ext_lim) +
+    labs(x = "Total extent (km²)", y = "Count") +
+    base_theme +
+    theme(legend.position = "none")
   
-  # (6) patchwork 2×2 layout
-  combined <- (p1_heat   | p1_precip) /
-    (p2_heat   | p2_precip) +
-    plot_layout(guides = "collect") &
-    theme(legend.position = "bottom")
+  # Combine panels
+  combined <- (p_duration_heat / p_duration_precip) | (p_extent_heat / p_extent_precip)
   
-  # save
+  # Save outputs
   ggsave(paste0(base_filename, ".png"), combined, width = 12, height = 8, dpi = 300)
   ggsave(paste0(base_filename, ".svg"), combined, width = 12, height = 8, device = "svg")
   
@@ -607,15 +655,17 @@ plot_cluster_duration_extent <- function(heat_dirs, precip_dir, base_filename = 
 
 # ——— Example call ———
 plot_cluster_duration_extent(
-  heat_dirs   = c(here::here("data", "output", "05_validation", "summary", "advisory", "cluster", "cluster_0.25_excess_heat_summary.csv"),
-                  here::here("data", "output", "05_validation", "summary", "advisory", "cluster", "cluster_0.3075_excess_heat_summary.csv"),
-                  here::here("data", "output", "05_validation", "summary", "advisory", "cluster", "cluster_0.39_excess_heat_summary.csv")),
-  precip_dir  = here::here("data", "output", "05_validation", "summary", "advisory", "cluster", "cluster_0.25_excess_heat_summary.csv"),
-  base_filename = "dur_ext_2x2"
+  heat_dirs = c(
+    here::here("data","output","03_cluster","02_cluster","advisory","points","0.25","heat_index","cluster_idf.csv"),
+    here::here("data","output","03_cluster","02_cluster","advisory","points","0.3075","heat_index","cluster_idf.csv"),
+    here::here("data","output","03_cluster","02_cluster","advisory","points","0.39","heat_index","cluster_idf.csv")
+  ),
+  precip_dir    = here::here("data","output","03_cluster","02_cluster","24hr1yr","cluster_idf.csv"),
+  base_filename = here::here("figures","Cluster_exposure_duration")
 )
 
 # 2025-04-21 updates ----
-
+# NCSCO plots for Carolinas only ----
 # 1. Read + preprocess CSV, filter to NC/SC clusters, expand counties, compute areas
 process_cluster_csv <- function(file_path) {
   # 1) Read all as character
@@ -839,204 +889,3 @@ png_path <- here("figures", paste0("Carolina_heatwaves_spatial_count", ".png"))
 svg_path <- here("figures", paste0("Carolina_heatwaves_spatial_count", ".svg"))
 ggsave(filename = png_path, plot = p4, width = 7, height = 6, dpi = 300)
 ggsave(filename = svg_path, plot = p4, width = 7, height = 6, device = "svg")
-
-# All counties ----
-process_cluster_csv <- function(file_path,
-                                states = c("North Carolina", "South Carolina")) {
-  # ——————————————————————————————
-  # 0) Build a lookup of state.abbr ↔ state.name
-  state_map <- tibble::tibble(
-    abbr = state.abb,
-    name = state.name
-  )
-  
-  # 1) Interpret the `states` parameter: allow c("NC","SC") or c("North Carolina",…)
-  param <- states
-  abbrs      <- character(length(param))
-  full_names <- character(length(param))
-  
-  for (i in seq_along(param)) {
-    s <- param[i]
-    if (toupper(s) %in% state_map$abbr) {
-      abbrs[i]      <- toupper(s)
-      full_names[i] <- state_map$name[state_map$abbr == abbrs[i]]
-    } else if (s %in% state_map$name) {
-      full_names[i] <- s
-      abbrs[i]      <- state_map$abbr[state_map$name == s]
-    } else {
-      stop("`states` must be valid US state names or abbreviations. Problem: ", s)
-    }
-  }
-  
-  # ——————————————————————————————
-  # 2) Read all columns as character, coerce known numerics
-  df <- readr::read_csv(file_path, col_types = readr::cols(.default = "c")) %>%
-    mutate(
-      cluster_id     = as.integer(cluster_id),
-      exposed_area   = as.double(exposed_area),
-      era5_mean      = as.double(era5_mean),
-      era5_median    = as.double(era5_median),
-      era5_max       = as.double(era5_max)
-    )
-  
-  # 3) Detect & coerce duration column
-  has_h <- "duration_hours" %in% names(df)
-  has_d <- "duration"       %in% names(df)
-  if (!has_h && !has_d) {
-    stop("CSV must have either `duration_hours` or `duration`.")
-  }
-  if (has_h) df <- df %>% mutate(duration_hours = as.double(duration_hours))
-  if (has_d) df <- df %>% mutate(duration       = as.double(duration))
-  
-  # 4) Rename the start‐date column to `raw_start`
-  if ("start_datetime" %in% names(df)) {
-    df <- rename(df, raw_start = start_datetime)
-  } else if ("start_date" %in% names(df)) {
-    df <- rename(df, raw_start = start_date)
-  } else {
-    stop("No `start_datetime` or `start_date` column found in ", file_path)
-  }
-  
-  # 5) Robustly parse `raw_start` into `start_date`
-  df <- df %>%
-    mutate(
-      iso_ts = ymd_hms(raw_start, quiet = TRUE, tz = "UTC"),
-      iso    = ymd     (raw_start, quiet = TRUE, tz = "UTC"),
-      us_ts  = mdy_hms(raw_start, quiet = TRUE, tz = "UTC"),
-      us     = mdy     (raw_start, quiet = TRUE, tz = "UTC"),
-      start_date = coalesce(iso_ts, iso, us_ts, us)
-    ) %>%
-    select(-iso_ts, -iso, -us_ts, -us)
-  
-  if (any(is.na(df$start_date))) {
-    bad <- unique(df$raw_start[is.na(df$start_date)])
-    stop("Failed to parse these raw_start values:\n",
-         paste0("  • ", bad, collapse = "\n"))
-  }
-  
-  # 6) Compute `duration_days` in separate branches
-  if (has_d && !has_h) {
-    df <- df %>% mutate(duration_days = duration)
-  } else if (has_h && !has_d) {
-    df <- df %>% mutate(duration_days = duration_hours / 24)
-  } else {
-    df <- df %>% mutate(
-      duration_days = if_else(!is.na(duration),
-                              duration,
-                              duration_hours / 24)
-    )
-  }
-  if (any(is.na(df$duration_days))) {
-    stop("Some rows have no valid duration. Check `duration`/`duration_hours`.")
-  }
-  
-  # 7) Split out counties and drop raw_start
-  df <- df %>%
-    mutate(exposed_counties_list = str_split(exposed_counties, ";")) %>%
-    select(-raw_start)
-  
-  # 8) Filter to any clusters hitting *any* of the specified states
-  df <- df %>%
-    filter(
-      purrr::map_lgl(
-        exposed_counties_list,
-        ~ any(str_detect(.x,
-                         regex(paste0(full_names, collapse = "|"),
-                               ignore_case = TRUE)))
-      )
-    )
-  
-  # 9) Explode to one row per county, extract state + county names
-  df_long <- df %>%
-    unnest(exposed_counties_list) %>%
-    rename(exposed_county = exposed_counties_list) %>%
-    mutate(
-      state  = str_to_title(str_extract(exposed_county, "^[^,]+")),
-      county = str_to_title(str_trim(str_extract(exposed_county, "(?<=,).*")))
-    ) %>%
-    filter(state %in% full_names)
-  
-  # 10) Load only the counties for those states, compute each area (km²)
-  counties_sf <- counties(state = abbrs, cb = TRUE, class = "sf") %>%
-    transmute(
-      state = case_when(
-        STATEFP %in% abbrs ~ state_map$name[match(STATEFP, state_map$abbr)]
-      ),
-      county = NAME,
-      geometry
-    ) %>%
-    mutate(county_area_km2 = as.numeric(st_area(geometry)) / 1e6)
-  
-  # 11) Join areas back to df_long, then summarize per‐cluster
-  areas <- st_set_geometry(counties_sf, NULL) %>%
-    select(state, county, county_area_km2)
-  
-  df_long <- left_join(df_long, areas, by = c("state","county"))
-  
-  cluster_area <- df_long %>%
-    group_by(cluster_id, start_date, duration_days) %>%
-    summarize(
-      total_county_area = sum(county_area_km2, na.rm = TRUE),
-      .groups = "drop"
-    )
-  
-  # 12) Return everything for downstream plotting
-  list(
-    df           = df,
-    df_long      = df_long,
-    counties_sf  = counties_sf,
-    cluster_area = cluster_area
-  )
-}
-
-
-plot_county_map_all <- function(df_long) {
-  # 1) Build a lookup from FIPS → full state name + county name
-  fips_lookup <- tigris::fips_codes %>%
-    mutate(
-      # strip trailing " County" from the fips_codes county column
-      county_name = str_remove(county, " County$")
-    ) %>%
-    select(
-      STATEFP   = state_code,
-      state     = state_name,
-      county    = county_name
-    ) %>%
-    distinct()
-  
-  # 2) Load every county in the U.S. (cb = cartographic boundary)
-  counties_all <- tigris::counties(cb = TRUE, class = "sf") %>%
-    left_join(fips_lookup, by = "STATEFP") %>%
-    # keep only the two columns we need plus geometry
-    transmute(state, county = NAME, geometry)
-  
-  # 3) Count clusters per county in your df_long
-  county_counts <- df_long %>%
-    count(state, county, name = "cluster_count")
-  
-  # 4) Join and keep only counties that actually appear in county_counts
-  plot_sf <- inner_join(counties_all, county_counts,
-                        by = c("state","county"))
-  
-  # 5) Plot
-  ggplot(plot_sf) +
-    geom_sf(aes(fill = cluster_count), color = "white", size = 0.1) +
-    scale_fill_viridis_c(option = "viridis", name = "Heatwaves") +
-    labs(title = "Heatwaves by County (all reported)") +
-    theme_bw() +
-    theme(
-      legend.position      = c(0.99, 0.01),
-      legend.justification = c("right", "bottom"),
-      legend.background    = element_rect(fill = alpha("white", 0.7), color = NA)
-    )
-}
-southeast_states <- c("AL","FL","GA","KY","LA","MS","NC","SC","TN","VA","TX",
-                      "OK","AR","MO","KS","IL","OH","IN","WV","MD","DE","NJ",
-                      "PA")
-res <- process_cluster_csv(here::here("data", "output", "03_cluster", "02_cluster", "advisory","points","0.39","heat_index", "cluster_idf.csv"), states = southeast_states)
-p_all <- plot_county_map_all(res$df_long)
-
-png_path <- here("figures", paste0("Southeast_heatwaves_spatial_count", ".png"))
-svg_path <- here("figures", paste0("Southeast_heatwaves_spatial_count", ".svg"))
-ggsave(filename = png_path, plot = p_all, width = 7, height = 6, dpi = 300)
-ggsave(filename = svg_path, plot = p_all, width = 7, height = 6, device = "svg")
