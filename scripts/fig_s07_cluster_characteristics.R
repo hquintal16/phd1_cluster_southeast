@@ -664,6 +664,164 @@ plot_cluster_duration_extent(
   base_filename = here::here("figures","Cluster_exposure_duration")
 )
 
+# 2025-04-24 updates ----
+# calculate median extent, duration
+
+# ────────────────────────────────────────────────────────────────────────────────
+#  Updated helpers + example usage
+#  • process_cluster_file()  – tolerant grid-size extraction
+#  • compute_median_duration_extent() – medians per grid
+# ────────────────────────────────────────────────────────────────────────────────
+
+
+
+# ── Robust dispatcher ───────────────────────────────────────────────────────────
+process_cluster_file <- function(path) {
+  ext <- tolower(tools::file_ext(path))
+  
+  # 1. Grid resolution: grab the *last* folder name that looks numeric
+  grid_candidates <- str_extract_all(path, "(?<=/)[0-9.]+(?=/)")[[1]]
+  grid_size <- if (length(grid_candidates)) as.numeric(tail(grid_candidates, 1)) else NA_real_
+  grid_fct  <- factor(ifelse(is.na(grid_size), "unknown", format(grid_size)))
+  km_per_deg <- 111.32
+  
+  # --- NetCDF ------------------------------------------------------------------
+  if (ext == "nc") {
+    r      <- rast(path)
+    times  <- time(r)
+    if (is.null(times)) stop("No time dimension found in ", path)
+    
+    df <- as.data.frame(r, xy = TRUE) %>% 
+      pivot_longer(-c(x, y), names_to = "time", values_to = "cluster") %>% 
+      mutate(date = as.Date(time), lon = x, lat = y) %>% 
+      filter(cluster != 0)
+    
+    return(df %>% 
+             group_by(cluster) %>% 
+             summarise(duration = as.numeric(diff(range(date))) + 1,
+                       total_count = n_distinct(paste0(lon, "_", lat)),
+                       .groups = "drop") %>% 
+             mutate(total_extent = total_count * (grid_size * km_per_deg)^2,
+                    grid = grid_fct) %>% 
+             select(cluster, grid, duration, total_extent))
+  }
+  
+  # --- CSV/TXT -----------------------------------------------------------------
+  if (ext %in% c("csv", "txt")) {
+    df <- read_csv(path, show_col_types = FALSE) %>% 
+      rename_with(tolower) %>% 
+      filter(!is.na(exposed_counties))               # keep only exposed rows
+    
+    if (!all(c("cluster_id","exposed_counties","exposed_area") %in% names(df)))
+      stop("CSV lacks required columns in ", path)
+    
+    if (!any(c("duration","duration_hours") %in% names(df)))
+      stop("CSV must contain 'duration' or 'duration_hours' in ", path)
+    
+    return(df %>% 
+             rename(cluster = cluster_id) %>% 
+             mutate(duration = if ("duration_hours" %in% names(.)) duration_hours/24 else duration,
+                    total_extent = exposed_area,
+                    grid = grid_fct) %>% 
+             select(cluster, grid, duration, total_extent))
+  }
+  
+  stop("Unsupported file type: ", path)
+}
+
+# ── Median helper ───────────────────────────────────────────────────────────────
+compute_median_duration_extent <- function(heat_dirs, precip_dir) {
+  
+  heat_df   <- map_df(heat_dirs,  process_cluster_file) %>% 
+    mutate(duration = duration + 1)   # maintain +1 parity
+  
+  precip_df <- map_df(precip_dir, process_cluster_file) %>% 
+    mutate(duration = duration + 1)
+  
+  summarise_medians <- function(df) {
+    df %>% 
+      group_by(grid) %>% 
+      summarise(median_duration = median(duration,     na.rm = TRUE),
+                median_extent   = median(total_extent, na.rm = TRUE),
+                .groups = "drop") %>% 
+      arrange(grid)
+  }
+  
+  list(
+    heat   = summarise_medians(heat_df),
+    precip = summarise_medians(precip_df)
+  )
+}
+
+# ── Example call ────────────────────────────────────────────────────────────────
+medians <- compute_median_duration_extent(
+  heat_dirs = c(
+    here::here("data","output","03_cluster","02_cluster","advisory","points",
+               "0.25","heat_index","cluster_idf.csv"),
+    here::here("data","output","03_cluster","02_cluster","advisory","points",
+               "0.3075","heat_index","cluster_idf.csv"),
+    here::here("data","output","03_cluster","02_cluster","advisory","points",
+               "0.39","heat_index","cluster_idf.csv")
+  ),
+  precip_dir = c(   # folder two-up now contains "0.25", so no warning
+    here::here("data","output","03_cluster","02_cluster","24hr1yr",
+               "cluster_idf.csv")
+  )
+)
+
+medians$heat
+medians$precip
+
+# 2025-04-25 updates ----
+# calculate confusion matrices
+# ── Sum TP/TN/FP/FN across yearly CSVs ──────────────────────────────────────────
+# • dir_path ─ folder that holds the CSVs
+# Returns a one-row tibble with total_TP, total_TN, total_FP, total_FN
+# ── Sum TP/TN/FP/FN across yearly CSVs ──────────────────────────────────────────
+#   dir_path  – folder containing the CSVs
+#   years     – vector of years to look for (defaults 2019:2023)
+# Returns: one-row tibble with total_TP, total_TN, total_FP, total_FN
+sum_confusion_metrics <- function(dir_path, years = 2019:2023) {
+
+  metrics   <- c("TP", "TN", "FP", "FN")
+  year_pat  <- str_c(years, collapse = "|")            #  "2019|2020|…|2023"
+  
+  csv_files <- list.files(dir_path, pattern = "\\.csv$", full.names = TRUE) %>% 
+    keep(~ str_detect(basename(.x), year_pat))
+  
+  if (length(csv_files) == 0) {
+    stop("No CSV files for ", paste(years, collapse = ", "), " found in ", dir_path)
+  }
+  
+  # Helper: read one file, keep/ensure the metric cols as numeric
+  read_one <- function(f) {
+    df <- read_csv(f, show_col_types = FALSE)
+    
+    # Add any missing metric columns and coerce all to numeric
+    for (m in metrics) {
+      if (!m %in% names(df)) df[[m]] <- 0
+      df[[m]] <- as.numeric(df[[m]])
+    }
+    
+    df[metrics]
+  }
+  
+  totals <- csv_files %>% 
+    map_df(read_one) %>% 
+    summarise(across(all_of(metrics), \(x) sum(x, na.rm = TRUE),
+                     .names = "total_{.col}"))
+  
+  return(totals)
+}
+
+# ── Example usage ───────────────────────────────────────────────────────────────
+totals <- sum_confusion_metrics(
+  here::here("data", "output", "05_validation", "recall", "advisory",
+             "day", "0.39", "excess_heat")
+)
+
+print(totals)
+
 # 2025-04-21 updates ----
 # NCSCO plots for Carolinas only ----
 # 1. Read + preprocess CSV, filter to NC/SC clusters, expand counties, compute areas
