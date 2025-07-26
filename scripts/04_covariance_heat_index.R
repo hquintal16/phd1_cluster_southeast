@@ -365,7 +365,7 @@ for (year in year_month){
   optimal.gau.exp.params <- gau.exp.params[[optimal.gau.exp.pos]]
   optimal.gau.exp.alpha1 <- rev(seq(.5,1,0.01))[[optimal.gau.exp.pos]]
   optimal.gau.exp.alpha2 <- 1 - optimal.gau.exp.alpha1
-  
+
   # Update original df's with modeled values
   gau.exp.model.time <- data.frame(lag = seq(min(time$lag),max(time$lag),0.1))
   gau.exp.model.time$covariance <- sill * (optimal.gau.exp.alpha1 * exp((-3 * (gau.exp.model.time$lag)^2) / (3 * (optimal.gau.exp.params[1])^2)) +

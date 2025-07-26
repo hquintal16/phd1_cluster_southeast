@@ -166,7 +166,13 @@ make_9panel_figure_binned <- function(noaa_dir, cluster_dirs, recall_dirs, year_
         geom_sf(data = us.states, fill = NA, color = "black", size = 0.3) +
         coord_sf(xlim = c(-95, -75), ylim = c(24, 40), expand = FALSE) +
         scale_y_continuous(breaks = seq(24, 40, by = 4)) +
-        scale_fill_manual(name = "", values = custom_palette, na.value = na_color) +
+        # scale_fill_manual(name = "", values = custom_palette, na.value = na_color) +
+        scale_fill_manual(
+          name    = "",
+          values  = custom_palette,
+          na.value = na_color,
+          guide   = guide_legend(reverse = TRUE)
+        ) +
         theme_minimal() +
         theme(axis.title = element_blank(),
               plot.title = element_blank(),
@@ -672,7 +678,13 @@ make_3panel_left <- function(noaa_dir, cluster_dirs, recall_dirs, year_range, ou
       coord_sf(xlim = c(-95, -75), ylim = c(24, 40), expand = FALSE) +
       scale_x_continuous(breaks = seq(-95, -75, by = 5)) +
       scale_y_continuous(breaks = seq(24, 40, by = 4)) +
-      scale_fill_manual(name = "", values = pal, na.value = "white") +
+      # scale_fill_manual(name = "", values = pal, na.value = "white") +
+      scale_fill_manual(
+        name    = "",
+        values  = custom_palette,
+        na.value = na_color,
+        guide   = guide_legend(reverse = TRUE)
+      )+
       theme_minimal() +
       theme(panel.grid = element_blank(),
             axis.title = element_blank(),
@@ -1497,7 +1509,13 @@ plot_single_recall_panel <- function(recall_raster,
     geom_sf(data = us_states, fill = NA, color = "black", size = 0.3) +
     coord_sf(xlim = c(-95, -75), ylim = c(24, 40), expand = FALSE) +
     scale_y_continuous(breaks = seq(24, 40, by = 4)) +
-    scale_fill_manual(name = "Recall", values = palette, na.value = na_color) +
+    # scale_fill_manual(name = "Recall", values = palette, na.value = na_color) +
+    scale_fill_manual(
+      name    = "Recall",
+      values  = palette,
+      na.value = na_color,
+      guide   = guide_legend(reverse = TRUE)
+    )+
     theme_minimal() +
     theme(axis.title = element_blank(),
           plot.title = element_blank(),
@@ -1526,7 +1544,7 @@ us.states <- st_as_sf(maps::map("state", plot = FALSE, fill = TRUE))
 us.states.vect <- vect(us.states)
 us.states.rast <- rasterize(us.states.vect, resolution, field = "ID")
 us.states.rast <- crop(us.states.rast, ext(region.crs))
-file_path <- here("data", "output", "05_validation", "recall","advisory", "raster", "2019_2023_day_record_excess_heat.nc")
+file_path <- here("data", "output", "05_validation", "recall","advisory", "raster", "2019_2023_day_0.39_excess_heat.nc")
 ### Process Recall files (direct file paths):
 r <- rast(file_path)
 recall_raster <- mask(r, us.states.rast, maskvalue = NA)
@@ -1539,3 +1557,4 @@ png_path <- here("figures","00_key_figure.png")
 svg_path <- here("figures","00_key_figure.svg")
 ggsave(filename = png_path, plot = recall_plot, width = 4, height = 4, dpi = 300)
 ggsave(filename = svg_path, plot = recall_plot, width = 4, height = 4, device = "svg")
+
